@@ -13,7 +13,7 @@ struct FallbackTests {
             passes += 1
         } else {
             failures += 1
-            print("FAIL: \(name)\(detail.isEmpty ? "" : " — \(detail)")")
+            print("FAIL: \(name)\(detail.isEmpty ? "" : " - \(detail)")")
         }
     }
 

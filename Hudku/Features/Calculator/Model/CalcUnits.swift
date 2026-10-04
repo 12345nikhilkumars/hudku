@@ -108,7 +108,7 @@ enum CalcUnits {
         // Weight
         "mg": ("g", false), "g": ("oz", false), "kg": ("lb", false), "oz": ("g", false),
         "lb": ("kg", false),
-        // Temperature (bare form requires a spelled/°-prefixed alias — see parseBareConversion)
+        // Temperature (bare form requires a spelled/°-prefixed alias - see parseBareConversion)
         "°C": ("f", false), "°F": ("c", false), "K": ("c", false),
         // Time
         "ms": ("s", false), "s": ("ms", false), "min": ("s", false), "hr": ("min", false),

@@ -6,16 +6,16 @@ one quicklink adapt to typed input, the clipboard, the selection, or the date.
 
 The feature ships **off**. **Settings → Quicklinks** carries the switch and its launcher-visibility
 companion. Off is fully off: no launcher section, no `Create` / `Search` / `Import` / `Export`
-Quicklinks commands, and `QuicklinkCoordinator.openQuicklink` — the single funnel palette activation and global
-shortcuts both reach — refuses to open anything. Bindings stay registered, so re-enabling restores
+Quicklinks commands, and `QuicklinkCoordinator.openQuicklink` - the single funnel palette activation and global
+shortcuts both reach - refuses to open anything. Bindings stay registered, so re-enabling restores
 every shortcut without re-registering.
 
 ## Invariants
 
 - **Quicklinks are authored data, and their store never deletes.** A database that will not open is
-  **reported, never discarded** — `ClipboardStore`'s delete-and-recreate is only sound because history is
+  **reported, never discarded** - `ClipboardStore`'s delete-and-recreate is only sound because history is
   regenerable, and a link library is not. The database lives in **Application Support**, not Caches.
-- **`Model/` stays Foundation-only (plus SQLite3) and pure** for `quicklink-test` — the home directory is
+- **`Model/` stays Foundation-only (plus SQLite3) and pure** for `quicklink-test` - the home directory is
   injected, never read. `Service/QuicklinkLauncher` owns every `NSWorkspace` call.
 - **Drawing an argument field reads nothing.** The header's chips come from
   `SnippetTemplateEngine.declaredArguments(in:)`, a parse of the template alone, so moving the
@@ -24,18 +24,18 @@ every shortcut without re-registering.
   slice.
 - **A disabled quicklink is inert, not gone.** `isEnabled == false` takes it out of root search and out
   of Search Quicklinks, and `openQuicklink` refuses it, so no surface can offer or open it. Everything
-  attached — name, link, alias, shortcut, favorite slot, ranking — stays exactly as it was. The
+  attached - name, link, alias, shortcut, favorite slot, ranking - stays exactly as it was. The
   **Settings → Quicklinks** row is the one place that turns it back on, through the checkbox launcher
   items and custom commands carry: last in the row, dimming the alias field and shortcut recorder.
 - **There is one template engine.** Quicklinks expand through `SnippetTemplateEngine` rather than a
-  second parser, which is what makes `| raw` mean something — it opts a value out of the automatic
+  second parser, which is what makes `| raw` mean something - it opts a value out of the automatic
   percent-encoding a URL destination asks for. `{selectedText}` is accepted as an alias for
   `{selection}`, but nothing ever *writes* it.
 
 ## Destinations
 
-`QuicklinkDestination.detect` decides what a link is from its shape alone — no filesystem or Launch
-Services read — which is what keeps it pure and covered by `Tests/quicklink-test.swift`. In order:
+`QuicklinkDestination.detect` decides what a link is from its shape alone - no filesystem or Launch
+Services read - which is what keeps it pure and covered by `Tests/quicklink-test.swift`. In order:
 
 | Shape                                                  | Result                                                            |
 | ------------------------------------------------------ | ----------------------------------------------------------------- |
@@ -44,7 +44,7 @@ Services read — which is what keeps it pure and covered by `Tests/quicklink-te
 | `smb:` · `afp:` · `nfs:` · `ftp:` · `sftp:` · `ftps:`  | `.network`                                                        |
 | any other `scheme:`                                    | `.deeplink` (`spotify://`, `slack://`, `shortcuts://`, `mailto:`) |
 | a bare host with a letter-led TLD (`github.com/a?b=c`) | `.web`, `https://` prepended                                      |
-| anything else                                          | nothing — the link is rejected                                    |
+| anything else                                          | nothing - the link is rejected                                    |
 
 Two false positives are excluded deliberately, because both are commoner than the schemes they would
 shadow: a one-letter "scheme" is a Windows drive letter, and a `scheme:` whose remainder is all
@@ -58,7 +58,7 @@ before the placeholders are resolved.
 
 ## Placeholders
 
-Quicklinks reuse Hudku's one template engine — the same
+Quicklinks reuse Hudku's one template engine - the same
 [`SnippetTemplateEngine`](snippets.md#template-tokens) snippets use, so every token and every modifier
 is available and there is no second parser to keep in sync. `{cursor}` and `{snippet:…}` are text
 concerns with nothing to resolve against in a destination, so they are left literal.
@@ -74,12 +74,12 @@ https://chat.openai.com/?q={clipboard}
 **Values going into a URL or deeplink are percent-encoded automatically**, so a search term with a
 space or an `&` can't truncate the destination. Encoding is applied _after_ the modifier pipeline, so
 `| uppercase` can't rewrite the `%xx` hex, and it is skipped when the template already spoke for
-itself — `| raw` opts out, `| percent-encode` has done it once already. A local path is never
+itself - `| raw` opts out, `| percent-encode` has done it once already. A local path is never
 encoded: `%20` in a path is a literal, not a space.
 
 `| raw` opts out of more than the escaping. Whether a link is a website, a path or a deeplink is
 decided by `QuicklinkDestination.detect` on the **expanded** text, so an unencoded substituted value
-that begins with a scheme picks the destination kind — a `{clipboard | raw}` holding `file:///…`
+that begins with a scheme picks the destination kind - a `{clipboard | raw}` holding `file:///…`
 resolves to a local path rather than to the web link the template looked like. Encoding is what
 normally prevents that, which is why `| raw` is a deliberate authoring choice and not a default.
 
@@ -90,7 +90,7 @@ a Raycast import rewrites it to `{argument}` before the row is stored.
 
 ## Arguments
 
-A quicklink whose placeholders still need values doesn't open — it collects them **in the header,
+A quicklink whose placeholders still need values doesn't open - it collects them **in the header,
 beside the search field**, as inline chips. There is no argument screen: the row that owns the values
 stays selected and visible the whole time, the way Raycast does it. The mechanics of the strip belong
 to the palette and are described in
@@ -98,20 +98,20 @@ to the palette and are described in
 answer means.
 
 `promptedArguments(for:)` is the one place that decides: the `{argument}`s the link declares, read
-straight off the template by `SnippetTemplateEngine.declaredArguments(in:)` — a pure parse, so nothing
-is expanded and no clipboard is read to draw a chip — plus the synthetic **"Selected Text"** field when
+straight off the template by `SnippetTemplateEngine.declaredArguments(in:)` - a pure parse, so nothing
+is expanded and no clipboard is read to draw a chip - plus the synthetic **"Selected Text"** field when
 the setting says ask. An argument with a `default=` answers itself and is never asked for.
 `QuicklinkArgumentsAccessory` turns that list into the strip; a field declaring `options=` is chosen
 from the palette's own menu rather than typed. **A chip marks nothing up front.** It draws like every
-other field until the caret has been in it and left it empty, and only then takes a red edge — a row
+other field until the caret has been in it and left it empty, and only then takes a red edge - a row
 you have not touched yet is not a row you owe anything on, which is how Raycast reads. The strip is
-given the row's identity, so that memory starts clean on the next quicklink. The strip is placed `.afterQuery` in root search — a
-glyph, then the chips, right after the typed text — and `.besideSearchField` on Search Quicklinks,
+given the row's identity, so that memory starts clean on the next quicklink. The strip is placed `.afterQuery` in root search - a
+glyph, then the chips, right after the typed text - and `.besideSearchField` on Search Quicklinks,
 where the field stays a filter with its prompt intact and the row below already carries the glyph.
 
 **"Selected Text" is asked for up front, not after a failed read.** A chip cannot capture a selection,
 so the field appears whenever the link reads `{selection}` and the setting is `.ask`. Left empty it
-changes nothing — a selection the frontmost app *does* expose is still used — and only a typed value
+changes nothing - a selection the frontmost app *does* expose is still used - and only a typed value
 replaces it. So it is never owed: `QuicklinkCoordinator.requiresValue` keeps it out of the first
 incomplete field, and ↵ opens a selected-text link at once instead of focusing the empty chip first. That is the one behavioural difference from the two-screen form it replaced, and it is
 what lets the strip be drawn without capturing anything.
@@ -122,10 +122,10 @@ context on **every** call rather than holding one across a session, so `{clipboa
 too: the frontmost app is recorded first, the way `runSystemAction` does, so the selection comes from
 the window the user was actually in.
 
-↵ with the chips filled opens straight away, wherever the row was reached from — root search carries
+↵ with the chips filled opens straight away, wherever the row was reached from - root search carries
 its values through `LauncherScreen.argumentValues(for:)` into the same funnel, so a filled row never
 takes a detour. **Only a shortcut whose values are still missing lands on Search Quicklinks**, on that
-row, with its first empty chip focused — carried across by `PaletteState.pendingArgumentEntryID` and
+row, with its first empty chip focused - carried across by `PaletteState.pendingArgumentEntryID` and
 `commandArguments`, both set after the show because `prepare` clears them. One argument surface, whether
 the row is reached from root search, from Search Quicklinks or from a hotkey. A ⌘↵ "open with default
 app" override survives that trip on `pendingDefaultAppOverride`, keyed by the quicklink it applies to.
@@ -147,19 +147,19 @@ stored bundle ID through Launch Services; an app that has since been uninstalled
 with an **Open with Default** recovery button rather than silently falling back.
 
 "Open in a new window" passes `--new-window` to the handler. Chromium and Firefox accept it, Safari
-ignores it, and an app that doesn't understand an argument drops it — so the setting is honest about
+ignores it, and an app that doesn't understand an argument drops it - so the setting is honest about
 applying only to handlers that accept one. Off is plain `NSWorkspace.open`, which reuses the
 frontmost tab; that is what "prefer existing tabs" means, so it is the same switch rather than a
 second one.
 
-Every failure — unresolvable link, missing file, missing app, refused open — reports through
+Every failure - unresolvable link, missing file, missing app, refused open - reports through
 Hudku's own dialog and leaves no partial state.
 
 ## Search and pinning
 
 Quicklinks are their own `AppEntry.Kind`, their own `AppIndex` slice and their own launcher section,
 between System Settings and Snippets. Only the **name** is indexed; the destination is not searchable
-(a URL is a subsequence of almost any query) — beside the name, a quicklink answers to whatever
+(a URL is a subsequence of almost any query) - beside the name, a quicklink answers to whatever
 [user alias](launcher.md#user-aliases) its Settings row carries, which is why a hidden one dims the
 field. Per-quicklink "Show in root search" filters the slice;
 the pane's "Show in launcher" takes the section and the four Quicklink commands out of the
@@ -169,8 +169,8 @@ Three levers, narrowing in that order: the pane's switches take the whole featur
 **Enabled** checkbox makes one quicklink inert, and **Show in root search** keeps a quicklink openable
 from Search Quicklinks and its shortcut while dropping it from the root list.
 
-`Quicklink.precedes` is the one display order — pinned first in the order they were pinned, then the
-rest by name — and both the store and the launcher slice sort through it, so the two can never
+`Quicklink.precedes` is the one display order - pinned first in the order they were pinned, then the
+rest by name - and both the store and the launcher slice sort through it, so the two can never
 disagree. **Pinned means the top of the Quicklinks section**, not above Applications: a second
 position in root search would need a second `AppEntry.Kind`, which the kind invariant forbids for one
 feature. The Search Quicklinks screen gives pins their own section, like the clipboard's.
@@ -187,7 +187,7 @@ Duplicate, Pin/Unpin (`⌘.`), Hide/Show in Root Search, Show in Finder (`⌘F`,
 path), and Delete (`⌘⌫`).
 
 Choosing an _arbitrary_ app belongs to the editor, which has a picker; `PopoverMenu` is a flat list
-with no nesting, so the palette offers the one alternative that always exists — bypass the saved app
+with no nesting, so the palette offers the one alternative that always exists - bypass the saved app
 and use the system handler, once, without changing what is saved.
 
 ## Storage
@@ -197,7 +197,7 @@ and use the system handler, once, without changing what is saved.
 ```
 
 Quicklinks are **authored data**, which decides the one way `QuicklinkStore` differs from
-`ClipboardStore` — they are neighbours in Application Support, and otherwise mirror each other (WAL,
+`ClipboardStore` - they are neighbours in Application Support, and otherwise mirror each other (WAL,
 prepared statements, an `isolated deinit`):
 
 - **A database that won't open is never deleted.** `ClipboardStore` discards and recreates a corrupt
@@ -218,7 +218,7 @@ Duplicating takes a **new** identity, so the copy can't inherit the original's s
 ## Hotkeys
 
 `HotKeyAction.quicklink(id:)` persists under `hotkey.quicklink.<uuid>` with a
-`boundQuicklinkIDs` index, the same shape custom commands use — both are per-item rather than
+`boundQuicklinkIDs` index, the same shape custom commands use - both are per-item rather than
 per-catalog-entry, so both need an index for `start()` to re-register from. The store therefore loads
 **even while the feature is off** and before `hotKeys.start`: the stale-binding prune reads that
 list, and an unloaded store would look like "every quicklink was deleted" and throw the shortcuts
@@ -228,8 +228,8 @@ away.
 
 `QuicklinkArchive` is a versioned JSON document (`{"version": 1, "quicklinks": [...]}`), pretty-printed
 with ISO 8601 dates so it can be hand-edited; a bare array decodes too, and only `name` and `link` are
-required. Duplicate detection is by **name or destination** — either match means the user already has
-it — compared against the existing library _and_ against the rest of the incoming file, so one file
+required. Duplicate detection is by **name or destination** - either match means the user already has
+it - compared against the existing library _and_ against the rest of the incoming file, so one file
 can't import its own duplicates. Skipped entries are counted and reported in the summary. An import
 takes a fresh identity for every entry, so it can never collide with a shortcut an existing quicklink
 owns.
@@ -243,7 +243,7 @@ independently selectable category. Hudku reads `name`, `link`, `createdAt` and t
 `openWith` / `applicationId` from the export's `quicklinks.quicklinks` collection, resolving an app
 path through `openWithPlatforms` when the field is a platform id. Invalid entries are skipped; valid
 entries merge into the existing library the same way **Import Quicklinks** does. Importing at least
-one turns the feature on — the switch grants no permission class.
+one turns the feature on - the switch grants no permission class.
 
 ## Standalone harness
 

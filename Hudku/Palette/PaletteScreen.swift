@@ -109,7 +109,7 @@ private extension MenuPanelCorner {
     var primaryActionTitle: String { get }
     /// True when the screen owns the keyboard, so the header's field is hidden and unfocused.
     var hidesSearchField: Bool { get }
-    /// True when the footer and ⌘K still act with no rows — a form's action belongs to the screen.
+    /// True when the footer and ⌘K still act with no rows - a form's action belongs to the screen.
     var actsWithoutRows: Bool { get }
     /// Where an open, a new query or a new filter puts the highlight; past row 0 it is centred.
     var landingSelection: Int { get }
@@ -222,7 +222,7 @@ extension PopoverMenuContent {
 struct PaletteHeaderAccessory {
     /// Where the strip sits, which is the whole of what it does to the search field beside it.
     enum Placement {
-        /// Right after the typed text, which the field therefore shrinks to fit — root search.
+        /// Right after the typed text, which the field therefore shrinks to fit - root search.
         case afterQuery
         /// Beside a search field that stays a search field, prompt and full width intact.
         case besideSearchField

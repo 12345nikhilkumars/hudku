@@ -2008,7 +2008,7 @@ $|geld,peso
 •|aufzählungspunkt,aufzählungszeichen,blickfangpunkt,punkt
 ◦|weißes aufzählungszeichen
 ·|mittelpunkt,halbhochpunkt,punkt
-—|geviertstrich,strich
+-|geviertstrich,strich
 –|halbgeviertstrich,langstrich,n-dash,strich
 …|ellipse,auslassungszeichen,drei punkte
 «|nach links weisendes guillemet,anführungszeichen,caret,chevron,klammer,links,spitzzeichen

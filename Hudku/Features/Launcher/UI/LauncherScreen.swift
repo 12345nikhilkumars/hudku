@@ -20,7 +20,7 @@ struct LauncherScreen: PaletteScreen {
     private let color: ColorValue?
     /// Sections stand in for the ranked Results list, which a typed query collapses to.
     private let showSections: Bool
-    /// Only the empty query pins favorites — a category shows its sections without one of its own.
+    /// Only the empty query pins favorites - a category shows its sections without one of its own.
     private let pinsFavorites: Bool
     /// How many of `results` are pinned favorites; zero unless the section shows.
     private let favoriteCount: Int
@@ -74,7 +74,7 @@ struct LauncherScreen: PaletteScreen {
             } ?? []
         let emojiTerm = Self.emojiSearchTerm(in: vm.query)
         let emojiMatches = emojiTerm.map { term in
-            // A bare `:` opens the section with favourites first, then the top of the catalog —
+            // A bare `:` opens the section with favourites first, then the top of the catalog -
             // the way Slack and Discord list something before a letter is typed.
             term.isEmpty ? Self.defaultEmoji(core: core) : core.emojiIndex.search(
                 term, frequent: core.frequentEmoji, limit: 7)
@@ -123,7 +123,7 @@ struct LauncherScreen: PaletteScreen {
 
     // MARK: - Keyword syntaxes
 
-    /// `:`, `:smile` or `:smile:` — the emoji requested by name, the Discord/Slack way.
+    /// `:`, `:smile` or `:smile:` - the emoji requested by name, the Discord/Slack way.
     static func emojiSearchTerm(in query: String) -> String? {
         guard query.hasPrefix(":") else { return nil }
         var term = query.dropFirst()
@@ -151,14 +151,14 @@ struct LauncherScreen: PaletteScreen {
         return picked
     }
 
-    /// `@word` / `?word` — a file or folder under the search scopes, by name.
+    /// `@word` / `?word` - a file or folder under the search scopes, by name.
     static func fileSearchTerm(in query: String) -> String? {
         guard let first = query.first, first == "@" || first == "?" else { return nil }
         let term = query.dropFirst().trimmingCharacters(in: .whitespaces)
         return term.isEmpty ? nil : term
     }
 
-    /// `def word` / `define:word` — the word to look up, said outright.
+    /// `def word` / `define:word` - the word to look up, said outright.
     static func definitionTerm(in query: String) -> String? {
         guard let first = query.first, first == "d" || first == "D" else { return nil }
         let lowered = query.lowercased()
@@ -288,7 +288,7 @@ struct LauncherScreen: PaletteScreen {
 
     func activate(at selection: Int) {
         switch row(at: selection) {
-        // Error cards no-op — copyCalculatorResult only acts on value payloads.
+        // Error cards no-op - copyCalculatorResult only acts on value payloads.
         case .calc(let result): core.calculatorCoordinator.copyCalculatorResult(result)
         case .color(let color):
             core.clipboardCoordinator.copyColor(color, as: ColorFormat.primary(for: color))
@@ -303,7 +303,7 @@ struct LauncherScreen: PaletteScreen {
         }
     }
 
-    /// ⌘↵ — the definition opens in Dictionary itself; a file shows in Finder; an app reveals.
+    /// ⌘↵ - the definition opens in Dictionary itself; a file shows in Finder; an app reveals.
     func secondary(at selection: Int) -> Bool {
         if case .definition(let entry) = row(at: selection) {
             core.dictionaryCoordinator.openInDictionary(entry)
@@ -350,14 +350,14 @@ struct LauncherScreen: PaletteScreen {
         return true
     }
 
-    /// ⌃⇧Q or ⌃⌥⇧Q — the screen owns the chord, but only a running app has anything to quit.
+    /// ⌃⇧Q or ⌃⌥⇧Q - the screen owns the chord, but only a running app has anything to quit.
     private func quit(at selection: Int, force: Bool) -> Bool {
         guard let app = runningApplication(at: selection) else { return false }
         core.launcherCoordinator.quit(app, force: force)
         return true
     }
 
-    /// ⌘R — mirrors the Restart Application row.
+    /// ⌘R - mirrors the Restart Application row.
     private func restart(at selection: Int) -> Bool {
         guard let app = runningApplication(at: selection) else { return false }
         core.launcherCoordinator.restart(app)
@@ -375,7 +375,7 @@ struct LauncherScreen: PaletteScreen {
         return true
     }
 
-    /// ⌘1–⌘9/⌘0 — launch a favorite by position, in either palette size.
+    /// ⌘1–⌘9/⌘0 - launch a favorite by position, in either palette size.
     private func launchFavorite(at index: Int) -> Bool {
         guard let app = pinnedFavorites.dropFirst(index).first else { return false }
         core.launcherCoordinator.launch(app)
@@ -385,7 +385,7 @@ struct LauncherScreen: PaletteScreen {
     /// Empty while a query is typed, the only state in which the section is off screen.
     private var pinnedFavorites: ArraySlice<AppEntry> { results.prefix(favoriteCount) }
 
-    /// ⌥⌘↑/↓ — swap with the neighbouring favorite; the ends of the section have nowhere to go.
+    /// ⌥⌘↑/↓ - swap with the neighbouring favorite; the ends of the section have nowhere to go.
     func moveFavorite(_ delta: Int, at selection: Int) -> Bool {
         guard let app = entry(at: selection), let index = favoriteIndex(of: app) else { return false }
         let target = index + delta
@@ -416,7 +416,7 @@ struct LauncherScreen: PaletteScreen {
         return index
     }
 
-    /// ⇧⌘H — the row leaves the list for good, so the highlight takes the place it vacated.
+    /// ⇧⌘H - the row leaves the list for good, so the highlight takes the place it vacated.
     private func hideFromSearch(at selection: Int) -> Bool {
         guard let app = entry(at: selection), app.canHideFromSearch,
             !CommandCatalog.isQueryDriven(app), let index = results.firstIndex(of: app)

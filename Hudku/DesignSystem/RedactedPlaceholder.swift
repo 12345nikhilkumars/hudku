@@ -18,7 +18,7 @@ enum RedactedPlaceholder {
             })
     }
 
-    /// FNV-1a over the value's UTF-8 — cheap and stable across launches, and no kind of boundary.
+    /// FNV-1a over the value's UTF-8 - cheap and stable across launches, and no kind of boundary.
     private static func seed(_ value: String) -> UInt32 {
         var state: UInt32 = 0x811c_9dc5
         for byte in value.utf8 {

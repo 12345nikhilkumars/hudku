@@ -12,7 +12,7 @@ struct PaletteTabTests {
             passes += 1
         } else {
             failures += 1
-            print("FAIL: \(message) — got \(actual), want \(expected)")
+            print("FAIL: \(message) - got \(actual), want \(expected)")
         }
     }
 
@@ -55,7 +55,7 @@ struct PaletteTabTests {
             passes += 1
         } else {
             failures += 1
-            print("FAIL: two presses ring back to the launcher — got \(visited)")
+            print("FAIL: two presses ring back to the launcher - got \(visited)")
         }
 
         print("\(passes) passed, \(failures) failed")

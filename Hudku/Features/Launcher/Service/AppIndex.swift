@@ -55,7 +55,7 @@ struct AppEntry: Identifiable, Hashable, Sendable {
         let rankPriority: Int
     }
 
-    let id: String  // file path (or "command:…" id) — always unique
+    let id: String  // file path (or "command:…" id) - always unique
     let name: String  // clean display name, never includes ".app"
     let url: URL
     let bundleID: String?
@@ -173,7 +173,7 @@ extension AppEntry.Kind {
         $0[$1.descriptor.label.lowercased()] = $1
     }
 
-    /// The category a query names outright. Exact only — a prefix would take a word from an entry.
+    /// The category a query names outright. Exact only - a prefix would take a word from an entry.
     static func named(by query: String) -> AppEntry.Kind? {
         // Every key starts with a, c or s; anything else is ruled out before any folding.
         var index = query.startIndex
@@ -276,7 +276,7 @@ final class AppIndex {
     }
 
     /// The entries a query could match: both folded forms must be tried, since they differ
-    /// only for transliterated input — and then by union, never intersection.
+    /// only for transliterated input - and then by union, never intersection.
     private func candidatePool(for query: LauncherOrder.Query) -> [AppEntry]? {
         guard !query.isEmpty else { return nil }
         ensureCharPostings()

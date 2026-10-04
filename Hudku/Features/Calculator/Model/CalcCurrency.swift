@@ -29,7 +29,7 @@ struct CurrencyRates: Codable, Equatable, Sendable {
 enum CalcCurrency {
     enum ConversionParse: Equatable {
         case value(input: Double, from: CurrencyDef, to: CurrencyDef, output: Double)
-        /// One side is a currency, the other a measurement unit — `10 usd to kg`.
+        /// One side is a currency, the other a measurement unit - `10 usd to kg`.
         case mismatch(from: String, to: String)
         /// Both sides are currencies but the snapshot doesn't quote one of them.
         case noRate(code: String)

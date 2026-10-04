@@ -2014,7 +2014,7 @@ $|dólar,dinheiro,peso
 •|ponto lista,lista,ponto
 ◦|marcador vazio,marcador,vazio
 ·|ponto mediano,mediano,médio,ponto
-—|travessão,traço
+-|travessão,traço
 –|meia-risca,traço
 …|reticências,omissão,pontos,três pontos
 «|aspas em linha para a esquerda,ângulo,aspas,chevron,duplas,esquerda,francesas

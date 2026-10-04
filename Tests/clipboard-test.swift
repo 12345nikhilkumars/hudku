@@ -542,7 +542,7 @@ struct ClipboardTests {
         }
     }
 
-    /// A backup reads the whole table, not `items` — which stops at the memory window.
+    /// A backup reads the whole table, not `items` - which stops at the memory window.
     static func exportSeesPastTheMemoryWindow() {
         withStore { store, _ in
             let total = 1_200
@@ -705,7 +705,7 @@ struct ClipboardTests {
             "an image has no plain text")
     }
 
-    /// Copy Text is an image answer: a captured blob, or an image file — never text or a PDF.
+    /// Copy Text is an image answer: a captured blob, or an image file - never text or a PDF.
     static func offersTextExtraction() {
         expect(
             ClipboardItem(imagePath: "/tmp/shot.png", sourceBundleID: nil).offersTextExtraction,

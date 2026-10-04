@@ -26,7 +26,7 @@ struct PopoverMenuItem {
     var sectionTitle: String?
     var startsSection: Bool
     var shortcut: String?
-    /// A value the row states rather than a chord it runs — what a "Copy as" row copies.
+    /// A value the row states rather than a chord it runs - what a "Copy as" row copies.
     var detail: String?
     /// Destructive rows (delete) tint their icon + label red, matching the native menu convention.
     var isDestructive: Bool = false

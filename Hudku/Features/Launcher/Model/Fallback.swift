@@ -37,7 +37,7 @@ enum Fallback: Hashable, Sendable {
         }
     }
 
-    /// Stored order first, then anything it has never seen — a feature added today lands last.
+    /// Stored order first, then anything it has never seen - a feature added today lands last.
     static func ordered(_ available: [Fallback], by storedIDs: [String]) -> [Fallback] {
         var remaining = Dictionary(available.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let known = storedIDs.compactMap { remaining.removeValue(forKey: $0) }

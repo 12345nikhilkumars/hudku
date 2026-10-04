@@ -41,7 +41,7 @@ enum CalcQuantity {
                 return CalcResult(
                     expression: query,
                     payload: .error(
-                        message: "Exchange rates unavailable — check your connection."))
+                        message: "Exchange rates unavailable - check your connection."))
             }
             if let code = parser.currencyCodes.first(where: { rates.rate(for: $0) == nil }) {
                 return CalcResult(

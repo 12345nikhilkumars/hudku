@@ -71,7 +71,7 @@ if [ "$only" = "--index" ]; then
     printf '[' > "$DB"
 fi
 
-# run [slow] [-O] [index] <name> <source...> — queue the harness. `slow` dispatches it in the first
+# run [slow] [-O] [index] <name> <source...> - queue the harness. `slow` dispatches it in the first
 # wave; `index` claims editor flags for a harness that is compiled by hand rather than by the suite.
 run() {
     local opt=-Onone pri=1 index_only=0
@@ -100,7 +100,7 @@ run() {
         printf ' %s' "${sources[@]}" >> "$DB"
         # Claim every file under `Tests/`: the harness and any helper compiled beside it. A shipped
         # source stays unclaimed, because it would get this short command instead of the app's full
-        # one and `.compile` is last-wins — but the app never compiles anything in `Tests/`.
+        # one and `.compile` is last-wins - but the app never compiles anything in `Tests/`.
         local claimed=""
         for source in "${sources[@]}"; do
             case "$source" in *"/Tests/"*) claimed="$claimed${claimed:+,}\"$source\"";; esac

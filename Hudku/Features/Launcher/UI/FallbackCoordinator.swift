@@ -18,7 +18,7 @@ final class FallbackCoordinator {
         self.core = core
     }
 
-    /// Everything this Mac can offer today, in the reader's order — Settings lists exactly this.
+    /// Everything this Mac can offer today, in the reader's order - Settings lists exactly this.
     var available: [Fallback] { store.ordered(candidates) }
 
     /// The launcher's rows. An empty query is nobody's input, so it earns no section at all.

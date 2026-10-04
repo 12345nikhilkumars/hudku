@@ -57,7 +57,7 @@ final class PseudoTerminal: @unchecked Sendable {
         return PseudoTerminal(parentEnd: parentEnd, processID: processID)
     }
 
-    /// Signals the session rather than the process — the negative pid is what reaches the children.
+    /// Signals the session rather than the process - the negative pid is what reaches the children.
     func signalSession(_ signal: Int32) {
         guard processID > 0 else { return }
         kill(-processID, signal)

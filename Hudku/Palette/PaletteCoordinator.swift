@@ -33,7 +33,7 @@ final class PaletteCoordinator {
 
     var panelFrame: CGRect? { windowController.visibleFrame }
 
-    /// The palette's own view, for AppKit UI anchored to it — a sharing picker, say.
+    /// The palette's own view, for AppKit UI anchored to it - a sharing picker, say.
     var anchorView: NSView? { windowController.anchorView }
 
     /// The app an action acts on: the one displaced, else what a hotkey found frontmost.

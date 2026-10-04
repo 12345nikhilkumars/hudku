@@ -1,6 +1,6 @@
 import AppKit
 
-/// Owns clipboard-history actions: paste, copy, reveal, pin — and the selection that follows.
+/// Owns clipboard-history actions: paste, copy, reveal, pin - and the selection that follows.
 @MainActor
 final class ClipboardCoordinator {
     private let clipboardStore: ClipboardStore
@@ -177,7 +177,7 @@ final class ClipboardCoordinator {
         }
     }
 
-    /// Unmarked, so a converted colour enters history itself — it is one you meant to keep.
+    /// Unmarked, so a converted colour enters history itself - it is one you meant to keep.
     func copyColor(_ color: ColorValue, as format: ColorFormat) {
         paletteCoordinator.hidePalette(restoreFocus: false)
         Paster.copyPlainText(format.string(for: color))
@@ -210,7 +210,7 @@ final class ClipboardCoordinator {
         core.showMessage("Copied path")
     }
 
-    /// ⇧⌘T / “Copy Text” — OCRs the image in the bundled helper and copies what it reads.
+    /// ⇧⌘T / “Copy Text” - OCRs the image in the bundled helper and copies what it reads.
     func copyImageText(_ item: ClipboardItem) {
         guard let path = item.imagePath ?? item.filePath else { return }
         paletteCoordinator.hidePalette(restoreFocus: false)

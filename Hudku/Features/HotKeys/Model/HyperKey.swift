@@ -43,7 +43,7 @@ enum HyperKeyPhysicalKey: String, CaseIterable, Identifiable, Sendable {
     /// Whether presses arrive as keyDown/keyUp (Caps Lock via F18) or as `flagsChanged`.
     var tapUsesKeyEvents: Bool { self == .capsLock }
 
-    /// Keys that do something on their own when not remapped — these get the Quick Press row.
+    /// Keys that do something on their own when not remapped - these get the Quick Press row.
     var hasOriginalFunction: Bool { self == .capsLock }
 
     /// The generic flag this key contributes, so the tap can strip it when outside the set.

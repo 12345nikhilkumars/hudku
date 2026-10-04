@@ -104,7 +104,7 @@ struct EntryIconTests {
         expect(bitmap(small) != bitmap(large), "two extents do not share a cache entry")
     }
 
-    /// A second ask must hit the cache, not redraw — that is what keeps a scrolled list cheap.
+    /// A second ask must hit the cache, not redraw - that is what keeps a scrolled list cheap.
     static func askingTwiceIsStable() {
         let url = URL(fileURLWithPath: "/System/Applications/Calculator.app")
         let first = bitmap(IconCache.icon(for: .tintedSymbol(name: "gear", tint: red), fileURL: url))

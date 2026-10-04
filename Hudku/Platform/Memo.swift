@@ -11,7 +11,7 @@ struct Memo<Key: Equatable, Value> {
 }
 
 /// A tiny LRU. A render re-asks the same query, backspace revisits the last few,
-/// and a picker's two limits alternate — none of which a one-slot memo serves.
+/// and a picker's two limits alternate - none of which a one-slot memo serves.
 struct SmallMemo<Key: Equatable, Value> {
     private var slots: [(key: Key, value: Value)] = []
     private let capacity: Int

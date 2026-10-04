@@ -1,6 +1,6 @@
 {
   // Toolchain selection is managed by the Swift extension (Command Palette →
-  // "Swift: Select Toolchain" → Xcode). Don't pin swift.path / DEVELOPER_DIR here —
+  // "Swift: Select Toolchain" → Xcode). Don't pin swift.path / DEVELOPER_DIR here -
   // it conflicts with the extension.
 
   // Code intelligence comes from SourceKit-LSP via buildServer.json, written by
@@ -10,11 +10,11 @@
   // Point the debugger at it so F5 (Run and Debug) works.
   "swift.debugger.path": "/Applications/Xcode.app/Contents/Developer/usr/bin/lldb-dap",
 
-  // Don't let the extension auto-append launch configs — we debug the binary inside the
+  // Don't let the extension auto-append launch configs - we debug the binary inside the
   // assembled .app bundle (see launch.json), not a bare executable.
   "swift.autoGenerateLaunchConfigurations": false,
 
-  // Formatting is swift-format from the Xcode toolchain, reached through sourcekit-lsp — no extra
+  // Formatting is swift-format from the Xcode toolchain, reached through sourcekit-lsp - no extra
   // extension or brew package. defaultFormatter is required: without it VS Code refuses to pick one
   // and ⌘S silently does nothing. `.swift-format` tunes it down to this tree's style; it still
   "[swift]": {

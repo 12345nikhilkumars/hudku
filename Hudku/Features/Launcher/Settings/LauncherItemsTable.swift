@@ -174,7 +174,7 @@ private final class OverhangingTableView: NSView {
 
 /// Hands every click to the hosted row; a table otherwise claims clicks that miss an `NSControl`.
 /// It also reports its visible area as the enclosing `Form`'s viewport: laid out at its full
-/// content height, a bare `NSTableView` considers every row visible and hosts them all — for a
+/// content height, a bare `NSTableView` considers every row visible and hosts them all - for a
 /// 243-row Applications list that is hundreds of SwiftUI trees nobody can see.
 private final class HostedRowsTableView: NSTableView {
     private var viewportObserver: NSObjectProtocol?

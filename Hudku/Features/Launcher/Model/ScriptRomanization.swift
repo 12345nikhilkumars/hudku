@@ -54,7 +54,7 @@ enum ScriptRomanization {
         return hasOther ? .other : nil
     }
 
-    /// ICU's Cyrillic is scientific — `Яндекс` becomes `Ândeks`, never the `yandex` users type.
+    /// ICU's Cyrillic is scientific - `Яндекс` becomes `Ândeks`, never the `yandex` users type.
     private static func cyrillicReading(of name: String) -> String {
         var result = ""
         for character in name.lowercased() {

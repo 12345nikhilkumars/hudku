@@ -23,7 +23,7 @@ extension Bundle {
         infoName("CFBundleDisplayName") ?? infoName("CFBundleName") ?? "Hudku"
     }
 
-    /// The name a bundle declares for itself. Not what Finder shows — LaunchServices ignores a
+    /// The name a bundle declares for itself. Not what Finder shows - LaunchServices ignores a
     /// `CFBundleDisplayName` that disagrees with the file name, so the launcher labels rows by that.
     var installedAppName: String {
         infoName("CFBundleDisplayName") ?? infoName("CFBundleName")

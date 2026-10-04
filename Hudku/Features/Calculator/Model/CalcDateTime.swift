@@ -115,7 +115,7 @@ enum CalcDateTime {
         return signals
     }
 
-    /// A day number beside a month, which no app search looks like — `25. aug`, `aug 25`.
+    /// A day number beside a month, which no app search looks like - `25. aug`, `aug 25`.
     private static func namesADay(_ query: String) -> Bool {
         let atoms = atomize(query)
         guard atoms.count == 2 || atoms.count == 3 else { return atoms.count == 1 && isDottedDate(atoms) }
@@ -132,7 +132,7 @@ enum CalcDateTime {
         return parts.allSatisfy { Int($0) != nil }
     }
 
-    /// `next monday`, `tomorrow`, `tomorrow at 9am` — a moment named without any arithmetic.
+    /// `next monday`, `tomorrow`, `tomorrow at 9am` - a moment named without any arithmetic.
     private static func bareMoment(
         _ query: String, echo: String, now: Date, calendar: Calendar
     ) -> CalcResult? {
@@ -167,7 +167,7 @@ enum CalcDateTime {
         return (meridiem == "pm" ? (hour % 12) + 12 : hour % 12, minute)
     }
 
-    /// `monday in 3 weeks` — that weekday, in the week the duration lands in.
+    /// `monday in 3 weeks` - that weekday, in the week the duration lands in.
     private static func parseWeekdayIn(
         _ query: String, echo: String, now: Date, calendar: Calendar
     ) -> CalcResult? {
@@ -196,7 +196,7 @@ enum CalcDateTime {
             payload: .value(display: text, copyText: text))
     }
 
-    /// `5 weekdays from now`, `3 days from today`, `2 weeks ago` — the duration leads.
+    /// `5 weekdays from now`, `3 days from today`, `2 weeks ago` - the duration leads.
     private static func parseOffset(
         _ query: String, echo: String, now: Date, calendar: Calendar
     ) -> CalcResult? {
@@ -306,7 +306,7 @@ enum CalcDateTime {
             base = local
         }
 
-        // C: moment ± duration, chained left to right — every term after the first shifts again.
+        // C: moment ± duration, chained left to right - every term after the first shifts again.
         if targetUnit == nil, let shifted = applyShifts(op, right, to: base, calendar: calendar) {
             let display = answerString(
                 shifted.date, hasTime: shifted.hasTime, now: now, calendar: calendar)
@@ -413,7 +413,7 @@ enum CalcDateTime {
 
     private struct Moment {
         let date: Date
-        /// True when the phrase named a clock time ("9am", "now") — drives the time badge.
+        /// True when the phrase named a clock time ("9am", "now") - drives the time badge.
         let hasTime: Bool
     }
 
@@ -504,7 +504,7 @@ enum CalcDateTime {
         }
     }
 
-    /// `august 26 2026` / `26 august 2026` — a month name with both a day and a year.
+    /// `august 26 2026` / `26 august 2026` - a month name with both a day and a year.
     private static func parseTriple(
         _ a: String, _ b: String, _ c: String, calendar: Calendar
     ) -> Moment? {

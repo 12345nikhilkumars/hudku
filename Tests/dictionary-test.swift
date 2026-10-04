@@ -1,4 +1,4 @@
-// How a Dictionary Services record — XHTML, or the public API's plain text — becomes page blocks.
+// How a Dictionary Services record - XHTML, or the public API's plain text - becomes page blocks.
 
 import Foundation
 

@@ -5,7 +5,7 @@ struct CalcResult: Equatable, Sendable {
     enum Payload: Equatable, Sendable {
         /// `display` is grouped ("1,234,567"); `copyText` is the same answer, ungrouped.
         case value(display: String, copyText: String)
-        /// A friendly error, only for a clear conversion attempt — never a half-typed expression.
+        /// A friendly error, only for a clear conversion attempt - never a half-typed expression.
         case error(message: String)
 
         static func number(_ value: Double, suffix: String = "") -> Self {
@@ -72,7 +72,7 @@ enum CalcEngine {
             return partial
         }
 
-        // A lone literal reads as an app search, so no card — except a radix one ("0xff").
+        // A lone literal reads as an app search, so no card - except a radix one ("0xff").
         if tokens.count == 1 {
             if case .intLiteral(let value, let base) = tokens[0], base != .decimal {
                 let display = CalcFormatter.grouped(String(value))
@@ -139,7 +139,7 @@ enum CalcEngine {
             case .unavailable:
                 return CalcResult(
                     expression: query,
-                    payload: .error(message: "Exchange rates unavailable — check your connection."))
+                    payload: .error(message: "Exchange rates unavailable - check your connection."))
             }
         }
 
@@ -290,7 +290,7 @@ enum CalcEngine {
                 display: output, copyText: output.replacingOccurrences(of: ",", with: "")))
     }
 
-    // Both spellings of a plain decimal literal — "255" and the compact "10k" — echo verbatim.
+    // Both spellings of a plain decimal literal - "255" and the compact "10k" - echo verbatim.
     private static func decimalLiteral(_ token: CalcToken) -> Double? {
         switch token {
         case .number(let value), .compactNumber(let value): return value

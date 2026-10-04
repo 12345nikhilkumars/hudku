@@ -639,7 +639,7 @@ struct CalcExpressionParser {
         recordCurrency(from.code)
         recordCurrency(to.code)
         guard let rates else {
-            issue = "Exchange rates unavailable — check your connection."
+            issue = "Exchange rates unavailable - check your connection."
             return nil
         }
         guard rates.rate(for: from.code) != nil else {

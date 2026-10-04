@@ -4,7 +4,7 @@
 #
 # `xcode-build-server parse` with no `-o` is deliberate: that is the only spelling that also writes
 # buildServer.json, and it writes it as `kind: manual`. The `kind: xcode` alternative ignores .compile
-# entirely and reads a cache scraped from .xcactivitylog instead — which silently freezes the moment
+# entirely and reads a cache scraped from .xcactivitylog instead - which silently freezes the moment
 # LogStoreManifest.plist stops updating, pinning the editor to a source list from an old build.
 
 set -uo pipefail
@@ -18,7 +18,7 @@ fi
 command -v xcode-build-server >/dev/null || { echo "xcode-build-server not installed; skipping." >&2; exit 0; }
 
 # A build that compiled no Swift emits no compile commands, and parsing it would replace .compile with
-# an empty database — every file loses its flags. Keep the previous one in that case.
+# an empty database - every file loses its flags. Keep the previous one in that case.
 backup="${TMPDIR:-/tmp}/hudku-compile.bak"
 [ -f .compile ] && cp .compile "$backup"
 

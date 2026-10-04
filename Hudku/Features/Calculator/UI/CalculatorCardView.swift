@@ -80,7 +80,7 @@ private enum CalcSyntax {
     static func highlighted(_ text: String) -> AttributedString {
         var attributed = AttributedString()
         let words = text.split(separator: " ", omittingEmptySubsequences: false)
-        // Rebuilt word by word, so a connector is only ever matched whole — `min` is not `in`.
+        // Rebuilt word by word, so a connector is only ever matched whole - `min` is not `in`.
         for (index, word) in words.enumerated() {
             if index > 0 { attributed.append(AttributedString(" ")) }
             var piece = AttributedString(String(word))

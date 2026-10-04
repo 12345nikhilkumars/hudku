@@ -54,7 +54,7 @@ struct ClipboardScreen: PaletteScreen {
         }
     }
 
-    /// ⌘1…⌘0 — the Nth visible pinned entry (Pinned section order), like ↵.
+    /// ⌘1…⌘0 - the Nth visible pinned entry (Pinned section order), like ↵.
     private func activatePinned(at index: Int) -> Bool {
         guard let item = store.pinnedItem(at: index, in: vm.query, filter: vm.clipboardFilter) else {
             return false
@@ -63,39 +63,39 @@ struct ClipboardScreen: PaletteScreen {
         return true
     }
 
-    /// ⌘↵ — the action ↵ is not set to.
+    /// ⌘↵ - the action ↵ is not set to.
     func secondary(at selection: Int) -> Bool {
         guard let item = item(at: selection) else { return false }
         return core.clipboardCoordinator.activate(item, chord: .command)
     }
 
-    /// ⌃⌘↵ — Paste as Plain Text, or Paste while that is the default.
+    /// ⌃⌘↵ - Paste as Plain Text, or Paste while that is the default.
     func tertiary(at selection: Int) -> Bool {
         guard let item = item(at: selection) else { return false }
         return core.clipboardCoordinator.activate(item, chord: .controlCommand)
     }
 
-    /// ⌥↵ — the palette stays up, so a run of entries goes over without re-summoning it.
+    /// ⌥↵ - the palette stays up, so a run of entries goes over without re-summoning it.
     func pasteKeepingWindowOpen(at selection: Int) -> Bool {
         guard let item = item(at: selection) else { return false }
         core.clipboardCoordinator.pasteKeepingWindowOpen(item)
         return true
     }
 
-    /// ⌘. — mirrors the Actions menu row; pinning lifts the row into the Pinned section.
+    /// ⌘. - mirrors the Actions menu row; pinning lifts the row into the Pinned section.
     private func pin(at selection: Int) -> Bool {
         guard let item = item(at: selection) else { return false }
         core.clipboardCoordinator.togglePinnedClip(item)
         return true
     }
 
-    /// ⌘⌫ / ⌃X — the screen owns the chord whether or not a row sits under the selection.
+    /// ⌘⌫ / ⌃X - the screen owns the chord whether or not a row sits under the selection.
     private func delete(at selection: Int) {
         guard let item = item(at: selection) else { return }
         store.remove(item)
     }
 
-    /// ⌃⇧X — mirrors the Actions row, confirmation included; pinned entries go with the rest.
+    /// ⌃⇧X - mirrors the Actions row, confirmation included; pinned entries go with the rest.
     private func deleteAll() {
         Task { await core.clipboardCoordinator.deleteAllClips() }
     }

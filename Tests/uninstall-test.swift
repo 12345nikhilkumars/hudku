@@ -66,7 +66,7 @@ struct UninstallTests {
             "a bundle ID matches itself")
         expect(
             UninstallRules.matchesBundleID("com.apple.iBooksX.CacheDelete", identity: books),
-            "a dot-namespaced child matches — the case prefix matching exists for")
+            "a dot-namespaced child matches - the case prefix matching exists for")
         expect(
             !UninstallRules.matchesBundleID("com.apple.iBooks", identity: books),
             "a shorter sibling ID does not match")
@@ -80,7 +80,7 @@ struct UninstallTests {
         let safari = identity(bundleID: "com.apple.Safari", name: "Safari")
         expect(
             !UninstallRules.matchesBundleID("com.apple.SafariTechnologyPreview", identity: safari),
-            "Safari Technology Preview is never claimed by Safari — the trailing-dot rule")
+            "Safari Technology Preview is never claimed by Safari - the trailing-dot rule")
         expect(
             !UninstallRules.matchesBundleID("com.apple.Safari2", identity: safari),
             "a digit-suffixed ID does not match")
@@ -94,7 +94,7 @@ struct UninstallTests {
             "a channel still matches its own artifacts")
         expect(
             !UninstallRules.matchesBundleID("com.example.app.dev", identity: stable),
-            "an installed sibling channel owns its own data — stable never claims Dev's")
+            "an installed sibling channel owns its own data - stable never claims Dev's")
         expect(
             !UninstallRules.matchesBundleID("com.example.app.beta.plist", identity: stable),
             "the sibling rule survives extension stripping")
@@ -191,7 +191,7 @@ struct UninstallTests {
         let reader = identity(bundleID: "com.other.BooksReader", name: "Books Reader")
         expect(
             evidence("Books", "Application Support", reader) == nil,
-            "and stops Books Reader claiming Books — exactness cuts both ways")
+            "and stops Books Reader claiming Books - exactness cuts both ways")
 
         let mail = identity(
             bundleID: "com.third.Mailer", name: "Mail", otherAppNames: ["Mail", "Notes"])
@@ -210,7 +210,7 @@ struct UninstallTests {
         let zed = identity(bundleID: "dev.zed.Zed", name: "Zed")
         expect(
             evidence("Zed", "Application Support", zed) == .displayName,
-            "three characters is enough — Zed names its own support folder")
+            "three characters is enough - Zed names its own support folder")
         expect(
             evidence("Zed", "Logs", zed) == .displayName, "and its logs folder")
         expect(
@@ -265,7 +265,7 @@ struct UninstallTests {
             "a sibling bundle sharing a path prefix does not")
         expect(
             !UninstallRules.isBundleSymlink(target: "/opt/homebrew/bin/zed", bundlePath: bundle),
-            "and neither does an unrelated target — attribution is by link target, never by name")
+            "and neither does an unrelated target - attribution is by link target, never by name")
         expect(
             UninstallSearchRoot.binDirectories.allSatisfy {
                 $0.hasPrefix("/") || $0.hasPrefix("~/")
@@ -283,7 +283,7 @@ struct UninstallTests {
                 let path = $0.path(home: home)
                 return path.hasPrefix(home + "/Library/") || path.hasPrefix("/Library/")
             },
-            "every root lives under a Library directory — never ~/Documents, ~/Dev or ~/Code")
+            "every root lives under a Library directory - never ~/Documents, ~/Dev or ~/Code")
         // VS Code's bundle name is "Code", so only the root table saves `~/Code`.
         let code = identity(
             bundleID: "com.microsoft.VSCode", name: "Visual Studio Code", bundleName: "Code")
@@ -314,7 +314,7 @@ struct UninstallTests {
             UninstallIdentity.make(
                 target: dev, otherAppNames: [], ownBundleID: "com.hudku.app.dev",
                 ownBundleURL: URL(fileURLWithPath: "/Applications/Hudku Dev.app")) == nil,
-            "the Dev channel refuses itself too — the check is against the running identity")
+            "the Dev channel refuses itself too - the check is against the running identity")
         expect(
             UninstallIdentity.make(
                 target: dev, otherAppNames: [], ownBundleID: ownBundleID,
@@ -356,7 +356,7 @@ struct UninstallTests {
         expect(!acceptable("/Applications"), "a path outside the root is rejected")
         expect(
             !acceptable(support + "/Nested/Deeper"),
-            "only immediate children are accepted — the walk never descends")
+            "only immediate children are accepted - the walk never descends")
         expect(
             !acceptable(support + "/../../../etc"),
             "relative components are rejected")
@@ -401,7 +401,7 @@ struct UninstallTests {
             classify(
                 PathFacts(path: "/System/Applications/Books.app", volumeIsReadOnly: true))
                 == .systemProtected,
-            "a read-only volume locks the row — the Books.app case")
+            "a read-only volume locks the row - the Books.app case")
         expect(
             classify(PathFacts(path: "/usr/bin/thing", isSystemRestricted: true)) == .systemProtected,
             "SF_RESTRICTED locks the row")
@@ -412,7 +412,7 @@ struct UninstallTests {
         expect(
             classify(PathFacts(path: "/Library/Caches/com.foo.Bar", isOwnedByCurrentUser: false))
                 == .removable,
-            "ownership alone never locks a row — POSIX unlink is governed by the parent directory")
+            "ownership alone never locks a row - POSIX unlink is governed by the parent directory")
         expect(
             classify(
                 PathFacts(
@@ -464,7 +464,7 @@ struct UninstallTests {
         expect(
             !UninstallProtectionRules.isTCCProtected(
                 path: home + "/Library/Application Scripts/com.foo.Bar", home: home),
-            "Application Scripts is NOT TCC-gated — measured, and it is why Books' scripts are removable")
+            "Application Scripts is NOT TCC-gated - measured, and it is why Books' scripts are removable")
         expect(
             classify(PathFacts(path: home + "/Library/Application Scripts/com.foo.Bar")) == .removable,
             "so those rows are checkable while the containers beside them stay locked")

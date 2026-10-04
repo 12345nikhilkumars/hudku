@@ -7,7 +7,7 @@ enum AppLauncher {
         NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
     }
 
-    /// Hands the URL to whatever the system registers for its scheme — the default browser, for web.
+    /// Hands the URL to whatever the system registers for its scheme - the default browser, for web.
     @MainActor
     static func open(_ url: URL) {
         NSWorkspace.shared.open(url)
@@ -18,7 +18,7 @@ enum AppLauncher {
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
-    /// No AppKit route for Get Info, so this drives Finder over Apple events — seconds when cold.
+    /// No AppKit route for Get Info, so this drives Finder over Apple events - seconds when cold.
     static func showInfoInFinder(_ url: URL) async -> Bool {
         let source = """
             tell application "Finder"
@@ -77,7 +77,7 @@ enum AppLauncher {
     /// Long enough for any app to exit, short enough not to relaunch under the user.
     private static let exitGrace = Duration.seconds(5)
 
-    /// A refused quit — a save sheet left standing — relaunches nothing.
+    /// A refused quit - a save sheet left standing - relaunches nothing.
     @MainActor
     static func restart(bundleID: String, url: URL) async {
         let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)

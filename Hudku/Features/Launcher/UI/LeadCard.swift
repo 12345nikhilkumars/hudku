@@ -51,7 +51,7 @@ struct LeadCardColumn: View {
     }
 }
 
-/// The pill a lead card states its kind in — the calculator's unit, a colour's notation.
+/// The pill a lead card states its kind in - the calculator's unit, a colour's notation.
 private struct LeadCardBadge: View {
     @Environment(\.metrics) private var metrics
     let text: String

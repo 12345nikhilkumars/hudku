@@ -2,29 +2,29 @@
 
 `Features/Calculator/Model/` is a **Foundation-only** engine (no AppKit / SwiftUI imports) fronted by
 `CalcMemo`, a one-deep memo mirroring `AppIndex`'s. It must stay Foundation-only because the
-`Tests/calc-test.swift` harness compiles the real engine sources — including `CalcDateTime`. It is
-also **pure**: the inputs it can't compute — the FX rate table and the Mac's own currency — are passed
+`Tests/calc-test.swift` harness compiles the real engine sources - including `CalcDateTime`. It is
+also **pure**: the inputs it can't compute - the FX rate table and the Mac's own currency - are passed
 in (see Currency below).
 
 ## Invariants
 
-- **`Model/` (including `CalcDateTime`) stays Foundation-only *and pure*** — no AppKit or SwiftUI, no
+- **`Model/` (including `CalcDateTime`) stays Foundation-only *and pure*** - no AppKit or SwiftUI, no
   clock read, no network, **no `Locale`**. `calc-test` compiles the real engine sources. Every
   externally-sourced input is injected: the clock via `now`/`calendar`, the FX table via `rates`,
   the Mac's own currency via `region`, which `RegionCurrency` reads and `CalcMemo` passes down, and
   the number format via `format`, which `RegionNumberFormatMonitor` reads from Language & Region.
 - **The engine only ever reads and writes canonical English numbers.** `CalcNumberFormat.canonical`
   rewrites a query before anything else sees it, and `CalcNumberFormat.localized` rewrites an answer
-  only at presentation — the card, the actions header, a history row, the pasteboard. No grammar,
+  only at presentation - the card, the actions header, a history row, the pasteboard. No grammar,
   tokenizer rule or formatter learns about locales, and `CalculatorHistoryStore` stores canonical
   text, so history re-renders in whatever format is chosen later.
-- **`CalcEngine.evaluate` never fetches** — it takes a finished `CurrencyRates?`, nil meaning no
+- **`CalcEngine.evaluate` never fetches** - it takes a finished `CurrencyRates?`, nil meaning no
   snapshot has landed yet. `CurrencyRateStore` owns the fetch and the cacheless `.ephemeral` session,
-  and `CurrencyFeed` — pure, so the harness covers it — turns the payloads into that snapshot.
+  and `CurrencyFeed` - pure, so the harness covers it - turns the payloads into that snapshot.
 - **The time-zone table is Foundation's, never generated and never hand-listed.**
   `TimeZone.knownTimeZoneIdentifiers` already carries the whole IANA database, so `CalcTimeZone`
   builds its city index from that on first use rather than shipping a copy that would rot every time
-  IANA moves a zone. `TimeZone.abbreviationDictionary` stays deliberately unused — it holds 51
+  IANA moves a zone. `TimeZone.abbreviationDictionary` stays deliberately unused - it holds 51
   entries and its `BDT` is the Bangladeshi taka. The home zone is read off the **injected calendar**,
   never `TimeZone.current`, which is what keeps the path pure and the harness deterministic.
   `localizedName` needs a `Locale`, so a badge is the identifier's own city component instead.
@@ -39,7 +39,7 @@ in (see Currency below).
   currencies share (`dollars`, `pounds`); `isoNames`, the standard's own names where CLDR substitutes
   a different one (ISO 4217 calls CNY "Yuan Renminbi"); `signCodes`, the codes daily use spells from
   CLDR's sign instead (`NT$` makes TWD `ntd`); and `crypto`, which no standards body names.
-  Do not add slang or synonyms to any of them — no source of truth, so they rot.
+  Do not add slang or synonyms to any of them - no source of truth, so they rot.
 
 ## Evaluation pipeline
 
@@ -49,7 +49,7 @@ Single ASCII words return immediately: a bare app name, constant or date keyword
 
 1. Natural-language date/time (`CalcDateTime`, e.g. `hrs till 9am`, `days till 9april`,
    `today + 3 weeks`)
-2. **Time zones** (`CalcTimeZone`, e.g. `time in Tokyo`, `5pm ldn in sf`) — before tokenizing,
+2. **Time zones** (`CalcTimeZone`, e.g. `time in Tokyo`, `5pm ldn in sf`) - before tokenizing,
    because a zone phrase is words rather than calculator input
 3. Tokenize, then preserve the complete prefix of a trailing binary operator
 4. Base conversion
@@ -91,17 +91,17 @@ parser, while the separator still chooses ISO, month-first or day-first interpre
 
 `CalcDateTime` recognizes these grammars:
 
-- **A** — duration until a moment: `hrs till 9am`, `days till 9april`
-- **B** — duration since a past moment: `days since 9jul`, `hrs since noon`
-- **C** — a moment ± durations: `today + 3 weeks`, `now + 90 min`,
+- **A** - duration until a moment: `hrs till 9am`, `days till 9april`
+- **B** - duration since a past moment: `days since 9jul`, `hrs since noon`
+- **C** - a moment ± durations: `today + 3 weeks`, `now + 90 min`,
   `17.2.26 + 100 weekdays - 4 + 2`
-- **D** — difference between two moments: `jul 4 - today`
-- **E** — a leading duration: `5 weekdays from now`, `3 days from today`, `2 weeks ago`
-- **F** — a weekday inside a future week: `monday in 3 weeks`, `friday in 2 weeks`
-- **G** — a named moment, once qualified: `tomorrow at 9am`, `next monday`, `last friday`
+- **D** - difference between two moments: `jul 4 - today`
+- **E** - a leading duration: `5 weekdays from now`, `3 days from today`, `2 weeks ago`
+- **F** - a weekday inside a future week: `monday in 3 weeks`, `friday in 2 weeks`
+- **G** - a named moment, once qualified: `tomorrow at 9am`, `next monday`, `last friday`
 
 **An answered moment badges its weekday.** Grammars C and E resolve to a date, and the day of the
-week is the thing a date does not say out loud — so `5 weekdays from now` reads `4 September` under
+week is the thing a date does not say out loud - so `5 weekdays from now` reads `4 September` under
 a `Friday` pill rather than repeating the weekday inside the date and badging it `Result`.
 `answerString` is `momentString` without the leading `EEEE` for exactly that reason; the source
 badge keeps its own weekday, since nothing else on the card carries it.
@@ -109,7 +109,7 @@ badge keeps its own weekday, since nothing else on the card carries it.
 A bare, recurring date or time resolves by _bias_: `till` takes the upcoming occurrence, `since` the
 most recent past one; an absolute date ignores the bias. Grammar D needs an unambiguous date/time signal: a letter, a clock, an ISO or dotted date,
 or an explicit time-unit target. Fraction-only operands (`5/2 - 1/2`) remain arithmetic. Two-digit years expand
-the way date pickers do — 00–68 to the 2000s, 69–99 to the 1900s.
+the way date pickers do - 00–68 to the 2000s, 69–99 to the 1900s.
 
 A **dotted** date is day-first (`19.2.27` is 19 February 2027), matching the convention that writes
 it, where the slashed form stays month-first. It needs three parts and a two- or four-digit year,
@@ -126,12 +126,12 @@ The same convention writes an **ordinal dot** after the day, so `28. aug + 3` re
 Only a trailing dot is dropped, which is why `28.5 aug` stays silent rather than becoming a date.
 
 Grammar G needs the qualifier. A lone `tomorrow` is an app search, so `at <time>` or a leading
-`next` / `last` earns a card — the same rule that keeps `today` and `july` silent. **A written day
+`next` / `last` earns a card - the same rule that keeps `today` and `july` silent. **A written day
 is qualifier enough**: `25. aug`, `aug 25` and `25.8.27` all answer, badged with their weekday,
 because nobody types a day-and-month pair looking for an app. A month alone still names no day, so
 `july` stays a search.
 
-A bare date takes the year it is **nearest**, not the next one — three days behind is likelier the
+A bare date takes the year it is **nearest**, not the next one - three days behind is likelier the
 date meant than the same day twelve months out. Grammar C shifts a moment, so it reads the year the
 same way and `25. aug` and `25. aug + 3` can never disagree. Grammar D measures _to_ a moment,
 where the documented forward bias still decides: `jul 4 - today` keeps looking ahead.
@@ -159,13 +159,13 @@ A bare number after a moment takes the unit that moment implies: hours off a clo
 spelled durations, since `5` names no unit of its own.
 
 Grammar C **chains**: every `± <term>` after the first is applied in written order, so
-`17.2.26 + 100 weekdays - 4 + 2` shifts three times. All of them must be durations — one term that
+`17.2.26 + 100 weekdays - 4 + 2` shifts three times. All of them must be durations - one term that
 is not (`today + 3 weeks - kg`) drops the whole card rather than answering from a prefix, which is
 what leaves a trailing moment to grammar D and keeps `jul 4 - today` a difference.
 
 Grammar F resolves the weekday **inside the landing week** rather than counting forward from the
 landing day, so `monday in 3 weeks` is that week's Monday whichever day you ask on. The week is
-`Calendar`'s own, so it follows the user's first-weekday preference — on a Monday-first calendar
+`Calendar`'s own, so it follows the user's first-weekday preference - on a Monday-first calendar
 `sunday in 1 week` lands at the end of that week rather than its start. It runs after every other
 grammar because `in` is also the unit connector, which is what keeps `10 in in cm` a conversion.
 
@@ -178,27 +178,27 @@ for addition (`10kg + 20%` → `12 kg`) and act as fractional scalars for multip
 
 A conversion may also appear **mid-expression, but only where `+` or `-` follows it**:
 `10kg to lb + 3lb` converts and then adds, without needing the parentheses it used to. The
-restriction is the whole point. `20 eur to usd * 30` has two honest readings — convert then scale,
-or convert into a scaled unit — so it stays silent and keeps asking for `(20 eur to usd) * 30`,
+restriction is the whole point. `20 eur to usd * 30` has two honest readings - convert then scale,
+or convert into a scaled unit - so it stays silent and keeps asking for `(20 eur to usd) * 30`,
 while `+` and `-` carry no such ambiguity because a conversion target is never an addend.
 A **trailing** `to` is untouched by this and still converts the whole expression, so
 `10kg + 500g to lb` remains the sum in pounds rather than `10kg + (500g to lb)`.
 
 **The last unit typed decides the answer's unit.** `+` / `-` convert the _left_ side into the right
-operand's unit, so `5feet + 1m` is `2.524 m` and `10kg + 500g` is `10,500 g` — the unit you finished
+operand's unit, so `5feet + 1m` is `2.524 m` and `10kg + 500g` is `10,500 g` - the unit you finished
 writing is the one you were thinking in. Chains are left-associative, so `1kg + 500g + 2lb` ends in
 pounds. A conversion suffix overrides it entirely (`10kg + 500g to lb`).
 
 Adjacency is the exception. `5 feet 3 inches` and `1hr 30min` are one quantity in composite notation,
 not a sum, so they answer in the _leading_ unit (`5.25 ft`, `1.5 hr`). `CalcExpressionParser.peekBinary`
-distinguishes the two — it reports `consumesToken: false` for the invisible `+` between adjacent
-quantities — and `addOrSubtract` keys the unit choice off exactly that flag. Composite notation binds
+distinguishes the two - it reports `consumesToken: false` for the invisible `+` between adjacent
+quantities - and `addOrSubtract` keys the unit choice off exactly that flag. Composite notation binds
 above multiplication, division and powers: `5w * 3h 30min` means `5w * (3h 30min)`, and
 `90km / 1h 30min` divides by the entire 90-minute duration. An explicit `+` keeps additive precedence.
 
 A bare number takes the unit it is written against: `5kg+5` is `10 kg`, `$10 + 5` is `15.00 USD`. Under
 adjacency the same input stays silent, because there a bare trailing number is a unit still being
-typed — `1hr 30` is one keystroke short of `1hr 30min`, and answering `31 hr` would be worse than
+typed - `1hr 30` is one keystroke short of `1hr 30min`, and answering `31 hr` would be worse than
 answering nothing.
 
 Once an operator is involved the answer stays in the units written, so `2 * 5kg` is `10 kg`. Only a
@@ -256,7 +256,7 @@ the space (`24px`) so it pastes straight into CSS; the card keeps the space ever
 Affine temperatures may only be added or subtracted when both operands use the same scale; treating
 an absolute Celsius/Fahrenheit value as a delta would silently produce physically incorrect answers.
 
-Errors are reserved for input that can only be a mistake — two incompatible units (`1kg + 1m`), or a
+Errors are reserved for input that can only be a mistake - two incompatible units (`1kg + 1m`), or a
 unit against a currency. Everything else that cannot be evaluated stays silent rather than flashing a
 card mid-keystroke.
 
@@ -266,7 +266,7 @@ target makes the intent unambiguous (`273.15K to C`).
 
 A whole magnitude word after a literal scales it the same way, spaced or attached and in any case:
 `thousand`, `million` and `billion` (`13 million idr to usd`, `1.5 billion`). The set is closed and
-short-scale — a billion is 10⁹, since the engine reads canonical English. It scales only the literal it
+short-scale - a billion is 10⁹, since the engine reads canonical English. It scales only the literal it
 follows, so `2 * million` and `(2 + 3) million` stay silent, and plurals (`13 millions`) are not read.
 Abbreviations are deliberately absent: `m`, `b` and `k` already mean metre, byte and Kelvin.
 
@@ -284,7 +284,7 @@ abbreviation for seconds, which costs nothing: a unit position resolves through 
 before a bare name reaches the function table, so `10 sec to min` stays a duration.
 
 Scientific notation (`1e5` → `100,000`, `5e-3km`, `3e+2`) is read only while the exponent hugs the
-mantissa, which is what keeps `2 e` and `2e` reading as 2 × Euler's _e_ — an exponent needs digits
+mantissa, which is what keeps `2 e` and `2e` reading as 2 × Euler's _e_ - an exponent needs digits
 after the `e`. Like `10k`, it tokenizes as a shorthand rather than a plain literal, so a lone `1e5`
 still earns a card where a lone `100000` deliberately doesn't. A literal that overflows to infinity
 (`1e400`) is treated as non-calculator input, not as a card.
@@ -292,7 +292,7 @@ still earns a card where a lone `100000` deliberately doesn't. A literal that ov
 ## Time zones
 
 `CalcTimeZone` answers `time in Tokyo`, `SF time`, `time SF`, `Canada timezone`, `now in usa`,
-`what time is it in London`, `5pm ldn in sf` and `9:30am in nyc`. It runs **before the tokenizer** —
+`what time is it in London`, `5pm ldn in sf` and `9:30am in nyc`. It runs **before the tokenizer** -
 a zone phrase is words, and `5pm ldn in sf` is not calculator input. The current-time forms resolve
 the whole place through the existing city, alias and country tables. `<place> time`, `time <place>`,
 `<place> timezone`, `<place> time zone`, `timezone <place>` and `timezone in <place>` use the same
@@ -321,13 +321,13 @@ A trailing `+ 2h` / `- 30 min` shifts the answer before it is converted, so `5pm
 stays one query rather than needing two. Only sub-day units qualify, since a zone answer is a clock
 time, and `5pm london in sf + 2 kg` is silent rather than wrong.
 
-The offset's unit may be left out — `time in sao paulo + 5` is five hours — because a clock answer
+The offset's unit may be left out - `time in sao paulo + 5` is five hours - because a clock answer
 admits no other reading. The implication is the **offset's alone**: `time in 4` still names no zone
 and stays silent, and a bare `5 + 3` is arithmetic exactly as it was. It mirrors the bare number a
 moment already takes in grammar C.
 
 `diff paris` answers how far a zone runs from the Mac's own, and a duration may stand where a zone
-would (`time in 4 hours`, `time in 4 hours in san francisco`) — the zone table is tried first, so a
+would (`time in 4 hours`, `time in 4 hours in san francisco`) - the zone table is tried first, so a
 city always outranks a duration. City names are matched **diacritic-folded**, because the identifiers
 carry no accents while the cities do: `são paulo` and `zürich` resolve alongside their bare
 spellings, the same folding `CalcCurrency` already applies to its nouns.
@@ -335,21 +335,21 @@ spellings, the same folding `CalcCurrency` already applies to its nouns.
 Two tables back it. `cities` is derived from `TimeZone.knownTimeZoneIdentifiers` on first use: 443
 identifiers keyed by their city component, ~0.8 ms to build and ~18 ns to query, so nothing is
 generated and no copy of tzdata is committed. `aliases` is the hand-written half, and the only place
-judgement lives — the abbreviations (`pst`, `cet`, `jst`), the nicknames a zone name doesn't carry
+judgement lives - the abbreviations (`pst`, `cet`, `jst`), the nicknames a zone name doesn't carry
 (`sf`, `nyc`, `ldn`), and the renamed zones Foundation still resolves but no longer lists
 (`kolkata`, `saigon`). It is deliberately small and deliberately not slang, for the same reason
 `CalcCurrency` refuses `quid`.
 
 It also carries the **cities IANA never names**. The database ships one representative city per
 distinct clock history, not one per city, so Graz, Salzburg, Hannover and Basel simply do not exist
-in it — their clocks have never differed from Vienna's, Berlin's or Zurich's by a second. Roughly a
+in it - their clocks have never differed from Vienna's, Berlin's or Zurich's by a second. Roughly a
 hundred are listed, chosen as the ones people actually type. Accented spellings need no entry of
 their own, since the lookup folds diacritics before it reaches the table.
 
 Apple can resolve any city: `MKGeocodingRequest` returns a `TimeZone` directly, needs no
 entitlement and prompts for nothing. It is deliberately **not** used. It is asynchronous and
 network-backed at ~150 ms a call, where `CalcEngine.evaluate` is synchronous and runs against every
-keystroke behind a one-deep memo — so `time in salzburg` would issue a request per prefix typed, and
+keystroke behind a one-deep memo - so `time in salzburg` would issue a request per prefix typed, and
 answer nothing at all offline. A launcher that answers `time in vienna` on a plane but not
 `time in salzburg` is worse than one with a known edge.
 
@@ -357,19 +357,19 @@ answer nothing at all offline. A launcher that answers `time in vienna` on a pla
 surface knows: `TimeZone(abbreviation:)` and `TimeZone(identifier:)` both return nil for every one,
 and the whole `abbreviationDictionary` is 51 zone abbreviations rather than airports. They are a
 curated product choice, so the list is the busiest airports rather than an attempt at all ~9,000.
-Two are deliberately absent: `MAD` is the Moroccan dirham, and `IST` is India Standard Time — a
+Two are deliberately absent: `MAD` is the Moroccan dirham, and `IST` is India Standard Time - a
 currency and a zone abbreviation both outrank an airport, the same ordering the rest of the file
 follows. The compiler enforces the rest: a duplicate key in the literal is a warning, which is what
 caught `syd` and `hkg` already being nicknames.
 
 **Countries** answer with their main clock: `time in uk`, `time in japan`, `5pm uk in japan`.
 Foundation knows every zone but not which country owns it, so `gen-countries.js` joins IANA's
-`zone.tab` — which names a country's zones, most populous first — with CLDR's English country names,
+`zone.tab` - which names a country's zones, most populous first - with CLDR's English country names,
 short forms included (`UK`, `US`, `Bosnia`). Diacritics fold as they do for cities, and `&` also
 reads as `and`. The badge stays the clock's city, which is what says *which* clock answered.
 
-Where `zone.tab`'s geographic order puts a remote edge first — Lord Howe for Australia, Kaliningrad
-for Russia — the generator's `CAPITAL_ZONES` substitutes the capital's clock, and fails if IANA stops
+Where `zone.tab`'s geographic order puts a remote edge first - Lord Howe for Australia, Kaliningrad
+for Russia - the generator's `CAPITAL_ZONES` substitutes the capital's clock, and fails if IANA stops
 listing it. Antarctica and the US Minor Outlying Islands have no capital and no single clock, so they
 stay silent. ISO codes are deliberately not keys: two letters collide with `in`, `at`, `to` and `la`,
 and three with airports (`fra`, `per`); `usa` and `uae` are ordinary entries in `aliases`. Lookup
@@ -400,7 +400,7 @@ days, then walks only the remainder. Work stays bounded even at the 10,000-day l
 direction; `saturday + 1 business day` still lands on Monday.
 
 Public holidays are deliberately not modelled in either. The only supported source is EventKit, and a
-calculator must never provoke its Full Calendar Access grant mid-keystroke — see the invariant above.
+calculator must never provoke its Full Calendar Access grant mid-keystroke - see the invariant above.
 
 ## Implicit multiplication
 
@@ -411,7 +411,7 @@ with `6/2*(1+2)`. A lone `x` between operands is also multiplication, so `3x3`, 
 consuming a token before parsing the right operand.
 
 A parenthesis, constant, function or spoken root starts an implicit product (`2 square root of 9` → 6).
-Adjacent numbers never do — `5 3` stays an app search — and unit and currency names keep their own
+Adjacent numbers never do - `5 3` stays an app search - and unit and currency names keep their own
 operand positions. The tokenizer only folds a lone `x` after an operand, keeping names such as `max`
 and incomplete hexadecimal input such as `0x` out of arithmetic. The same rule covers typed values
 (`$5(2)` → `10.00 USD`, `2(3)kg` → `6 kg`, matching `2*(3)kg`); adjacent quantities still use the
@@ -423,7 +423,7 @@ composite `+` described above.
 and currency paths so a spelled-out word never outranks a measurement:
 
 - `20% off 500` → 400, and `50 as % of 200` → 25%
-- `15% tip on 42` → 6.3 — the tip alone, which is what the phrase asks for
+- `15% tip on 42` → 6.3 - the tip alone, which is what the phrase asks for
 - `50 is what % of 200` → 25%, the spoken form of `as % of`
 - `30 is 20% of what` → 150, solving for the whole instead of the share
 - `ratio of 1920 to 1080` → `16 : 9`, reduced by GCD; integers only
@@ -432,11 +432,11 @@ and currency paths so a spelled-out word never outranks a measurement:
 
 `CalcToken.comma` separates these lists and function arguments. Outside function parentheses,
 a comma **between digits** remains a grouping separator, so `1,000 + 234` is unchanged and a bare
-`10,5` stays silent. Where the comma is the decimal, `;` takes its place — see
+`10,5` stays silent. Where the comma is the decimal, `;` takes its place - see
 [Number format](#number-format).
 
-Each of these badges what its number **is** — `Tip`, `Discounted`, `Percentage`, `Total`, `Ratio`,
-`Average`, `Sum`, `Minimum`, `Maximum`, `Rounded` — rather than the bare `Result` that says nothing
+Each of these badges what its number **is** - `Tip`, `Discounted`, `Percentage`, `Total`, `Ratio`,
+`Average`, `Sum`, `Minimum`, `Maximum`, `Rounded` - rather than the bare `Result` that says nothing
 the card doesn't already show. `min` and `max` are only told apart by it.
 
 ## Modulo
@@ -450,7 +450,7 @@ A query ending in a binary operator keeps the last complete prefix visible while
 being typed: `10 +` shows `10`, `10kg + 500g +` shows `10,500 g`, and `$10 +` shows `10.00 USD`
 when currency is enabled. The prefix must itself be valid, so malformed input and incomplete
 parentheses remain silent. The partial result preserves the complete prefix's target badge, making
-the result's unit or currency explicit beneath the value. Only operators qualify — a trailing English
+the result's unit or currency explicit beneath the value. Only operators qualify - a trailing English
 word such as `of` does not, so `10 of` stays a search. When the prefix was a conversion the card
 echoes the typed text (`10km to mi ×`) rather than the conversion's own shortened echo, and
 `tokenQuery` keeps radix prefixes so `0xff -` still reads Hexadecimal → Decimal.
@@ -464,39 +464,39 @@ A leading sign is swapped back into amount-first order, so `€20 to GBP` and `2
 The table is **generated except for the judgement calls**. `node Scripts/gen-currencies.js` joins three
 sources on the ISO code and emits `CurrencyData.generated.swift`:
 
-- **The fiat rate feed** decides which currencies exist — the same feed the rates come from, so the
+- **The fiat rate feed** decides which currencies exist - the same feed the rates come from, so the
   table can never list something the app can't price.
 - **CLDR's supplemental currency data** decides which of those are still spent. The feed carries no
   retirement metadata and happily quotes codes their countries abandoned years ago, so a code CLDR
   marks live in some region is kept, a code CLDR retired everywhere is dropped, and a code CLDR never
-  mentions is also kept — absence of evidence is not retirement, and that distinction is what
+  mentions is also kept - absence of evidence is not retirement, and that distinction is what
   preserves `CNH`, the metals, `XDR` and the Crown Dependencies' pounds, none of which are any
   region's tender. 159 codes survive.
 - **CLDR** (`en`) decides what humans call them: display name, currency sign, singular/plural noun.
   Read from the pinned `cldr-json` checkout, not the host's `Intl`, whose output shifts with the
   local ICU version.
 
-Only _unambiguous_ CLDR data is emitted — 26 signs and 130 nouns. CLDR itself supplies the sign
+Only _unambiguous_ CLDR data is emitted - 26 signs and 130 nouns. CLDR itself supplies the sign
 tie-break: it writes every dollar but USD as `CA$`/`A$`/`NT$`, so plain `$` is claimed by exactly one
 currency. Bare Latin letters CLDR lists as symbols (`P` for BWP, `L` for HNL) are dropped, since a
 letter is indistinguishable from a word to the tokenizer. Accented nouns are emitted both as written
 and folded, so `krónur` and `kronur` both resolve. The noun itself is the name's last word, which is
-only wrong where that word isn't one — `NOT_NOUNS` in the generator drops those ("Special Drawing
+only wrong where that word isn't one - `NOT_NOUNS` in the generator drops those ("Special Drawing
 Rights" is not a "rights").
 
 What's left hand-written in `CalcCurrency.swift` starts with `contested`: the nouns several
 currencies share, where CLDR correctly refuses to choose and the calculator must. `dollars` is
 claimed by 22 currencies, `francs` 10, `pounds` 9, `pesos` 8, `rupees` 6. CLDR says "US dollars" and
 "Canadian dollars"; nothing in it says a bare "dollars" is USD. Words that stay genuinely ambiguous
-are assigned to nobody — `krona` is both SEK and ISK, so it produces no card. Slang and synonyms
+are assigned to nobody - `krona` is both SEK and ISK, so it produces no card. Slang and synonyms
 (`quid`, `bucks`) are deliberately _not_ carried: they'd be hand-maintained data with no source of
 truth. `isoNames` is the narrow exception that proves the rule: where ISO 4217 itself names a
 currency and CLDR substitutes a different word, the standard's name is carried with the standard as
-its source — CNY is "Yuan Renminbi" to ISO 4217, so `rmb` and `renminbi` resolve, while CLDR's own
+its source - CNY is "Yuan Renminbi" to ISO 4217, so `rmb` and `renminbi` resolve, while CLDR's own
 "Chinese Yuan" supplies `yuan` through the generator.
 
 `signCodes` is the same exception read off the other source. CLDR's sign for a currency is sometimes
-a letter pair the region spells as a code — it writes TWD `NT$`, and Taiwan writes `NTD` where the
+a letter pair the region spells as a code - it writes TWD `NT$`, and Taiwan writes `NTD` where the
 standard says `TWD`. The single-character `signs` table cannot carry a two-letter prefix, so the code
 it implies is carried here instead, with CLDR as its source. The standard code always keeps working.
 
@@ -504,13 +504,13 @@ it implies is carried here instead, with CLDR as its source. The standard code a
 
 `CalcCurrency.crypto` is the third hand-written table, and the only one with no external source at
 all: no standards body names a coin, and the feed silently omits any symbol it can't price, so it
-can't even report which exist. The list is therefore a product choice — and it is also the symbol
+can't even report which exist. The list is therefore a product choice - and it is also the symbol
 list the fetch asks for, since `CurrencyRateStore` builds its request from `cryptoCodes`. The two
 cannot drift apart. A symbol the feed drops reports `No exchange rate for <CODE>.`, exactly like an
 unquoted fiat code, and starts working again on its own if the feed picks it back up.
 
-Coins join the same `byName` table as `CurrencyDef`s, so every existing path — the sign tokenizer,
-the `BTC1K` prefix split, `parseConversion`, typed arithmetic — works on them unchanged. They are
+Coins join the same `byName` table as `CurrencyDef`s, so every existing path - the sign tokenizer,
+the `BTC1K` prefix split, `parseConversion`, typed arithmetic - works on them unchanged. They are
 inserted **after** the generated nouns, so a ticker outranks one: `1 sol` is Solana while `soles` and
 `pen` still reach the Peruvian sol. That is the only word the two tables both claim.
 
@@ -521,7 +521,7 @@ and a unit on the other produces the same friendly category error as any other m
 (`Cannot convert Currency to Weight.`).
 
 The typed quantity path uses the same ordering and injected rate snapshot. Currency arithmetic is
-therefore deterministic: `$10 + €5` converts the left operand into euros when rates are available —
+therefore deterministic: `$10 + €5` converts the left operand into euros when rates are available -
 the same last-unit-typed rule the measurements follow. Bare prefix and suffix signs (`$10`, `10$`)
 are accepted, and a conversion suffix applies to the whole expression. Parentheses make the
 conversion an operand (`(20 sgd to usd) * 30`), matching a trailing suffix on a scalar product
@@ -531,10 +531,10 @@ conversion an operand (`(20 sgd to usd) * 30`), matching a trailing suffix on a 
 
 An amount with no target answers in the region currency: on a machine set to Bangladesh, `1 usd`
 reads `122.84 BDT`, badged `US Dollar → Bangladeshi Taka`, and `1 btc` follows the same rule. The
-region comes from `RegionCurrency`, one `Locale.current.currency` read — a preference, so nothing
+region comes from `RegionCurrency`, one `Locale.current.currency` read - a preference, so nothing
 ever asks for location, and a `Model/` file never performs it.
 
-Where the region names the currency already written, the amount pairs with the **dollar** instead —
+Where the region names the currency already written, the amount pairs with the **dollar** instead -
 the **euro** where the dollar is the one that was typed. Converting is the only reason to write a
 lone amount, so `25 eur` on a European Mac answering `25.00 EUR` said nothing at all; it now reads
 `28.95 USD`.
@@ -544,7 +544,7 @@ written (`$10 + €5` stays euros), an explicit target overrides everything, a t
 the typed currency while the expression is still being written (`$10 +`), and a lone code with no
 amount is still an app search. Where the region names no currency, names one the table doesn't carry,
 or names one the snapshot doesn't quote, the amount answers in the currency written rather than
-erroring about a code the user never typed — an unresolvable region still names no target.
+erroring about a code the user never typed - an unresolvable region still names no target.
 
 ### Exchange rates
 
@@ -555,7 +555,7 @@ The fetch runs on a private **cacheless** `URLSession` (`.ephemeral`, `urlCache 
 
 Rates come from `CurrencyRateStore` (`Calculator/Service/`, owned by `AppCore`), which issues two
 requests concurrently: the fiat table, keyed `<base><code>` with the base's own row omitted, and the
-coin table, which quotes the **inverse** — one coin priced in the base. `CurrencyFeed` folds both
+coin table, which quotes the **inverse** - one coin priced in the base. `CurrencyFeed` folds both
 into the single units-per-base map `CurrencyRates` stores, inverting the coins on the way in and
 merging them last so a symbol both feeds quote takes the coin feed's own price. One flat table means
 `convert(_:from:to:)` cross-rates fiat against crypto with no special case anywhere downstream.
@@ -567,22 +567,22 @@ whatever `rates` currently holds: a partial one answers without resetting the cl
 park the loop for a day nor be reloaded at launch as though it were complete.
 
 The same rule absorbs a cached snapshot written before crypto existed. It still prices fiat, so it is
-served rather than discarded — but it counts as no age at all, so the store re-fetches immediately
+served rather than discarded - but it counts as no age at all, so the store re-fetches immediately
 instead of trusting a `fetchedAt` that says the table is hours fresh. `CurrencyFeed.pricesCoins` is
 that test, and it is sound only because a partial snapshot is never persisted.
 
 The table is cached at `~/Library/Caches/<bundle-id>/currency-rates.json` and refreshed every 24h.
 The feed republishes about once a day, so a tighter interval would cost requests without returning
 newer numbers. Age is measured from the persisted `fetchedAt`, not from launch, so relaunching
-Hudku never re-fetches a snapshot that is still fresh — a cold start with a same-day cache makes
+Hudku never re-fetches a snapshot that is still fresh - a cold start with a same-day cache makes
 zero requests. Offline, the last snapshot keeps answering; with no snapshot at all the card says so
 rather than guessing, and a currency the feed doesn't quote reports `No exchange rate for <CODE>.`
-The store hands `CalcEngine.evaluate` a finished `CurrencyRates` value — the engine never fetches,
+The store hands `CalcEngine.evaluate` a finished `CurrencyRates` value - the engine never fetches,
 which is what keeps it Foundation-only and testable. `CalcMemo` keys its memo on the snapshot's
 `fetchedAt` and the region currency, so either changing re-evaluates without diffing every rate.
 
 Money rounds to two decimals (`CalcFormatter.currency`), widening to four significant digits below a
-cent — in _plain_ notation, deliberately not `%g`, so `1 IDR to USD` reads `0.00005539 USD` rather
+cent - in _plain_ notation, deliberately not `%g`, so `1 IDR to USD` reads `0.00005539 USD` rather
 than `5.539e-05`.
 
 ## Result and rendering
@@ -601,7 +601,7 @@ the list (flat selection index 0, shifting rows by one) and Enter copies the ans
 General ▸ Calculator ▸ Number format is `System` by default, reading the decimal and grouping
 separators from Language & Region, or `English`, which is the canonical syntax itself. A decimal
 separator other than `.` or `,` (the Arabic `٫`) falls back to English, and so does any grouping
-separator outside `. , ' ’` and the no-break spaces — an ordinary space is never grouping, so
+separator outside `. , ' ’` and the no-break spaces - an ordinary space is never grouping, so
 `1hr 30` and `5 feet 3 inches` keep their meaning. `RegionNumberFormatMonitor` re-reads on
 `NSLocale.currentLocaleDidChangeNotification`, so a change in System Settings applies without a relaunch.
 
@@ -609,12 +609,12 @@ separator outside `. , ' ’` and the no-break spaces — an ordinary space is n
 it to canonical spelling or rejects the whole query. Rejection means **no card**, never a guess:
 
 - **A decimal comma owns every comma between two digits.** `2,3 + 1,5` is `3,8` and `max(2,3)` is
-  `max(2.3)`. Function arguments and list items are separated by `;` instead — `max(2,5; 3)`,
-  `average of 10; 20; 30` — the convention every spreadsheet in those locales uses. `;` becomes a
+  `max(2.3)`. Function arguments and list items are separated by `;` instead - `max(2,5; 3)`,
+  `average of 10; 20; 30` - the convention every spreadsheet in those locales uses. `;` becomes a
   spaced canonical comma, so it can never be re-read as grouping. A comma followed by a space cannot
   be a decimal, so `max(2, 3)` still separates.
 - **Grouping must be valid grouping**: one to three digits, then groups of exactly three.
-  `1.234,56` is 1234.56. In Italian `1.5`, `12.34` and `1.2345` are rejected — each is either a
+  `1.234,56` is 1234.56. In Italian `1.5`, `12.34` and `1.2345` are rejected - each is either a
   mistyped group or an English decimal, and there is no telling which.
 - **More than one decimal separator is rejected** (`1,2,3`), as is grouping after the decimal
   (`1,234.5`, the English habit in an Italian format).
@@ -628,8 +628,8 @@ it to canonical spelling or rejects the whole query. Rejection means **no card**
   space) is the canonical decimal, so `1.5 + 1` answers `2,5`.
 
 `CalcNumberFormat.localized` is the reverse, applied to canonical text: a run that is one valid
-canonical number takes the format's separators, and anything else — a dotted date, a version, a
-clock, a date formatter's `Friday, 24 July` — is left as written. Inside a function call every comma
+canonical number takes the format's separators, and anything else - a dotted date, a version, a
+clock, a date formatter's `Friday, 24 July` - is left as written. Inside a function call every comma
 is an argument, as `CalcTokenizer` reads it, so a stored `max(1,234)` shows `max(1;234)`, never
 `max(1.234)`. The echoed expression additionally turns its canonical argument commas into `;`. `English` makes both directions the identity, so the
 English path is byte-for-byte what it was.

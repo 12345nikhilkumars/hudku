@@ -9,7 +9,7 @@ struct ClipboardItem: Identifiable, Hashable, Sendable {
 
     let id: UUID
     let kind: Kind
-    /// The copied text, or for a `.file` entry the absolute path — which is what FTS indexes.
+    /// The copied text, or for a `.file` entry the absolute path - which is what FTS indexes.
     let text: String?
     /// Absolute path on disk; only files under `imagesDir` are ours to delete.
     let imagePath: String?
@@ -207,7 +207,7 @@ final class ClipboardStore {
 
     /// A warm cache of the newest rows, not a limit: search still reaches older ones, and
     /// every pinned row stays resident regardless. Sized so text bodies cannot add up to
-    /// tens of MB — the window's rows are the only item data held in memory.
+    /// tens of MB - the window's rows are the only item data held in memory.
     nonisolated private static let memoryWindow = 300
     /// The most unpinned rows any one query answers with, ordinary and OCR-only alike.
     nonisolated private static let searchLimit = 200
@@ -1003,7 +1003,7 @@ final class ClipboardStore {
         return hasher.finalize()
     }
 
-    /// Keeps the staged blob's name, so importing one backup twice lands on the same path — and
+    /// Keeps the staged blob's name, so importing one backup twice lands on the same path - and
     /// the row dedupes on it rather than minting a second copy of every image.
     nonisolated private static func adoptionTarget(
         _ item: ClipboardItem, in directory: URL?

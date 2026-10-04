@@ -67,7 +67,7 @@ final class HotKeyManager {
         UserDefaults.standard.stringArray(forKey: boundKey) ?? []
     }
 
-    /// Settings-pane bundle IDs with a hotkey — same role as `boundBundleIDs`, own namespace.
+    /// Settings-pane bundle IDs with a hotkey - same role as `boundBundleIDs`, own namespace.
     var boundPaneBundleIDs: [String] {
         UserDefaults.standard.stringArray(forKey: boundPaneKey) ?? []
     }

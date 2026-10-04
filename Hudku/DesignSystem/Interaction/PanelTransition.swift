@@ -21,7 +21,7 @@ extension NSWindow {
         }
     }
 
-    /// Safe to interrupt — the handler checks opacity — and `done` runs once it is off screen.
+    /// Safe to interrupt - the handler checks opacity - and `done` runs once it is off screen.
     func fadeOut(duration: TimeInterval, done: (@MainActor () -> Void)? = nil) {
         NSAnimationContext.runAnimationGroup { context in
             context.duration = duration

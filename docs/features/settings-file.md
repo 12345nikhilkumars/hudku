@@ -24,8 +24,8 @@ in `Features/WindowManagement/`.
 - **Applying the file never writes it.** Only a change made in the app rewrites the file, so hand
   formatting stays until then.
 - **Content and machine state never enter it.** Notes, snippets, custom commands, quicklinks, MCP
-  servers and AI connections stay where they are — the file can say which folder notes and snippets
-  live in, never what is in them — as do the palette's position, the extension toolchain,
+  servers and AI connections stay where they are - the file can say which folder notes and snippets
+  live in, never what is in them - as do the palette's position, the extension toolchain,
   every shortcut outside window management, and what a room learns by being entered.
 
 ## Layout

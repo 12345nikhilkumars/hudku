@@ -30,8 +30,8 @@ The suite runs in parallel, `hw.ncpu` harnesses at a time, which is what takes i
 seconds to about 15. `HUDKU_TEST_JOBS=1` forces it back to one at a time. Each result is numbered
 against the total and shows its run and compile time, a quiet stretch names the harnesses still running, and a harness that runs longer
 than `HUDKU_TEST_TIMEOUT` seconds (default 300) is killed and reported as timed out. Parallelism is safe
-because each harness already roots its scratch state somewhere of its own — a UUID-suffixed
-`temporaryDirectory`, a `UserDefaults(suiteName:)`, or `NSPasteboard.withUniqueName()` — and a new
+because each harness already roots its scratch state somewhere of its own - a UUID-suffixed
+`temporaryDirectory`, a `UserDefaults(suiteName:)`, or `NSPasteboard.withUniqueName()` - and a new
 harness must keep doing that rather than reach for a fixed path.
 
 Two consequences worth knowing. Status lines arrive in **completion order**, not the order the `run`
@@ -41,7 +41,7 @@ a compiler diagnostic is far longer than `PIPE_BUF`, so eleven workers streaming
 interleave into nonsense.
 
 A `run` line takes two optional markers before the harness name. `-O` compiles that harness optimised,
-which is worth it only where the run dominates the compile — `raycast-test` spends 47 seconds in
+which is worth it only where the run dominates the compile - `raycast-test` spends 47 seconds in
 scrypt at `-Onone` and one second at `-O`. `slow` dispatches it in the first wave, so the longest
 harnesses are not still running after everything else has finished.
 
@@ -81,69 +81,69 @@ If a change touches anything in the right column, the harness on the left is man
 
 | Harness | Guards |
 | --- | --- |
-| `fuzz-test` | `Launcher/Model/LauncherMatch.swift`, `LauncherOrder.swift`, `LauncherSuggestions.swift`, `EntryNaming.swift`, `ScriptRomanization.swift`, `SearchRelevance.swift`, `LauncherRankingStore.swift` — **a new ranking complaint is a new case in its `denseIndex`** |
+| `fuzz-test` | `Launcher/Model/LauncherMatch.swift`, `LauncherOrder.swift`, `LauncherSuggestions.swift`, `EntryNaming.swift`, `ScriptRomanization.swift`, `SearchRelevance.swift`, `LauncherRankingStore.swift` - **a new ranking complaint is a new case in its `denseIndex`** |
 | `file-search-test` | `FileSearch/Model/`, plus the shared `FuzzyMatch` scorer |
 | `file-search-session-test` | serialized query execution, debounce coalescing and cancellation |
 | `menu-search-test` | `MenuSearch/Model/` decisions, `MenuSearch/Service/` session filtering, the shared `FuzzyMatch` scorer |
 | `action-menu-search-test` | Action-menu query normalization and shared fuzzy matching |
 | `ranking-test` | `Launcher/Model/LauncherRankingStore.swift` |
 | `scopes-test` | `Launcher/Model/SearchScopes.swift` |
-| `app-name-test` | `Platform/AppDisplayName.swift` — every path that names a scanned bundle |
+| `app-name-test` | `Platform/AppDisplayName.swift` - every path that names a scanned bundle |
 | `calc-test` | all of `Calculator/Model/` |
-| `calendar-test` | all of `Calendar/Model/` — link detection, the join window, the day buckets |
+| `calendar-test` | all of `Calendar/Model/` - link detection, the join window, the day buckets |
 | `clipboard-search-test` | Ordinary and OCR result ordering, opt-in lifecycle, cancellation, pins and type filters |
 | `clipboard-text-test` | Apple Vision/PDF extraction, scheduling, retry backoff and recovery |
-| `paste-sequence-test` | `Clipboard/Model/PasteSequence.swift` — the walk's order, its end, and what starts it over |
+| `paste-sequence-test` | `Clipboard/Model/PasteSequence.swift` - the walk's order, its end, and what starts it over |
 | `clipboard-test` | `Clipboard/Model/ClipboardStore.swift`, `ClipboardFilter.swift`, `ClipboardFileKind.swift`, the colour trio |
-| `pasteboard-test` | `Clipboard/Service/ClipboardManager.swift` capture and `Paster.write` — what a Finder copy reads as, and what a file entry writes back |
+| `pasteboard-test` | `Clipboard/Service/ClipboardManager.swift` capture and `Paster.write` - what a Finder copy reads as, and what a file entry writes back |
 | `emoji-test` | `Emoji/Model/EmojiCatalog.swift`, `EmojiGridGeometry.swift`, the generated data and keyword packs |
 | `emoji-search-test` | `Emoji/Service/EmojiIndex.swift`, `FrequentEmojiStore.swift`, `Scripts/gen-emoji.js`'s keyword format, multilingual search |
-| `palette-navigation-test` | `Palette/PaletteState.swift`'s screen motions — `prepare`, `replace`, `push`, `pop` |
+| `palette-navigation-test` | `Palette/PaletteState.swift`'s screen motions - `prepare`, `replace`, `push`, `pop` |
 | `palette-selection-test` | `Features/PaletteRowIndex.swift` |
 | `interface-size-test` | `DesignSystem/InterfaceMetrics.swift`, `Features/Settings/InterfaceSize.swift`, `Extensions/Model/ExtensionFormMetrics.swift` |
 | `palette-placement-test` | `DesignSystem/Theme.swift`, `Palette/PalettePlacement.swift` |
 | `hotkey-test` | `HotKeys/Model/DoubleTapModifier.swift`, `DoubleTapDetector.swift`, `GlobeTapDetector.swift`, `HotKeyBinding.swift`, `HotKeySpelling.swift`, `HyperKey.swift`, `HotKeyAction.swift`, `Service/KeyShortcut.swift`, and the command→action mapping in `Launcher/Model/CommandID.swift` |
 | `fallback-test` | `Launcher/Model/Fallback.swift`, plus the `CommandID` and `Quicklink` ids it is built from |
-| `dictionary-test` | `Dictionary/Model/DictionaryEntry.swift`, `DictionaryMarkup.swift` — a real XHTML record and the plain-text fallback, read into page blocks |
+| `dictionary-test` | `Dictionary/Model/DictionaryEntry.swift`, `DictionaryMarkup.swift` - a real XHTML record and the plain-text fallback, read into page blocks |
 | `callout-test` | `DesignSystem/Theme.swift`, `HotKeys/UI/CalloutPlacement.swift` |
 | `system-action-test` | `SystemActions/Model/SystemAction.swift` |
 | `volume-test` | `SystemActions/Model/VolumeLevel.swift` |
 | `window-command-test` | `WindowManagement/WindowCommand.swift`, `WindowPlacementEngine.swift`, `WindowActionMemory.swift` |
-| `window-layout-test` | `WindowManagement/Model/WindowLayout*.swift` and `CustomWindowSize*.swift` — the layout record, its geometry and its inverse, the plan and the store; custom sizes' units, frames and store |
-| `window-room-test` | `WindowManagement/Model/Room*.swift` — every room layout and its minimum sizes, the grid, arrangement reading, window matching, parking, the plan, Tab's choices and the three stores |
+| `window-layout-test` | `WindowManagement/Model/WindowLayout*.swift` and `CustomWindowSize*.swift` - the layout record, its geometry and its inverse, the plan and the store; custom sizes' units, frames and store |
+| `window-room-test` | `WindowManagement/Model/Room*.swift` - every room layout and its minimum sizes, the grid, arrangement reading, window matching, parking, the plan, Tab's choices and the three stores |
 | `custom-command-test` | `CustomCommands/Model/CustomCommand.swift`, `Service/ShellCommandRunner.swift` |
 | `uninstall-test` | all five pure files in `Uninstall/Model/` |
 | `quicklink-test` | all of `Quicklinks/Model/` |
-| `apple-shortcut-test` | all of `AppleShortcuts/Model/` — the `shortcuts list` parser and entry ids |
+| `apple-shortcut-test` | all of `AppleShortcuts/Model/` - the `shortcuts list` parser and entry ids |
 | `snippets-test` | all of `Snippets/Model/` and `Snippets/Service/`, plus `Platform/HealthTicker.swift` |
 | `notes-test` | all of `Notes/Model/` and `Notes/Service/`, including the Markdown parser, edit plans and reveal policy, plus the real fuzzy matcher and signposts |
 | `notes-editor-test` | the Notes editor, rendered and literal, with real TextKit 2 and AppKit editing objects: styling, reveal, layout fragments, keys, chords, checkboxes and links |
 | `raycast-test` | `Backup/Service/RaycastDecoder.swift`, `Scrypt.swift`, `Platform/Compression/Zlib.swift` |
 | `symbols-test` | `Extensions/Service/SymbolCatalog.swift`, against this machine's CoreGlyphs |
-| `ext-store-test` | `Extensions/Model/` — GitHub source parsing and URLs, the store and Git tree parsers |
-| `ext-refresh-test` | `Extensions/Model/ExtensionRefreshPolicy.swift` — interval parsing, due dates, backoff, subtitle fallback, indicator state |
-| `ext-version-test` | `Extensions/Service/ExtensionVersionStore.swift` — what an update check reports, adopts and forgets |
-| `ext-metadata-test` | `Extensions/Service/ExtensionCommandMetadataStore.swift` — round-trip, failure runs, uninstall |
-| `ext-test` | the extension runtime and native menu-bar lifecycle — boots shipped sources in JavaScriptCore; menu tests cover restoration, refresh serialization, actions and teardown; fetch tests cover HTTP connection cleanup, cancellation and request isolation |
-| `ext-icon-test` | `Extensions/Service/ExtensionIconCache.swift` — artwork sizing and its fallback |
-| `icon-cache-test` | `Platform/Images/IconCache.swift` — row sizing at 1×/2×, warm reuse, stamp and style invalidation, bitmap release, fitted geometry across all 256 alpha values, and that a row icon draws identically to the 96px one |
-| `entry-icon-test` | `EntryIcon` — that each case draws, caches and prints apart from the others, and that a moved `FileIconStamp` retires the bitmap decoded before it |
-| `text-diff-test` | `QuickActions/Model/TextDiffEngine.swift` — exact chunks, Unicode, ties, token-cap boundaries and fast paths |
+| `ext-store-test` | `Extensions/Model/` - GitHub source parsing and URLs, the store and Git tree parsers |
+| `ext-refresh-test` | `Extensions/Model/ExtensionRefreshPolicy.swift` - interval parsing, due dates, backoff, subtitle fallback, indicator state |
+| `ext-version-test` | `Extensions/Service/ExtensionVersionStore.swift` - what an update check reports, adopts and forgets |
+| `ext-metadata-test` | `Extensions/Service/ExtensionCommandMetadataStore.swift` - round-trip, failure runs, uninstall |
+| `ext-test` | the extension runtime and native menu-bar lifecycle - boots shipped sources in JavaScriptCore; menu tests cover restoration, refresh serialization, actions and teardown; fetch tests cover HTTP connection cleanup, cancellation and request isolation |
+| `ext-icon-test` | `Extensions/Service/ExtensionIconCache.swift` - artwork sizing and its fallback |
+| `icon-cache-test` | `Platform/Images/IconCache.swift` - row sizing at 1×/2×, warm reuse, stamp and style invalidation, bitmap release, fitted geometry across all 256 alpha values, and that a row icon draws identically to the 96px one |
+| `entry-icon-test` | `EntryIcon` - that each case draws, caches and prints apart from the others, and that a moved `FileIconStamp` retires the bitmap decoded before it |
+| `text-diff-test` | `QuickActions/Model/TextDiffEngine.swift` - exact chunks, Unicode, ties, token-cap boundaries and fast paths |
 | `settings-backup-test` | `Settings/AppSettingsKey.swift`, `Backup/Model/SettingsBackupCoverage.swift` |
-| `settings-file-test` | `Settings/Model/` and `Settings/Service/` — key paths, value tokens, the printer and parser, and the repository's import, replace, save, reload and symlink handling on a scratch folder |
-| `window-file-test` | `WindowManagement/Model/WindowManagementFileFormat.swift` — command shortcuts, custom sizes, layouts and rooms as settings.json spells them, hand edits and bad records |
+| `settings-file-test` | `Settings/Model/` and `Settings/Service/` - key paths, value tokens, the printer and parser, and the repository's import, replace, save, reload and symlink handling on a scratch folder |
+| `window-file-test` | `WindowManagement/Model/WindowManagementFileFormat.swift` - command shortcuts, custom sizes, layouts and rooms as settings.json spells them, hand edits and bad records |
 | `backup-archive-test` | all of `Backup/Model/`, plus `Backup/Service/BackupStaging.swift` |
-| `updates-test` | `Updates/Model/` — version precedence, channel filtering, install route, readiness |
-| `support-test` | `Support/Model/` — when the support reminder comes due, and a clock moved backwards |
-| `mcp-test` | `MCP/Model/` and `MCPSettingsStore` — JSON-RPC framing, handles, tool names, output flattening, trust, `@server` addressing, the shape a vendor CLI is handed, and which servers Hudku leaves to that CLI |
-| `mcp-stdio-test` | `MCP/Service/` against a stub server — handshake, listing, calling, and every way one can go away |
+| `updates-test` | `Updates/Model/` - version precedence, channel filtering, install route, readiness |
+| `support-test` | `Support/Model/` - when the support reminder comes due, and a clock moved backwards |
+| `mcp-test` | `MCP/Model/` and `MCPSettingsStore` - JSON-RPC framing, handles, tool names, output flattening, trust, `@server` addressing, the shape a vendor CLI is handed, and which servers Hudku leaves to that CLI |
+| `mcp-stdio-test` | `MCP/Service/` against a stub server - handshake, listing, calling, and every way one can go away |
 | `mcp-oauth-test` | OAuth parsing, RFC 7636 PKCE, discovery and resource binding, loopback callback validation/cancellation, dynamic registration, supplied client credentials and their token-endpoint authentication, Keychain token rotation, concurrent refresh, the wider margin for a token lent to a CLI, redirects and one-retry 401 handling |
 
 The subprocess harnesses bring their own servers: `Tests/ai-fixtures/codex-stub.js`
 and `mcp-stub.js`, each copied into a scratch directory and put in front of PATH so the locator finds
-it the way it would find a real one. Both read fd 0 synchronously rather than through a stream —
+it the way it would find a real one. Both read fd 0 synchronously rather than through a stream -
 `codex-stub.js` stalls mid-turn on purpose, and an event loop would read the next line while it is
-still holding — and both write with `fs.writeSync`, so a reply is on the pipe before a mode that
+still holding - and both write with `fs.writeSync`, so a reply is on the pipe before a mode that
 exits does. `installed-cli-stub.js` reads the same way for the one turn shape that answers back:
 Claude's consent channel is a reply on stdin in the middle of a turn, so the stub has to be sitting
 on the pipe when it arrives.
@@ -201,9 +201,9 @@ find ~/Library/Developer/Xcode/DerivedData -name "Hudku*.app" -maxdepth 6 -print
 ./Scripts/lint.sh
 ```
 
-SwiftLint owns the rules that catch defects, including the two checkable comment rules — the
+SwiftLint owns the rules that catch defects, including the two checkable comment rules - the
 100-character cap and the ban on stacked comment lines. Errors block; warnings do not. There is no
-formatter, deliberately — the configuration and the measurements behind that are in
+formatter, deliberately - the configuration and the measurements behind that are in
 [development.md](development.md#formatting).
 
 The script then runs `Scripts/check-settings-search.js`, one check SwiftLint can't: every
@@ -236,7 +236,7 @@ swiftc -O -swift-version 6 Hudku/Platform/Signposts.swift \
 Every query runs twice: once on the shipped rules and once with five extra user patterns, so the output
 says what the ignore list itself costs rather than only what Spotlight does.
 
-The calculator benchmark is deterministic — an injected clock, calendar and rate table — so it is a
+The calculator benchmark is deterministic - an injected clock, calendar and rate table - so it is a
 timing harness rather than an assertion one, and stays out of `run-tests.sh` for that reason:
 
 ```sh
@@ -317,11 +317,11 @@ Measured at the end of the 2026 refactor, on `main`. Useful as orders of magnitu
 | Largest view / owner | `RootPaletteView` 662 lines, `AppCore` 284 lines |
 | Comment density | 1,653 of 27,289 source lines (6.1%) |
 | The harness suite | ~15 s wall clock, 11-way parallel (~98 s serial, ~140 s before either) |
-| `palette-selection-test` | 111,684 assertions — a tripwire: a change in this count means the row-order model moved |
-| `SnippetKeywordPolicy` match | 7 µs/keystroke at 50 keywords, 59 µs at 1,000 — the `lowercased()` is 0.09 µs of it |
-| `ClipboardStore.pinnedItems` | 27–127 µs per uncached search, 1,000-row window — no cache earns its invalidation yet |
+| `palette-selection-test` | 111,684 assertions - a tripwire: a change in this count means the row-order model moved |
+| `SnippetKeywordPolicy` match | 7 µs/keystroke at 50 keywords, 59 µs at 1,000 - the `lowercased()` is 0.09 µs of it |
+| `ClipboardStore.pinnedItems` | 27–127 µs per uncached search, 1,000-row window - no cache earns its invalidation yet |
 | Rendered Notes editor, 100,000 characters | 30 ms install and full restyle; 7.5, 5.9 and 3.3 ms per character typed at the end, middle and start (5.2, 3.1 and 0.6 ms with rendering off); 0.6 ms per caret move |
-| `count items of trash` | 5,000 ms against a cold Finder on an *empty* Trash, 110 ms warm — why AppleScript is detached |
+| `count items of trash` | 5,000 ms against a cold Finder on an *empty* Trash, 110 ms warm - why AppleScript is detached |
 
 Launch time, allocation counts and RSS have never been captured as numbers. The signposts are in place,
 so any of them can be taken from `main` whenever a change makes it worth knowing.
@@ -343,7 +343,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   and run it: Escape returns to the launcher **with the query still typed and the row still
   selected**, and the next press clears it. The same screen from its own global hotkey hides the
   palette instead, and shows its own header icon rather than a back chevron
-- ⌘⎋ from any depth lands on an empty root search with the window still open — **must be checked on
+- ⌘⎋ from any depth lands on an empty root search with the window still open - **must be checked on
   a real keyboard**: macOS claims the chord, so `CommandEscapeTap` is the only thing that delivers it
   and it needs Accessibility granted to the running build. With the palette closed, ⌘⎋ still does
   whatever macOS does with it
@@ -354,7 +354,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Compact mode: typing expands it, and the search bar does **not** shift vertically during the swap
 - With a CJK IME: the placeholder clears as soon as composition starts and the composing text never
   overlaps it; cancelling composition brings the placeholder back, and the list filters only once the
-  candidate is committed — check on a second summon too, where first responder never moved
+  candidate is committed - check on a second summon too, where first responder never moved
 - Typing filters instantly; ↑/↓ move the highlight and scroll it into view without yanking the list
 - ⌃N/⌃P move the highlight as ↓/↑ do; ⌃F/⌃B step the emoji grid's selection, and the caret elsewhere
 - The highlight always sits on the row the footer pill describes
@@ -369,8 +369,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   the palette query; sections survive filtering, **No Results** is centred, and no dissolve covers the
   last row. The native caret blinks; mouse drag and ⌘A select text; ←/→ move through it; ↑/↓ still
   move the menu highlight. Escape clears a non-empty query, then closes the menu on the next press
-- The bottom-left app menu also searches from its bottom band; every header menu — including Emoji
-  categories, File Search filters and extension dropdowns — searches from its top band
+- The bottom-left app menu also searches from its bottom band; every header menu - including Emoji
+  categories, File Search filters and extension dropdowns - searches from its top band
 - A long menu opens with unchanged row insets; while scrolling, rows can reach the panel edges
 - A click in the palette but outside its menu closes only the menu; a click outside the palette
   closes both, regardless of the menu query; the next summon accepts typing immediately
@@ -387,7 +387,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - The type filter searches from its top band, retains its active checkmark when matched, and shows
   centred **No Results** without changing the clipboard query; its native field supports selection
 - ⌘. pins and the highlight follows the row into Pinned; ⌘⌫ deletes; ⌘↵ copies without pasting
-- With enough pins to fill the list, opening it — the first show after launch too — highlights the
+- With enough pins to fill the list, opening it - the first show after launch too - highlights the
   newest clip, centred with pins above; clearing a query or the filter lands there again
 - ⌃X deletes the selected entry and ⌃⇧X clears the history, from the list and from an open ⌘K menu
 - ⌃⇧X asks first, through Hudku's own dialog; Cancel and Esc both leave every entry in place
@@ -399,7 +399,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   the same Copy Text row
 - The "Reading text…" progress pill appears while the helper runs and is replaced by the outcome:
   **Copied text**, or **No text found** when nothing was recognized
-- Copy Text on a vanished row reports by kind — "That file has moved or been deleted." for a
+- Copy Text on a vanished row reports by kind - "That file has moved or been deleted." for a
   referenced file, "That image is no longer available." for a pruned blob
 - Copy Text works with clipboard text search off: the helper is bundled either way
 - Copying something else while "Reading text…" shows leaves that copy on the pasteboard, and the
@@ -435,7 +435,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - A conflicting binding is rejected and names its current owner
 - A double-tap binding fires; Hyper Key remaps and its status dot is green
 - Every binding survives quit and relaunch
-- `Enable Commands` off leaves every pane-owned command listed, searchable and firing — Notes,
+- `Enable Commands` off leaves every pane-owned command listed, searchable and firing - Notes,
   Clipboard, Emoji, File Search, Snippets, Quicklinks, Calendar, AI and the two layout commands
 
 ### Uninstall
@@ -493,15 +493,15 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - With Notes **off**: all three commands are absent, their shortcuts no-op, and the Notes directory is
   not created
 - Enabling in Settings projects Show Notes, Create Note, and Search Notes immediately; the pane's
-  visibility checkboxes and recorders are the only ones — Settings > Commands lists none of the three
+  visibility checkboxes and recorders are the only ones - Settings > Commands lists none of the three
 - Show Notes opens the last active note and focuses an already visible window without hiding it
 - Create Note makes one unique Untitled file, including as the first action in an empty channel
 - Command-P and the Browse button focus search, arrows move selection, Return opens, and Command-N
   creates
 - Empty switcher search reads the complete recent list; title and body searches rank correctly and a
   superseded query never publishes
-- An Untitled note titles itself from its first line as it is typed, in the title bar and — after the
-  autosave — in the browse list; naming it replaces that, and clearing the name brings it back
+- An Untitled note titles itself from its first line as it is typed, in the title bar and - after the
+  autosave - in the browse list; naming it replaces that, and clearing the name brings it back
 - Inline rename updates the Markdown filename without changing source, and starts from that filename
   even where the row shows a derived title; collisions receive a suffix
 - Delete confirms through Hudku, moves the file to Trash, and selecting another note never loses an
@@ -594,7 +594,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - A currency query answers from the cached snapshot; with the cache cleared and no network it reports
   rates unavailable rather than guessing
 - A bare amount (`1 usd`) answers in the Mac's region currency, and follows a change to
-  System Settings ▸ General ▸ Language & Region without a relaunch — and nothing prompts for location
+  System Settings ▸ General ▸ Language & Region without a relaunch - and nothing prompts for location
 - A crypto query (`1 btc`, `0.5 sol to eur`) answers, and `1 usd to btc` stays in plain notation
 
 ### Calendar and meetings
@@ -626,12 +626,12 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Clicking the calendar item opens `Join <title>`, `Open in Calendar...`, `My Schedule` and
   `Calendar Settings...` and nothing else; the second opens that event in Calendar.app, while a bare
   click never joins
-- Camera Preview on: ↵ on the join card opens the panel **already showing live video** — no black
+- Camera Preview on: ↵ on the join card opens the panel **already showing live video** - no black
   frame, no blank mid-preview; ↵ joins, Esc drops the join; the camera light goes out with the
   panel, and the first run prompts once, before any panel appears
 - A meeting that ends leaves the launcher results and `My Schedule` on the same minute boundary it
   leaves the menu bar, with the palette open or closed over the end
-- Auto Join on: the meeting opens itself at its start, **once** — dismiss it and it does not return.
+- Auto Join on: the meeting opens itself at its start, **once** - dismiss it and it does not return.
   With confirm on and camera preview off, the dialog asks first
 - Arming Auto Join during a meeting already under way joins nothing
 - Sleeping over a meeting's start and waking past it reloads the events; one still inside the window
@@ -698,12 +698,12 @@ defaults delete com.hudku.app.dev 2>/dev/null || true
 tccutil reset Accessibility com.hudku.app.dev 2>/dev/null || true
 ```
 
-- Launches with every store directory absent — no crash, no hang; onboarding runs
+- Launches with every store directory absent - no crash, no hang; onboarding runs
 - Palette opens and lists apps; clipboard, quicklinks, snippets and calculator history are all empty
   and all accept a first entry
 - Notes creates no directory until Show, Create, or Search is first used, then accepts its first edit
 - **Every setting shows its intended default.** Walk the panes: this is what catches a broken
   absence-versus-`false` read
 - Quit and relaunch: everything created above persisted
-- Nothing was written outside `com.hudku.app.dev/`. Channel isolation is not negotiable — a Dev build
+- Nothing was written outside `com.hudku.app.dev/`. Channel isolation is not negotiable - a Dev build
   writing into the stable app's directory is a defect even though the data is disposable

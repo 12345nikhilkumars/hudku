@@ -50,7 +50,7 @@ struct DoubleTapDetectorTests {
     }
 
     static func expect(_ fired: [DoubleTapModifier], _ expected: [DoubleTapModifier], _ m: String) {
-        expect(fired == expected, "\(m) — fired \(fired.map(\.rawValue)), want \(expected.map(\.rawValue))")
+        expect(fired == expected, "\(m) - fired \(fired.map(\.rawValue)), want \(expected.map(\.rawValue))")
     }
 
     static func main() {
@@ -235,7 +235,7 @@ struct DoubleTapDetectorTests {
         let unbindable = Set(CommandID.allCases.filter { $0.hotKeyAction == nil })
         expect(
             unbindable == [.openInBrowser, .quit],
-            "only the query-driven row and Quit are unbindable — got \(unbindable.map(\.name))")
+            "only the query-driven row and Quit are unbindable - got \(unbindable.map(\.name))")
         expect(
             CommandID.allCases.allSatisfy {
                 unbindable.contains($0) || $0.hotKeyAction == .command($0)

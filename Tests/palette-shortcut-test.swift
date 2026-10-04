@@ -13,7 +13,7 @@ struct PaletteShortcutTests {
         } else {
             failures += 1
             let got = String(describing: actual)
-            print("FAIL: \(message) — got \(got), want \(String(describing: expected))")
+            print("FAIL: \(message) - got \(got), want \(String(describing: expected))")
         }
     }
 

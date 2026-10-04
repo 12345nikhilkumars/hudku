@@ -120,7 +120,7 @@ enum CalcTimeZone {
         return (query, nil)
     }
 
-    /// `2h`, `90 min`, `2 hours` — sub-day only, since a zone answer is a clock time.
+    /// `2h`, `90 min`, `2 hours` - sub-day only, since a zone answer is a clock time.
     private static func parseDuration(
         _ text: String, impliesHours: Bool = false
     ) -> (count: Int, component: Calendar.Component)? {
@@ -172,7 +172,7 @@ enum CalcTimeZone {
 
     private static let connectors: Set<String> = ["in", "to", "at", "diff", "difference"]
 
-    /// `diff paris`, `time diff paris` — how far a zone runs from the Mac's own.
+    /// `diff paris`, `time diff paris` - how far a zone runs from the Mac's own.
     private static func offsetBetween(
         _ query: String, now: Date, calendar: Calendar
     ) -> CalcResult? {
@@ -441,7 +441,7 @@ enum CalcTimeZone {
         return table
     }()
 
-    /// Not `localizedName`, which needs a `Locale` — banned in `Model/`.
+    /// Not `localizedName`, which needs a `Locale` - banned in `Model/`.
     private static func label(for zone: TimeZone) -> String {
         if zone.identifier == "GMT" || zone.identifier == "UTC" { return "UTC" }
         guard let city = zone.identifier.split(separator: "/").last else { return zone.identifier }

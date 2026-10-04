@@ -4,7 +4,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
-# The Xcode toolchain's swift-format, the same binary sourcekit-lsp formats with — not a brew package,
+# The Xcode toolchain's swift-format, the same binary sourcekit-lsp formats with - not a brew package,
 # so the editor's ⌘S and this script can never disagree.
 FORMAT=$(xcrun --find swift-format 2>/dev/null)
 [ -x "${FORMAT:-}" ] || {
@@ -12,9 +12,9 @@ FORMAT=$(xcrun --find swift-format 2>/dev/null)
     exit 2
 }
 
-# Generated files are never hand-edited, and formatting one is exactly that — the next
+# Generated files are never hand-edited, and formatting one is exactly that - the next
 # `node Scripts/gen-emoji.js` would revert it.
-# Built with a read loop rather than `mapfile`, which is bash 4 — macOS ships bash 3.2.
+# Built with a read loop rather than `mapfile`, which is bash 4 - macOS ships bash 3.2.
 files=()
 while IFS= read -r f; do files+=("$f"); done < <(
     find Hudku Tests -name '*.swift' ! -name '*.generated.swift' | sort

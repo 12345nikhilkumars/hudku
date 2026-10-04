@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Starts a window drag on mouse-down — the hosting view otherwise eats the click first.
+/// Starts a window drag on mouse-down - the hosting view otherwise eats the click first.
 struct WindowDragHandle: NSViewRepresentable {
     var onBegan: () -> Void
     var onEnded: () -> Void

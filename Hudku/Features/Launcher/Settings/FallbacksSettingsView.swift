@@ -13,7 +13,7 @@ struct FallbacksSettingsView: View {
             Section {
                 let fallbacks = fallbacks
                 if fallbacks.isEmpty {
-                    Text("Nothing to offer — their features are off.")
+                    Text("Nothing to offer - their features are off.")
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .center)
                 } else {

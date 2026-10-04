@@ -2,15 +2,15 @@
 
 Hudku is signed with a **stable self-signed identity** called `Hudku Self-Signed`. Keeping the
 _same_ identity on every build is what makes macOS remember the Accessibility permission across
-rebuilds and updates — ad-hoc signing changes every build and macOS forgets the grant.
+rebuilds and updates - ad-hoc signing changes every build and macOS forgets the grant.
 
 An Apple Developer ID certificate now exists, but nothing is signed with it yet. Why that switch is
 staged rather than immediate is [below](#the-developer-id-migration).
 
 You create this identity **once**. The same identity is used for:
 
-- **local dev builds** — so Accessibility persists while you develop (the Xcode project signs with it), and
-- **CI releases** — exported into two GitHub secrets the release workflow imports.
+- **local dev builds** - so Accessibility persists while you develop (the Xcode project signs with it), and
+- **CI releases** - exported into two GitHub secrets the release workflow imports.
 
 ## 1. Create the `Hudku Self-Signed` identity (once)
 
@@ -68,10 +68,10 @@ UI under **Settings → Secrets and variables → Actions**):
 ```sh
 gh secret set SIGNING_P12_BASE64   --repo abue-ammar/hudku < /tmp/signing.p12.base64
 gh secret set SIGNING_P12_PASSWORD --repo abue-ammar/hudku --body "$P12_PASSWORD"
-rm -f /tmp/signing.p12.base64   # holds your private key — delete it
+rm -f /tmp/signing.p12.base64   # holds your private key - delete it
 ```
 
-If you ever lose the secrets, just re-run this section — as long as the `Hudku Self-Signed`
+If you ever lose the secrets, just re-run this section - as long as the `Hudku Self-Signed`
 identity is still in your keychain, the exported identity is the same, so users are unaffected. If you
 lose the identity entirely, recreate it (step 1) and re-do this; existing users will re-grant
 Accessibility once on their next update, then it's stable again.
@@ -79,7 +79,7 @@ Accessibility once on their next update, then it's stable again.
 ## Hardened runtime
 
 **Release only**, on both targets: `ENABLE_HARDENED_RUNTIME: YES`, which notarization requires. Debug
-must stay without it — hardened runtime turns on library validation, and Xcode's
+must stay without it - hardened runtime turns on library validation, and Xcode's
 `Hudku Dev.debug.dylib` is refused at launch because a self-signed identity carries no Team ID for
 the loader to match. The flag is not part of the designated requirement, so turning it on costs no
 Accessibility grant. Each entitlement in `Hudku/Hudku.entitlements` earns its place:
@@ -87,18 +87,18 @@ Accessibility grant. Each entitlement in `Hudku/Hudku.entitlements` earns its pl
 | Entitlement | Without it |
 | --- | --- |
 | `com.apple.security.cs.allow-jit` | JavaScriptCore cannot JIT, and every extension command runs on the interpreter |
-| `com.apple.security.automation.apple-events` | Every Apple event is refused with `-1743` and no prompt — Get Info, the Finder selection an extension reads, and the System Events–driven system actions all die silently |
+| `com.apple.security.automation.apple-events` | Every Apple event is refused with `-1743` and no prompt - Get Info, the Finder selection an extension reads, and the System Events–driven system actions all die silently |
 | `com.apple.security.device.camera` | The camera prompt never appears and access resolves as denied |
 | `com.apple.security.personal-information.calendars` | `requestFullAccessToEvents()` returns `false` in milliseconds with no dialog, and Hudku never appears under System Settings › Calendars |
 
 **A usage string is not enough under the hardened runtime.** `tccd` checks the matching entitlement
 *before* it prompts, and without it logs "requires entitlement … but it is missing" and denies on the
-spot — no dialog, no error, status still `.notDetermined`. A grant saved before the hardened runtime
+spot - no dialog, no error, status still `.notDetermined`. A grant saved before the hardened runtime
 arrived keeps working, since `tccd` does not re-check it, which is why this surfaces only on fresh
 installs. Adding a protected resource therefore means adding its usage string *and* its entitlement.
 
 `RESOURCE_ENTITLEMENTS` in `Scripts/verify-signature.sh` maps every protected resource's usage string
-to its entitlement, including resources Hudku does not use. That grants nothing — only
+to its entitlement, including resources Hudku does not use. That grants nothing - only
 `Hudku.entitlements` does, and a row whose usage string `Info.plist` doesn't declare is skipped. It
 is there so a future feature that adds the usage string but forgets the entitlement fails the release
 instead of shipping a prompt that can never appear.
@@ -107,7 +107,7 @@ Nothing else is needed: the only `dlopen` is Apple's own IOBluetooth, so library
 on, and `node`, `ray` and shell commands are separate processes it never reaches. Bluetooth has no
 hardened-runtime entitlement.
 
-`./Scripts/verify-signature.sh <path-to-.app>` asserts all of this — the runtime flag on the app *and*
+`./Scripts/verify-signature.sh <path-to-.app>` asserts all of this - the runtime flag on the app *and*
 on `Contents/Helpers/ClipboardTextHelper`, an intact nested seal, no `get-task-allow`, and an
 entitlement for every usage string `Info.plist` declares. Both release jobs run it before packaging:
 a nested binary missing the runtime flag is the most common notarization rejection, and a usage string
@@ -122,13 +122,13 @@ has to reach users *before* the first build carrying it. Until the switch it als
 app's own leaf, which is the only thing a copy installed earlier knows how to check.
 
 The requirement pins the team rather than the certificate, so a Developer ID renewal strands nobody.
-It deliberately omits the `notarized` keyword — that resolves a ticket through `syspolicyd` or the
+It deliberately omits the `notarized` keyword - that resolves a ticket through `syspolicyd` or the
 network, and the updater verifies in a cache directory Gatekeeper has never assessed, so an offline
 Mac would refuse a bundle the chain already proves is ours.
 
 **The Developer ID identity stays a CI-only fact.** When the switch happens it is named on the
 release workflow's `xcodebuild` line and nowhere else: `project.yml` keeps signing with
-`Hudku Self-Signed`, so a contributor keeps building with the one they created in §1 — same name,
+`Hudku Self-Signed`, so a contributor keeps building with the one they created in §1 - same name,
 their own key, never shared. Nothing about local development changes.
 
 **Keep `Hudku Self-Signed` in the login keychain after the switch.** It is the only way to ship a

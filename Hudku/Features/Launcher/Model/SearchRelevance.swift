@@ -27,7 +27,7 @@ enum FuzzyMatch {
         fileprivate let text: String
         /// Folded once too: the subsequence pass needs random access on every candidate.
         fileprivate let characters: [Character]
-        /// The byte form when the fold is ASCII — the walks skip the grapheme machinery.
+        /// The byte form when the fold is ASCII - the walks skip the grapheme machinery.
         fileprivate let bytes: [UInt8]?
         var isEmpty: Bool { text.isEmpty }
 
@@ -338,7 +338,7 @@ struct SearchAlias: Sendable, Hashable {
     static func owner(_ text: String) -> Self { Self(text, .owner) }
 }
 
-/// Never flatten these into one string — which alias matched is half of what picks the cell.
+/// Never flatten these into one string - which alias matched is half of what picks the cell.
 struct SearchFields: Sendable, Hashable, ExpressibleByArrayLiteral {
     var aliases: [SearchAlias]
 

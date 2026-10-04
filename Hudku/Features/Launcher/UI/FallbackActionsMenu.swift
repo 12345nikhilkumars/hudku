@@ -1,7 +1,7 @@
 import Foundation
 
 /// Actions for one fallback row. It answers the query rather than naming a thing, so nothing
-/// here pins, ranks or reveals it — the two entries are running it and changing the list.
+/// here pins, ranks or reveals it - the two entries are running it and changing the list.
 @MainActor
 enum FallbackActionsMenu {
     static func content(

@@ -38,7 +38,7 @@ enum PaletteMode: String, CaseIterable, Identifiable {
 /// The app a paste lands in, resolved once per show so nothing re-reads it per render.
 struct PasteTarget: Equatable {
     let name: String
-    /// Bundle path for `IconCache` — nil for a target with no on-disk bundle.
+    /// Bundle path for `IconCache` - nil for a target with no on-disk bundle.
     let iconPath: String?
 
     init?(app: NSRunningApplication?) {

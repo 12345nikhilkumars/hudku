@@ -15,7 +15,7 @@ enum SettingsFileIssue: Error, Equatable, Sendable {
 
     var message: String {
         switch self {
-        case .invalidJSON(let detail): "not valid JSON — \(detail)"
+        case .invalidJSON(let detail): "not valid JSON - \(detail)"
         case .notAnObject(nil): "the file must hold one JSON object"
         case .notAnObject(let path?): "“\(path)” must be an object"
         case .unknownSetting(let path): "unknown setting “\(path)”"

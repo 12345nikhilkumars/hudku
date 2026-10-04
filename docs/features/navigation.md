@@ -2,8 +2,8 @@
 
 Two commands that move you somewhere rather than changing something, behind one switch:
 **Switch Windows** raises any open window of any running app, and **Search Menu Bar Items** presses
-any item in the front app's menu bar. The second has its own page —
-[menu-search.md](menu-search.md) — because its internals are a menu walk; this page owns the
+any item in the front app's menu bar. The second has its own page -
+[menu-search.md](menu-search.md) - because its internals are a menu walk; this page owns the
 switcher and the pane the two share.
 
 Ships **off**. Settings › Navigation is the switch, and while it is off neither command is in the
@@ -12,25 +12,25 @@ launcher and a still-recorded shortcut for either does nothing.
 ## Invariants
 
 - **The sweep is synchronous, and that is deliberate.** `WindowSwitchSweep.snapshot` visits apps and
-  their windows — one level, two AX reads each — where the menu walk descends a tree. A
+  their windows - one level, two AX reads each - where the menu walk descends a tree. A
   `Task.detached` here would buy a "Reading windows…" state nobody would ever see, and cost a
   revision counter to keep superseded sweeps from publishing. `WindowInventory` made the same call.
 - **A live `AXUIElement` never leaves the main actor, and never outlives the show.** The pure entry
   carries a `handle`; `WindowSwitchSession` holds the `handle → Element` table `@ObservationIgnored`
   and drops it in `reset()`, which `hidePalette` and every mode change call. So every open sweeps
-  anew — `WindowSwitchCoordinator.load()`, through `PaletteCoordinator.onScreenOpening` — and a
+  anew - `WindowSwitchCoordinator.load()`, through `PaletteCoordinator.onScreenOpening` - and a
   screen restored inside the Pop to Root window lists today's windows, not an empty snapshot.
 - **Nothing in `Model/` knows what a window is.** `WindowSwitchEntry` takes `appRank` as a number
   someone else measured, so `WindowSwitchOrder` and `WindowSwitchQuery` stay Foundation-only and the
   harness compiles the shipped sources.
-- **The order is total.** `(isMinimized, appRank, appName, handle)` — so a sweep that enumerated apps
+- **The order is total.** `(isMinimized, appRank, appName, handle)` - so a sweep that enumerated apps
   in a different order sorts identically, and minimized windows are always one run at the end rather
   than interleaved.
 - **Accessibility is gated twice**, on open and again on activate: a grant revoked while the palette
   is open must not reach `AXUIElementPerformAction`. The open gate sits in both `show()` and
   `load()`, because a restore reaches `load()` alone.
 - **Activation hides with `restoreFocus: false`.** Restoring focus reactivates the displaced app,
-  which races the raise and can land on the wrong window — the same reason a Space command does it.
+  which races the raise and can land on the wrong window - the same reason a Space command does it.
 - **`AXWindowAccess` stays the one AX window layer.** `unminimize` and `focus` live there rather
   than in a second AX shim, and Window Layouts brings its frontmost window forward through `focus`.
 
@@ -43,7 +43,7 @@ launcher and a still-recorded shortcut for either does nothing.
 | `Model/WindowSwitchQuery.swift` | ranking over `SearchRelevance`, capped at 200 rows |
 | `Service/WindowZOrder.swift` | the one `CGWindowList` call: per-pid front rank |
 | `Service/WindowSwitchSweep.swift` | the AX sweep, and the live element table it hands back |
-| `Service/WindowSwitchSession.swift` | the observable state — snapshot, filtered rows, elements |
+| `Service/WindowSwitchSession.swift` | the observable state - snapshot, filtered rows, elements |
 | `UI/WindowSwitchCoordinator.swift` | show, activate, the switch, the failure reports |
 | `UI/WindowSwitchScreen.swift` | the `PaletteScreen` conformance and the two empty states |
 | `UI/WindowSwitchList.swift` | the list and its row: app icon, title, app name |
@@ -52,7 +52,7 @@ launcher and a still-recorded shortcut for either does nothing.
 
 The MRU order comes from the window server's own front-to-back list: one
 `CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)`, keeping
-layer 0 — the normal window band, not the menu bar, Dock or overlay panels — and recording where each
+layer 0 - the normal window band, not the menu bar, Dock or overlay panels - and recording where each
 pid first appears. Only `kCGWindowName` is permission-gated, and titles come from AX instead, so the
 call needs no Screen Recording grant.
 
@@ -60,8 +60,8 @@ The rank is therefore **per app, not per window**: mapping a `CGWindowID` onto a
 the private `_AXUIElementGetWindow`, and the app's own `kAXWindowsAttribute` order already gives the
 windows inside one app front-to-back. [Rooms](window-rooms.md#invariants) do resolve that symbol, in
 `AXWindowAccess.windowID(of:)`, because a parked window's way back must outlive its element; the
-switcher keeps its per-app rank, which needs nothing private. An app with nothing on screen — everything minimized, or every
-window on another Space — gets no rank at all and sorts after the ranked ones by name.
+switcher keeps its per-app rank, which needs nothing private. An app with nothing on screen - everything minimized, or every
+window on another Space - gets no rank at all and sorts after the ranked ones by name.
 
 The alternative was a long-lived `NSWorkspace.didActivateApplicationNotification` observer with its
 own LRU and its own lifetime. This needs neither, and it is right on the first summon after launch
@@ -69,7 +69,7 @@ rather than after the user has switched apps once.
 
 ## The sweep
 
-`WindowSwitchSweep` walks `WindowInventory.candidates()` — regular-policy, non-terminated, not us —
+`WindowSwitchSweep` walks `WindowInventory.candidates()` - regular-policy, non-terminated, not us -
 and takes every window whose subrole is `AXStandardWindow`. That is looser than
 `WindowInventory.eligibleFrame` in two ways that both matter here: a **minimized** window is exactly
 what a switcher is for, and a window on another Space reports no frame until it is raised, so
@@ -79,7 +79,7 @@ Each element gets a 0.2 s messaging timeout, the same as the layout inventory an
 one hung app cannot stall the summon.
 
 The app icon rides on the entry as a `FileIconStamp` and its bundle URL, and the row draws it through
-`EntryIconView(source: .file(stamp:))` — so `IconCache` decodes once per app however many windows it
+`EntryIconView(source: .file(stamp:))` - so `IconCache` decodes once per app however many windows it
 contributes.
 
 ## Stepping with the shortcut
@@ -108,7 +108,7 @@ window's app quit between the sweep and the ↵.
   named by `SettingsTab.navigation.ownedCommands`, which is the whole of what moves the second out of
   Settings › Commands: `LauncherItemsSection` filters on `settingsOwner == nil`, and `VisibilityStore`
   skips the `Enable Commands` category gate for a pane-owned command. Neither adds an
-  `AppEntry.Kind`, a `HotKeyAction` case or a `VisibilityStore` category — they are plain `.command`
+  `AppEntry.Kind`, a `HotKeyAction` case or a `VisibilityStore` category - they are plain `.command`
   entries.
 - **`navigationEnabled`** (off) is the switch. `AppCore.observeFeatureSwitches` tracks it once and
   reprojects into both coordinators; each owns only its own command and its own palette mode, so
@@ -124,10 +124,10 @@ window's app quit between the sweep and the ↵.
   command through `FeatureCommandRow`, so a command added to `ownedCommands` later still appears
   under `Commands` without a second edit. A list of excluded apps in a box of its own read as
   belonging to the pane rather than to one command, which is what this section exists to fix;
-  `DisabledApplicationsList` is the shared half — the rows and the picker — that Settings ›
+  `DisabledApplicationsList` is the shared half - the rows and the picker - that Settings ›
   Clipboard still wraps in a `DisabledApplicationsSection` of its own.
-- Both settings ride in backups. Neither grants a permission class of its own — Accessibility is
-  already required for paste — which is the call `windowManagementEnabled` made, and the opposite of
+- Both settings ride in backups. Neither grants a permission class of its own - Accessibility is
+  already required for paste - which is the call `windowManagementEnabled` made, and the opposite of
   `snippetsEnabled`.
 - **There is deliberately no "Show in launcher" switch.** The per-command checkboxes in
   `FeatureCommandsSection` already are one, and a second would be a switch over rows the pane lists.
@@ -140,7 +140,7 @@ sweep, the minimized run at the end, ranking, and the 200-row cap under both an 
 matching query.
 
 `WindowZOrder` and `WindowSwitchSweep` are not compiled into the harness and have no automated
-coverage — the AX and `CGWindowList` paths need manual verification, particularly:
+coverage - the AX and `CGWindowList` paths need manual verification, particularly:
 
 1. A minimized window is listed last and ↵ un-minimizes it rather than doing nothing.
 2. A window on another Space is listed, and ↵ pulls that Space forward.

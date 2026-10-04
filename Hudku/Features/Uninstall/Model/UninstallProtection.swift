@@ -7,11 +7,11 @@ struct PathFacts: Hashable, Sendable {
     /// Never followed: sizing through one could walk the whole disk.
     var isSymbolicLink = false
     var volumeIsReadOnly = false
-    /// `SF_RESTRICTED` / `SF_IMMUTABLE` — SIP.
+    /// `SF_RESTRICTED` / `SF_IMMUTABLE` - SIP.
     var isSystemRestricted = false
-    /// `UF_IMMUTABLE` — Finder's "Locked" checkbox, which the user can clear themselves.
+    /// `UF_IMMUTABLE` - Finder's "Locked" checkbox, which the user can clear themselves.
     var isUserImmutable = false
-    /// Only decides anything under a sticky parent — see `classify`.
+    /// Only decides anything under a sticky parent - see `classify`.
     var isOwnedByCurrentUser = true
     var parentIsWritable = true
     /// `S_ISVTX` on the parent: the `/tmp` rule, where only an owner may unlink an item.

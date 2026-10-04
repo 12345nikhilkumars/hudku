@@ -1,7 +1,7 @@
 import Foundation
 
 enum CalcTokenizer {
-    /// nil on any character that can't be calculator input — "not a calculation", not an error.
+    /// nil on any character that can't be calculator input - "not a calculation", not an error.
     static func tokenize(_ input: String) -> [CalcToken]? {
         let chars = Array(input.unicodeScalars)
         var tokens: [CalcToken] = []
@@ -43,7 +43,7 @@ enum CalcTokenizer {
                         text.unicodeScalars.append(c)
                     } else if c == "," && functionDepth == nil && i + 1 < chars.count && isDigit(chars[i + 1])
                     {
-                        // grouping separator between digits — skip
+                        // grouping separator between digits - skip
                     } else if c == "." && !seenDot {
                         seenDot = true
                         text.unicodeScalars.append(c)
@@ -52,7 +52,7 @@ enum CalcTokenizer {
                     }
                     i += 1
                 }
-                // Only while the exponent hugs the mantissa — a spaced `2 e` stays 2 × e.
+                // Only while the exponent hugs the mantissa - a spaced `2 e` stays 2 × e.
                 var isShorthand = false
                 if i < chars.count, chars[i] == "e" || chars[i] == "E" {
                     var digits = i + 1

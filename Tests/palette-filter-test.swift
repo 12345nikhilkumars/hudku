@@ -14,7 +14,7 @@ struct PaletteFilterTests {
             passes += 1
         } else {
             failures += 1
-            print("FAIL: \(message) — got \(actual), want \(expected)")
+            print("FAIL: \(message) - got \(actual), want \(expected)")
         }
     }
 

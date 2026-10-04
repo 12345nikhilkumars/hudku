@@ -2008,7 +2008,7 @@ $|argent,peso
 •|puce
 ◦|puce creuse
 ·|point médian,médian,milieu,point
-—|tiret cadratin,cadratin,tiret
+-|tiret cadratin,cadratin,tiret
 –|tiret demi-cadratin,demi-cadratin,tiret
 …|points de suspension,ellipse,suspension
 «|guillemet gauche,anti-lambda,chevron,citation,crochet oblique,crochets,gauche

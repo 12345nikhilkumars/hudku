@@ -18,13 +18,13 @@ struct PaletteRowIndexTests {
     static func expect(_ actual: PaletteRow?, _ expected: PaletteRow?, _ message: String) {
         expect(
             actual == expected,
-            "\(message) — got \(String(describing: actual)), want \(String(describing: expected))")
+            "\(message) - got \(String(describing: actual)), want \(String(describing: expected))")
     }
 
     static func expect(_ actual: Int?, _ expected: Int?, _ message: String) {
         expect(
             actual == expected,
-            "\(message) — got \(String(describing: actual)), want \(String(describing: expected))")
+            "\(message) - got \(String(describing: actual)), want \(String(describing: expected))")
     }
 
     /// Where a flat index lands in the rendered grid: its visual row, and its column of that row.
@@ -42,7 +42,7 @@ struct PaletteRowIndexTests {
         return (row, 0)
     }
 
-    /// How many cells a visual row holds — the last row of a section is usually a partial one.
+    /// How many cells a visual row holds - the last row of a section is usually a partial one.
     static func rowLength(_ row: Int, counts: [Int], columns: Int) -> Int {
         var first = 0
         for count in counts {
@@ -179,7 +179,7 @@ struct PaletteRowIndexTests {
         expect(gapped.index(section: 1, offset: 0), nil, "an empty section has no valid offset")
         expectRoundTrip(gapped, "empty middle section")
 
-        // Sections plus the calculator card — the launcher's real shape.
+        // Sections plus the calculator card - the launcher's real shape.
         let launcher = PaletteRowIndex(hasCalculator: true, sectionCounts: [2, 1, 3])
         expect(launcher.count == 7, "the card plus six results")
         expect(launcher.row(at: 0), .calculator, "the card still leads")

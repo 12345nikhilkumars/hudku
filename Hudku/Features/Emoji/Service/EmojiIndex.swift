@@ -209,7 +209,7 @@ final class EmojiIndex {
     private static let searchCap = 320
 
     /// The cold ranking plus frecency. Every entry that carries a lift is added to the
-    /// cold top, so the merge is exact — lift can never pull an entry past its cold band.
+    /// cold top, so the merge is exact - lift can never pull an entry past its cold band.
     private static func rankedFromBase(
         _ base: [(order: Int, score: Int)], cap: Int, frecency: [String: Int],
         entries: [EmojiEntry]

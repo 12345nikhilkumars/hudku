@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Scroll-driven edge mask for a list underlapping the palette's floating bars. See `docs/ui.md`.
 struct EdgeDissolveMask: ViewModifier {
-    /// Band lengths: the bar's height plus its overshoot into the list — 32px top, 28px bottom.
+    /// Band lengths: the bar's height plus its overshoot into the list - 32px top, 28px bottom.
     private var topFade: CGFloat {
         metrics.size.headerHeight + metrics.size.headerPadding + metrics.scaled(32)
     }
@@ -40,7 +40,7 @@ struct EdgeDissolveMask: ViewModifier {
                 canScroll = new.canScroll
             }
             .mask(
-                // Must span the scroll view's *full* frame — the bars' safe-area insets would otherwise shift the gradient inward, clipping the underlap regions to black.
+                // Must span the scroll view's *full* frame - the bars' safe-area insets would otherwise shift the gradient inward, clipping the underlap regions to black.
                 GeometryReader { geo in
                     LinearGradient(
                         stops: stops(height: geo.size.height),

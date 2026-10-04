@@ -510,7 +510,7 @@ struct AliasField: View {
         .accessibilityLabel("Alias for \(name)")
     }
 
-    /// The one commit path — ↵ or focus landing elsewhere; a blank draft removes the alias.
+    /// The one commit path - ↵ or focus landing elsewhere; a blank draft removes the alias.
     private func commit() {
         aliases.setAlias(draft, for: key)
         draft = aliases.alias(for: key) ?? ""

@@ -49,7 +49,7 @@ enum UninstallRules {
         return namespaceSeparators.contains(folded[folded.index(folded.startIndex, offsetBy: id.count)])
     }
 
-    /// Attribution by link target, never by name — the name is whatever the vendor chose.
+    /// Attribution by link target, never by name - the name is whatever the vendor chose.
     static func isBundleSymlink(target: String, bundlePath: String) -> Bool {
         let target = (target as NSString).standardizingPath
         let bundlePath = (bundlePath as NSString).standardizingPath

@@ -12,7 +12,7 @@ struct ThinScrollbar: ViewModifier {
         var scrollable: Bool { content > viewport + 1 }
     }
 
-    // Interaction signals — kept separate so each source of "show the bar" is independent.
+    // Interaction signals - kept separate so each source of "show the bar" is independent.
     @State private var isScrolling = false
     @State private var isHoveringTrack = false
     /// Mirrors the AppKit-side thumb drag (`ScrollbarInteraction` owns the actual drag state).
@@ -24,7 +24,7 @@ struct ThinScrollbar: ViewModifier {
     @State private var scrollStop: Task<Void, Never>?
     @State private var hoverExit: Task<Void, Never>?
 
-    // Knob/rail geometry: thin at rest, fatter on hover/drag — like the macOS overlay knob.
+    // Knob/rail geometry: thin at rest, fatter on hover/drag - like the macOS overlay knob.
     private let thinWidth: CGFloat = 6
     private let expandedWidth: CGFloat = 10
     private let inset: CGFloat = 3
@@ -202,7 +202,7 @@ private struct NativeScrollerHider: NSViewRepresentable {
                 return
             }
             startObservingStyleChanges()
-            retriesLeft = 10  // fresh hierarchy on (re)attach — allow the splice a few ticks again
+            retriesLeft = 10  // fresh hierarchy on (re)attach - allow the splice a few ticks again
             applyOverlayStyle()
         }
 
@@ -236,7 +236,7 @@ private struct NativeScrollerHider: NSViewRepresentable {
                     || scrollView.hasVerticalScroller
                     || scrollView.hasHorizontalScroller
             else { return }
-            scrollView.scrollerStyle = .overlay  // float over content — reserves no layout width
+            scrollView.scrollerStyle = .overlay  // float over content - reserves no layout width
             scrollView.hasVerticalScroller = false
             scrollView.hasHorizontalScroller = false
             // Reclaim the trailing gutter a legacy scroller was reserving, on this same layout pass.

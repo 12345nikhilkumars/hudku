@@ -16,7 +16,7 @@ enum CalcFormatter {
     /// Every integer up to 2^53 is exactly representable as a Double.
     private static let maxExactInteger = 9_007_199_254_740_992.0
 
-    /// Same rounding, no grouping — what lands on the pasteboard.
+    /// Same rounding, no grouping - what lands on the pasteboard.
     static func copyText(_ value: Double) -> String {
         let v = value == 0 ? 0 : value  // normalize -0
         // Past 2^53 the precision is genuinely gone, so exponent form is the honest answer there.

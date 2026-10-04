@@ -18,7 +18,7 @@ struct InterfaceSizeTests {
     }
 
     static func expect(_ actual: CGFloat, _ expected: CGFloat, _ message: String) {
-        expect(abs(actual - expected) < 0.001, "\(message) — got \(actual), want \(expected)")
+        expect(abs(actual - expected) < 0.001, "\(message) - got \(actual), want \(expected)")
     }
 
     static func main() {
@@ -204,7 +204,7 @@ struct InterfaceSizeTests {
             for (name, value) in lengths(m) {
                 expect(
                     value == value.rounded(),
-                    "\(name) lands on a whole point at \(size.rawValue) — got \(value)")
+                    "\(name) lands on a whole point at \(size.rawValue) - got \(value)")
             }
         }
     }

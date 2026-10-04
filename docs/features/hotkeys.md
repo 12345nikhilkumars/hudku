@@ -2,21 +2,21 @@
 
 `Features/HotKeys/` holds:
 
-- `KeyShortcut` — Sendable model, Carbon keycode + modifiers, layout-aware glyphs via `UCKeyTranslate`.
-- `HotKeyBinding` — what an action is bound to: `.combo(KeyShortcut)`,
+- `KeyShortcut` - Sendable model, Carbon keycode + modifiers, layout-aware glyphs via `UCKeyTranslate`.
+- `HotKeyBinding` - what an action is bound to: `.combo(KeyShortcut)`,
   `.doubleTap(DoubleTapModifier)`, `.globe`, or `.doubleGlobe`.
-- `HotKeyCenter` — the Carbon `RegisterEventHotKey` layer, pausable.
-- `DoubleTapModifier` / `DoubleTapDetector` — the double-tap recognizer.
-- `GlobeTapDetector` / `ModifierTapMonitor` — Globe recognition and the shared modifier-only tap.
+- `HotKeyCenter` - the Carbon `RegisterEventHotKey` layer, pausable.
+- `DoubleTapModifier` / `DoubleTapDetector` - the double-tap recognizer.
+- `GlobeTapDetector` / `ModifierTapMonitor` - Globe recognition and the shared modifier-only tap.
 
 `HotKeyManager` owns them all: persistence, conflict lookup, and dispatch. Every action reads and
 writes one `HotKeyBinding`, so the four cases share persistence, conflict detection, the recorder and
-the keycap rendering — only the _engine_ differs.
+the keycap rendering - only the _engine_ differs.
 
 ## Invariants
 
 - **Hotkeys persist as JSON strings under `hotkey.<action>` UserDefaults keys**, and
-  `HotKeyAction.defaultsKey` is the one place that computes a key — it is also the `HotKeyCenter`
+  `HotKeyAction.defaultsKey` is the one place that computes a key - it is also the `HotKeyCenter`
   registration id, so the two cannot drift.
 - **A command's shortcut and its launcher row run the same funnel.** `HotKeyAction.command(CommandID)`
   is parameterised over the whole catalog and dispatches through `LauncherCoordinator.runCommand`, so a
@@ -41,7 +41,7 @@ the keycap rendering — only the _engine_ differs.
 
 ## Persistence
 
-Bindings persist as JSON strings under `hotkey.<action>` UserDefaults keys, computed in one place —
+Bindings persist as JSON strings under `hotkey.<action>` UserDefaults keys, computed in one place -
 `HotKeyAction.defaultsKey`, which doubles as the `HotKeyCenter` registration id. The set of bound
 bundle IDs lives in `boundAppBundleIDs` and is re-registered on launch. After every `AppIndex` scan,
 `HotKeyManager.removeAppBindings` clears the binding of an app that is gone from both the index and
@@ -55,7 +55,7 @@ Window management's shortcuts are also spelled as typeable chords (`ctrl+option+
 
 System Settings panes use `boundPaneBundleIDs`; custom commands, quicklinks, window layouts, rooms
 and custom window sizes use their stable UUIDs in `boundCustomCommandIDs`, `boundQuicklinkIDs`,
-`boundWindowLayoutIDs`, `boundWindowRoomIDs` and `boundCustomWindowSizeIDs`. Those five are the per-item case — unlike a fixed catalog, there is no `allCases` to walk — so each needs an index for `start()`
+`boundWindowLayoutIDs`, `boundWindowRoomIDs` and `boundCustomWindowSizeIDs`. Those five are the per-item case - unlike a fixed catalog, there is no `allCases` to walk - so each needs an index for `start()`
 to re-register from
 and to prune bindings whose record was deleted while Hudku wasn't running. That prune is why
 `QuicklinkStore` loads at launch even when the feature is off
@@ -73,18 +73,18 @@ travels in a backup, where an imported snippet lands at a new path
 
 `HotKeyBinding` takes the synthesised `Codable`, so a `.combo` writes
 `{"combo":{"_0":{"carbonKeyCode":N,"carbonModifiers":N}}}` and a `.doubleTap` writes
-`{"doubleTap":{"_0":"command"}}`. `KeyShortcut` keeps a hand-written `init(from:)` — not a format seam,
+`{"doubleTap":{"_0":"command"}}`. `KeyShortcut` keeps a hand-written `init(from:)` - not a format seam,
 but the guarantee that every decode runs through the initializer that masks device modifier bits off.
 `SettingsBackup.HotkeyBackup` stores the same values, so the backup file carries this shape too; only
 export → import within one build is guaranteed to round-trip.
 
 Every built-in command is bindable: `CommandID.hotKeyAction` answers `.command(self)` by default, and
-names the three exceptions. Open in Browser and Run Shell Command are query-driven — their input is the
-typed text a chord has none of — and Quit is withheld so no chord can terminate the app outright. The
+names the three exceptions. Open in Browser and Run Shell Command are query-driven - their input is the
+typed text a chord has none of - and Quit is withheld so no chord can terminate the app outright. The
 list is a deny-list rather than an allow-list, so a new command still arrives bindable without an edit
 there. A binding therefore persists under `hotkey.<command raw value>`, as in
 `hotkey.command:clipboard-history`, which is also what puts a recorder on the command's row and a
-keycap on every launcher row. That row is in exactly one pane — Settings ▸ Commands, or the feature's
+keycap on every launcher row. That row is in exactly one pane - Settings ▸ Commands, or the feature's
 own pane when `SettingsTab.ownedCommands` names it. `hotkey.togglePalette` is the one fixed action with
 no command row. `HotKeyManager` names them all through `CommandID`, so a conflict callout spells an
 action exactly as its command row does.
@@ -99,7 +99,7 @@ System actions and window commands are the fixed-catalog case: they persist unde
 `hotkey.systemAction.<raw-id>` and `hotkey.windowCommand.<raw-id>`
 and need **no** bound-ID index, because `start()` and `conflictOwner` can just iterate `allCases` and
 `register` no-ops on an unbound item. A registered window-command shortcut still runs nothing while the
-feature switch is off — `WindowCommandCoordinator.runWindowCommand` re-checks it (see
+feature switch is off - `WindowCommandCoordinator.runWindowCommand` re-checks it (see
 [window-management.md](window-management.md)); a system-action shortcut likewise goes through
 `SystemActionCoordinator.runSystemAction(id:)`, so the confirmation gate holds for a hotkey exactly as it does for the
 palette.
@@ -118,24 +118,24 @@ Keyboard settings if it conflicts. Globe+key chords use Carbon registration, lik
 
 ## Double-tap modifiers
 
-Any action can instead be bound to a **double-tapped lone modifier** — ⌃, ⌥, ⇧ or ⌘. Carbon cannot
+Any action can instead be bound to a **double-tapped lone modifier** - ⌃, ⌥, ⇧ or ⌘. Carbon cannot
 register a modifier-only shortcut at all, so this is a separate engine that meets the combo path only
 at `HotKeyBinding`.
 
 `DoubleTapDetector` is the recognizer: Foundation-only, pure, and clock-injected (`now` is a caller-
 supplied monotonic timestamp), so `Tests/hotkey-test.swift` drives it without an event tap. A **tap**
 is a press that starts from no modifiers held, keeps exactly one of the four held with no `fn`
-alongside, sees no key press or mouse click, and is released within `maxHold` (250 ms — the same
+alongside, sees no key press or mouse click, and is released within `maxHold` (250 ms - the same
 window `HyperKeyTap` calls a quick press). A **double-tap** is a second tap of the same modifier
 starting within `maxGap` (300 ms) of the first one's release.
 
 Only _momentary_ keys may feed `hasOtherModifiers`. Caps Lock must not: `maskAlphaShift` tracks the
 **latch**, not a press, so testing it would disqualify every tap for as long as Caps Lock is on and
-silently kill the feature. Caps Lock is still ineligible as a _binding_ — that is what the Hyper Key
+silently kill the feature. Caps Lock is still ineligible as a _binding_ - that is what the Hyper Key
 is for.
 
 It **fires on the second release, not the second press**. The modifier is then already up when the
-action runs, so the palette never opens with a phantom ⌘ held and focus restoration isn't polluted —
+action runs, so the palette never opens with a phantom ⌘ held and focus restoration isn't polluted -
 and "double-tap and hold" is a deliberate non-event.
 
 `ModifierTapMonitor` is the one platform file. It is a **listen-only** `CGEventTap` and it installs only
@@ -144,7 +144,7 @@ details are load-bearing:
 
 - It is `.tailAppendEventTap`, unlike the two head-inserted taps, so it observes events **after**
   `HyperKeyTap`'s rewrite. A Hyper-remapped right-side modifier therefore arrives as the full ⌃⌥⇧⌘
-  chord and correctly reads as "not a lone modifier" — the left-side twin still double-taps.
+  chord and correctly reads as "not a lone modifier" - the left-side twin still double-taps.
 - Like every keyboard tap it needs the **Accessibility** grant, and it never prompts for it. The
   binding records regardless; the recorder shows an inline warning that opens System Settings, and the
   one-second health timer installs the tap the moment the grant lands.
@@ -154,18 +154,18 @@ where a bare ⇧ combo would shadow typing.
 
 ## The Hyper Key
 
-`HyperKeyTap` turns one physical key — Caps Lock or a right-side modifier — into the ⌃⌥(⇧)⌘ chord
+`HyperKeyTap` turns one physical key - Caps Lock or a right-side modifier - into the ⌃⌥(⇧)⌘ chord
 system-wide. It is a **modifying** `CGEventTap`, a separate layer from `HotKeyCenter` because Carbon
 cannot intercept a lone key at all. The rewritten flags flow onward into Carbon matching, so existing
 combo hotkeys fire from Hyper+key with no extra registration.
 
-Which key is chosen persists as a `HyperKey` string raw value in `AppSettings` — renaming a case is a
+Which key is chosen persists as a `HyperKey` string raw value in `AppSettings` - renaming a case is a
 migration, and a removed case decodes to `.none`. **F-keys are deliberately not candidates:** the
 top-row media functions fire *below* the tap, so binding F1 as Hyper still dimmed the display.
 
 ### Caps Lock has to stop being Caps Lock
 
-The caps-lock toggle — both the LED and the latch — happens below every `CGEventTap`, so no tap can
+The caps-lock toggle - both the LED and the latch - happens below every `CGEventTap`, so no tap can
 suppress it. The key must therefore stop being Caps Lock **at the source**: while Caps Lock serves as
 Hyper, `CapsLockRemap` installs an IOKit `UserKeyMapping` remapping it to **F18**, the same mechanism
 `hidutil` uses. The tap then intercepts F18 in its place. The remap is cleared on unbind and on quit,
@@ -174,7 +174,7 @@ order instead of racing as independent detached tasks and leaving the wrong fina
 
 Because the remap is asynchronous, there is a fallback for the window before it takes hold: the key
 still arrives as Caps Lock, so the tap rides the modifier path instead. The LED toggles during that
-window — that is un-remapped HID behaviour, not something Hudku can stop.
+window - that is un-remapped HID behaviour, not something Hudku can stop.
 
 Once remapped, Caps Lock arrives as **keyDown/keyUp** rather than `flagsChanged`. Both ends are
 converted into Left Control `flagsChanged` transitions, so everything downstream sees the Hyper chord
@@ -189,7 +189,7 @@ is installed.
 ### Press tracking uses toggle semantics
 
 `flagsChanged` does not describe its own direction, so a modifier-style Hyper key is tracked by
-toggling. The obvious alternative — querying `CGEventSource` key state — **races the release**,
+toggling. The obvious alternative - querying `CGEventSource` key state - **races the release**,
 inverting the state machine and breaking Quick Press. A missed release therefore lingers only until
 the watchdog or the next press clears it. Work that posts events or touches IOKit is deferred to the
 next runloop turn rather than run inside the tap callback, where it would risk re-entrancy.
@@ -197,22 +197,22 @@ next runloop turn rather than run inside the tap callback, where it would risk r
 The flags OR'd into every rewritten event are the generic ⌃⌥(⇧)⌘ masks **plus the left-side device
 bits** (`NX_DEVICE…KEYMASK`, from `IOLLEvent.h`). Some consumers distinguish sides, and generic-only
 flags do not always read as fully pressed. The Hyper key's own residue is scrubbed in the same pass:
-Caps Lock's alpha-shift bit, or — for a key modifier outside the Hyper set — its generic mask and both
+Caps Lock's alpha-shift bit, or - for a key modifier outside the Hyper set - its generic mask and both
 device bits. Events the tap posts carry a `"TYCT"` marker in `.eventSourceUserData`, the same FourCC
 `HotKeyCenter` uses, so the tap never reacts to its own synthetics.
 
 A Quick Press key is posted with **`flags` cleared explicitly**, like every other synthetic in the app.
 A keyboard event built from `.combinedSessionState` inherits the source's modifiers, and the release
-that ended the hold is still in flight a runloop turn later — so the Escape went out as ⌃⌥⇧⌘Escape.
+that ended the hold is still in flight a runloop turn later - so the Escape went out as ⌃⌥⇧⌘Escape.
 Terminals read the raw `0x1B` and did not care; a focused field editor and any exact-match keymap
 swallowed it, which is why Quick Press worked in Ghostty but never in Zed or the palette itself.
 
 ### ✦ is the notation, not a preference
 
 Any combo whose modifiers are a superset of the chord renders with the Hyper set replaced by a single
-**✦** keycap — `✦G`, or `✦⇧G` when a modifier survives the subtraction. It is unconditional: there is
+**✦** keycap - `✦G`, or `✦⇧G` when a modifier survives the subtraction. It is unconditional: there is
 no toggle, because collapsing the chord is what the feature *is*. The one condition is a Hyper key
-being configured at all — `AppCore` hands `KeyShortcut.displayedHyperChord` a `nil` chord otherwise, and a
+being configured at all - `AppCore` hands `KeyShortcut.displayedHyperChord` a `nil` chord otherwise, and a
 literal ⌃⌥⌘G renders as itself. That hook is a **closure rather than a value** so reading it inside a
 view body registers the `AppSettings` dependency, and every keycap re-renders the moment a toggle moves.
 
@@ -221,12 +221,12 @@ view body registers the `AppSettings` dependency, and every keycap re-renders th
 A `KeyShortcut` stores absolute Carbon modifiers, captured from the already-rewritten flags, so a chord
 recorded under one Include Shift setting is stale under the other: it would stop collapsing to ✦ *and*
 stop firing, because Carbon is registered for ⌃⌥⌘ while the tap has started emitting ⌃⌥⇧⌘. So flipping
-the toggle re-points every stored combo — `HotKeyManager.retargetHyperBindings`, driven by the same
+the toggle re-points every stored combo - `HotKeyManager.retargetHyperBindings`, driven by the same
 `AppCore.track` observation the feature switches use, swapping the stale chord for the current one
 through `setBinding` so persistence and re-registration stay on one path. A re-point that would land on
 a chord another action already holds is skipped rather than clobbering it; that row keeps its literal
 keycaps. `retargetingHyper` is idempotent, which is what makes a settings import a no-op rather than a
-corruption. Nothing is re-pointed while the Hyper key is `.none` — and the Settings row is disabled
+corruption. Nothing is re-pointed while the Hyper key is `.none` - and the Settings row is disabled
 there, so the toggle cannot move without a chord to mean.
 
 ### Lifecycle
@@ -247,7 +247,7 @@ or double Globe taps by feeding its `.flagsChanged` / `.keyDown` monitors into t
 as the global monitor, so recording needs no event tap and no permission.
 
 Setting `recordingAction` is what starts and stops the capture, so there is exactly **one**
-`ShortcutCaptureSession` (`HotKeys/Service/`) for the app rather than one per row — which is what lets the
+`ShortcutCaptureSession` (`HotKeys/Service/`) for the app rather than one per row - which is what lets the
 callout above the field render the live state from outside the row that opened it. The field itself
 only ever shows the binding; the prompt, the live preview and the conflict message all live in the
 callout. See [ui.md](../ui.md#the-shortcut-recorder-callout).

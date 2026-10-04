@@ -51,7 +51,7 @@ enum Theme {
         static let attachmentChip: CGFloat = 8
         static let card: CGFloat = 10
         static let keyCap: CGFloat = 6
-        /// Settings shortcut-recorder keycap — smaller than the palette's `keyCap` chip.
+        /// Settings shortcut-recorder keycap - smaller than the palette's `keyCap` chip.
         static let recorderKeyCap: CGFloat = 4
         static let tooltip: CGFloat = 8
     }
@@ -96,7 +96,7 @@ enum Theme {
         static let calendarBarWidth: CGFloat = 3
         static let calendarBarHeight: CGFloat = 18
         static let keyCap: CGFloat = 18
-        /// Settings shortcut-recorder keycap — smaller than the palette's `keyCap` chip.
+        /// Settings shortcut-recorder keycap - smaller than the palette's `keyCap` chip.
         static let recorderKeyCap: CGFloat = 16
         /// Fixed so the recorder can't resize as its binding changes.
         static let shortcutRecorder: CGFloat = 120

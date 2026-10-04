@@ -2014,7 +2014,7 @@ $|dólar,dinero,peso
 •|bolo,boliche,punto,topo,viñeta
 ◦|bolo hueco,bolo,hueco
 ·|punto medio,alto,interpunto,medio,punto,punto centrado
-—|raya,guion largo
+-|raya,guion largo
 –|guion corto,guion,semimenos
 …|puntos suspensivos,elipsis,omisión,puntos
 «|comillas latinas de apertura,apertura,comillas angulares,comillas de apertura,comillas españolas,comillas francesas

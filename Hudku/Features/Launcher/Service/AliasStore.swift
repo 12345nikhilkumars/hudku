@@ -17,7 +17,7 @@ final class AliasStore {
 
     func alias(for entryKey: String) -> String? { aliases[entryKey] }
 
-    /// Stored as typed — trimming here would eat the space mid-word — but blank still means none.
+    /// Stored as typed - trimming here would eat the space mid-word - but blank still means none.
     func setAlias(_ alias: String, for entryKey: String) {
         let value = alias.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : alias
         guard aliases[entryKey] != value else { return }

@@ -36,7 +36,7 @@ commands and global shortcuts can show, search, or extend the collection.
 - **The user owns the window size.** AppKit resizes and autosaves the frame; the controller only
   clamps it to the floor below which the title bar's own parts collide.
 - **The editor is the one surface snippets expand into.** `NoteTextView` adopts `InjectableTextView`,
-  so a typed keyword — and the Snippets browser's ↵ — is written straight into the text storage
+  so a typed keyword - and the Snippets browser's ↵ - is written straight into the text storage
   rather than posted as events at whichever app happens to be frontmost. Quick Actions also read and
   replace its selected text in process. Nothing else in Hudku adopts it: see
   [snippets.md](snippets.md#text-delivery-and-pasteboard-safety).
@@ -68,11 +68,11 @@ in UserDefaults and does not ride settings backups.
 
 ## Derived titles
 
-A note still carrying a name `create` claimed — `Untitled`, `Untitled 2`, … — shows the first line of
+A note still carrying a name `create` claimed - `Untitled`, `Untitled 2`, … - shows the first line of
 its source that carries visible text. `NoteTitle` owns that rule: blank, rule and fence lines are
 skipped, block and inline Markdown markers are dropped whether or not rendering is on, and the line is
 capped to 120 characters so no row or title bar has to carry a paragraph. `NoteSummary.title` remains the filename; `displayTitle` is what every
-surface renders — switcher rows and their VoiceOver labels, the Trash confirmation, the window title,
+surface renders - switcher rows and their VoiceOver labels, the Trash confirmation, the window title,
 and the title band of `NoteSearch`, so a fuzzy query reaches a note nobody has named.
 
 `list()` reads at most 4 KB of each unnamed note to derive it, and a named note costs nothing beyond
@@ -93,7 +93,7 @@ coordinator through `@Environment`; it never receives `AppCore` or mutates the s
 Settings > Notes owns `AppSettings.notesEnabled`, which is false when absent. The pane lists **Show
 Notes**, **Create Note**, and **Search Notes** from `CommandCatalog`, so it can still render them while
 `AppIndex` omits them. It is their only pane: `SettingsTab.ownedCommands` names the three, which takes
-them out of Settings > Commands and out of reach of `Enable Commands` — Notes' own switch is the one
+them out of Settings > Commands and out of reach of `Enable Commands` - Notes' own switch is the one
 that decides they exist.
 
 `AppCore` observes enablement and calls `NotesCoordinator.applyEnabled()`. Disabling hides the panel,
@@ -109,7 +109,7 @@ failed flush retains the draft for retry.
 Command-N creates, Command-P opens or refocuses the switcher, Command-O opens the Notes folder, and
 Command-F opens AppKit's find bar in the active note. Escape closes the find bar or switcher before
 hiding; Command-W and the red traffic light both hide directly. Hiding
-restores the prior external application or Hudku window and flushes without delaying the order-out —
+restores the prior external application or Hudku window and flushes without delaying the order-out -
 but only while that app is still the frontmost one, so closing a window the user has already left behind
 leaves them in whatever app they moved to.
 Command-Q is bound to nothing app-wide, so no chord over Notes can quit Hudku.
@@ -125,7 +125,7 @@ The yellow and green traffic lights are disabled; double-clicking the free title
 unchanged window to the top-right of its current screen's visible area.
 
 The switcher is a borderless child window centred on its host and hung below the title bar, not an
-in-window screen — a note window may be 180pt tall, and the list must not be. It carries the same glass
+in-window screen - a note window may be 180pt tall, and the list must not be. It carries the same glass
 surface as a `PopoverMenu`, and its 240-point height is a ceiling rather than a size: the list reports
 its own height and the window shrinks to it with the top edge pinned. It travels with its host, dismisses
 like a popover when it resigns key, and closes outright when the last note goes. An empty query lists

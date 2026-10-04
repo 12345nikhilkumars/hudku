@@ -1,4 +1,4 @@
-# SwiftLint is the only code-quality tool here — there is no formatter, deliberately.
+# SwiftLint is the only code-quality tool here - there is no formatter, deliberately.
 # So this config sticks to rules that catch defects, and stays quiet
 # about style a formatter would otherwise own. See docs/standards.md.
 
@@ -16,7 +16,7 @@ excluded:
 disabled_rules:
   - todo                                      # tracked in issues, not by the linter
   - trailing_whitespace                       # cosmetic, and nothing auto-fixes it on save
-  - identifier_name                           # rejects `id`, `dx`, `x` — all correct here
+  - identifier_name                           # rejects `id`, `dx`, `x` - all correct here
   - type_body_length                          # a SwiftUI view is legitimately long
   - function_body_length
   - file_length                               # RootPaletteView is 662 lines by design
@@ -45,7 +45,7 @@ opt_in_rules:
   - unneeded_parentheses_in_closure_argument
   - weak_delegate
 
-# A `try!` is never acceptable. A `force_cast` sometimes is — the AX and AppKit bridges have four —
+# A `try!` is never acceptable. A `force_cast` sometimes is - the AX and AppKit bridges have four -
 # so it warns rather than blocks.
 force_try: error
 force_cast: warning

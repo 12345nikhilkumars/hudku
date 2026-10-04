@@ -6,9 +6,9 @@ and run from Return, a favorite slot, or an optional global shortcut. A command 
 [arguments](#arguments) it is asked for first, and may [show what it printed](#show-output) when it
 finishes.
 
-The pane carries the feature switch — off out of the box — and its launcher-visibility companion,
+The pane carries the feature switch - off out of the box - and its launcher-visibility companion,
 both in `AppSettings` and in settings backups. Switching the feature off empties the launcher section and makes
-`CustomCommandCoordinator.runCustomCommand` — the single funnel for palette activation and global shortcuts — refuse to
+`CustomCommandCoordinator.runCustomCommand` - the single funnel for palette activation and global shortcuts - refuse to
 run anything; Carbon registrations and their bindings stay put, so re-enabling restores every shortcut
 without re-registering. "Show in launcher" only hides the section; shortcuts keep working.
 
@@ -63,7 +63,7 @@ The command text is deliberately not searchable. Only the user-facing name enter
 - up to 8 KiB of standard error retained for a failure dialog
 - standard output discarded
 
-**Show output** takes a different route entirely — see [Show output](#show-output). Nothing else does.
+**Show output** takes a different route entirely - see [Show output](#show-output). Nothing else does.
 
 No Terminal window or pseudo-terminal is created. The exit wait blocks for the whole life of the
 command, so it runs on a private concurrent `DispatchQueue` rather than a cooperative-pool thread a
@@ -72,23 +72,23 @@ long `brew upgrade` would hold for minutes. The streaming path blocks the same q
 ### Load shell environment
 
 zsh reads `~/.zshrc` **only for interactive shells**, so the default `-lc` sees `.zprofile` and
-`.zlogin` and nothing else — a user's aliases, functions and `PATH` edits are all absent, and the
+`.zlogin` and nothing else - a user's aliases, functions and `PATH` edits are all absent, and the
 command exits **127**. That is the single most common way a custom command fails. The flag switches to
 `-ilc`, which sources the rc file.
 
 It is per-command and off by default, because turning it on runs whatever the user's shell startup
-does — oh-my-zsh's auto-update (`git pull`, network, seconds), powerlevel10k's `gitstatusd`,
+does - oh-my-zsh's auto-update (`git pull`, network, seconds), powerlevel10k's `gitstatusd`,
 `compinit` rewriting `~/.zcompdump`, or an `exec` that replaces the shell so the command never runs at
 all. `HUDKU=1` exists so an rc file can skip those sections: `[[ -n $HUDKU ]] && return`.
 
 Measured cost: ~10 ms for `-lc`, ~65 ms for `-ilc` against a real-world `~/.zshrc` (~11 ms against a
-minimal one — the interactive shell itself is ~2 ms, the rest is the user's own config).
+minimal one - the interactive shell itself is ~2 ms, the rest is the user's own config).
 
-Interactive prompts still cannot block. Standard input is `/dev/null` — or, under **Show output**, a
-pty already sent EOF — so a `read` gets EOF and
+Interactive prompts still cannot block. Standard input is `/dev/null` - or, under **Show output**, a
+pty already sent EOF - so a `read` gets EOF and
 returns non-zero, and a launchd-launched app has no controlling terminal, so `/dev/tty` fails with
 `device not configured`. A dev build launched _from a terminal_ inherits that terminal's tty, so an rc
-file reading `/dev/tty` can hang there but not for real users. There is **no timeout** — Hudku never kills a
+file reading `/dev/tty` can hang there but not for real users. There is **no timeout** - Hudku never kills a
 running command except through the output window's Stop button, and a command outlives Hudku
 quitting.
 
@@ -97,7 +97,7 @@ is dropped while the actual error survives.
 
 ### Arguments
 
-A command may declare **up to three** arguments, each a name and an optional/required flag — Raycast's
+A command may declare **up to three** arguments, each a name and an optional/required flag - Raycast's
 own cap, and what keeps the fields on screen. `CustomCommandArgument.sanitized` enforces it on every
 path in, so a stored or imported command carrying more keeps its first three and drops the rest, the
 way Raycast ignores an `argument4`. The editor's **Add** stops at three.
@@ -105,18 +105,18 @@ way Raycast ignores an `argument4`. The editor's **Add** stops at three.
 They are filled **inline beside the search field** when the command's row is selected in root search,
 as a quicklink's are (see [palette.md](palette.md#inline-row-arguments)).
 `CustomCommandArgumentsAccessory` builds the strip; Tab walks into it, and ↵ with a required field
-still empty focuses that field instead of running — Raycast's rule. An optional field left empty is
+still empty focuses that field instead of running - Raycast's rule. An optional field left empty is
 never marked as owed.
 
-**The fields are keyed by position, not name** — `CustomCommandArgument.fieldID(at:)`, `$1` to `$3` —
+**The fields are keyed by position, not name** - `CustomCommandArgument.fieldID(at:)`, `$1` to `$3` -
 because two arguments may share a name, and keying by name would give them one value and one focus.
 `CustomCommand.positionalValues(from:)` turns the fields back into `$n` order, or nil while a required
 one is empty.
 
 `runCustomCommand(id:values:)` is still the one funnel for every entry point. A launcher row hands it
 the typed values; a **global hotkey or favorite slot** hands it none. Either way, a required value still
-missing opens root search onto that command alone — the query seeded with its name, its row the only
-one listed, its first empty field focused — through `PaletteCoordinator.showArguments(of:values:)`.
+missing opens root search onto that command alone - the query seeded with its name, its row the only
+one listed, its first empty field focused - through `PaletteCoordinator.showArguments(of:values:)`.
 That is what Raycast does for a hotkey. The row is listed even when the command is hidden from the
 launcher, since its shortcut still has to be answered; typing anything else returns to a normal search.
 
@@ -144,13 +144,13 @@ assumed:
   a terminal. A command printing a line every 0.4 s delivered all four lines within 20 ms of each
   other, at exit.
 - **The order is wrong.** stderr stays unbuffered while stdout does not, so stderr overtakes the
-  stdout it followed. `print` / `write(stderr)` / `print` came out as 2, 1, 3 — through a *single
+  stdout it followed. `print` / `write(stderr)` / `print` came out as 2, 1, 3 - through a *single
   merged pipe*. Merging is not enough; only a terminal restores line buffering, and with it the
   order. Under a pty the same command printed 1, 2, 3.
 
 `PseudoTerminal` also spawns with `POSIX_SPAWN_SETSID`, which is what makes Stop honest: the command
 leads its own session, so one `kill(-pid)` reaches the whole `a && b && c` chain. `Process.terminate`
-signals only zsh — a `sleep` started behind it survives, verified.
+signals only zsh - a `sleep` started behind it survives, verified.
 
 The pty's stdin gets an EOT byte at spawn, which keeps the invariant a `/dev/null` stdin gave the
 pipe path: a command that prompts reads EOF and moves on rather than waiting on a terminal that will
@@ -163,7 +163,7 @@ about what ran), the log, and a footer with a status dot, the outcome and the el
 always there; the second control is **Stop** while it runs and **Run Again** once it has.
 
 Because a terminal makes tools colour their output, `ANSIInterpreter` renders SGR colour rather than
-printing the escapes — that is what replaces the old red-stderr tint, which was a mistake: stderr is
+printing the escapes - that is what replaces the old red-stderr tint, which was a mistake: stderr is
 where most tools log progress, so colouring it as an error made a successful `brew update` look
 broken. A bare carriage return rewinds its line, so a progress bar redraws in place instead of
 stacking a line per frame.
@@ -171,7 +171,7 @@ stacking a line per frame.
 The log is an `NSTextView` and only the undrawn tail is appended; a quarter-megabyte of output
 re-laid-out per line is seconds of work. The run publishes each append as an explicit `delta` and
 `revision`, so the view adds just that when it is exactly one step behind and redraws from the whole
-log otherwise — a new run, a trim, or a window reopened onto a finished one. Past 256 KiB the head is dropped. Following the tail stops
+log otherwise - a new run, a trim, or a window reopened onto a finished one. Past 256 KiB the head is dropped. Following the tail stops
 when the reader scrolls up and resumes when they reach the bottom, the same band the chat transcript
 uses.
 
@@ -189,7 +189,7 @@ the success pill is skipped for the same reason.
 #### The ad-hoc run
 
 The launcher's **Run Shell Command** fallback (see [launcher.md](launcher.md#fallbacks)) is a
-`CustomCommand` that is built, run and thrown away — same `streamOutput`, same window, same Stop
+`CustomCommand` that is built, run and thrown away - same `streamOutput`, same window, same Stop
 button. It is not gated on `customCommandsEnabled`: that switch governs a library of saved commands,
 not a line someone types on purpose, and the fallback's own checkbox is its switch. Because it has no
 library entry, `rerunOutput` checks `lastShellCommand` before falling through to `runCustomCommand`,
@@ -201,7 +201,7 @@ Each command may name the folder it starts in; empty means the home directory, w
 command did before. The path is stored abbreviated, so a `~` one survives a home directory that
 moves, and expanded at run time.
 
-A folder that has gone is **reported rather than ignored** — `resolvedWorkingDirectory` returns nil
+A folder that has gone is **reported rather than ignored** - `resolvedWorkingDirectory` returns nil
 and the run fails with the path in the message. Falling back to home would run a command somewhere it
 did not expect, which is worse than not running it. A path that exists but is a file is refused the
 same way.
@@ -210,7 +210,7 @@ same way.
 
 A command may carry its own SF Symbol; without one it draws `CustomCommand.sfSymbol`, the shared
 terminal glyph. `CustomCommand.symbol` is the one place that fallback lives, and every surface reads
-it — the launcher row, the Settings list, the confirmation and failure dialogs, and the output
+it - the launcher row, the Settings list, the confirmation and failure dialogs, and the output
 window's header. The picker is `DesignSystem/SymbolPicker`, shared with the quicklink editor, which
 supplies its own symbol list: what reads as a quicklink is not what reads as a script.
 
@@ -220,7 +220,7 @@ supplies its own symbol list: what reads as a quicklink is not what reads as a s
 so the gate lives there and neither path can bypass it. The palette hides before the dialog it is a
 floating panel and would sit above it. The dialog shows the command text as well as its name; ↵ runs
 it and Escape cancels, with Cancel rendered on the left of the two buttons. It carries the `terminal`
-glyph the command's launcher row uses, and reads neutral rather than destructive — running a command the
+glyph the command's launcher row uses, and reads neutral rather than destructive - running a command the
 user wrote themselves wants a deliberate second tap, not a red alarm. The gate is Hudku's own
 dialog, not an `NSAlert` ([ui.md](../ui.md#dialogs--hud)): presentation is `async` with no nested run loop,
 and the presenter itself refuses a second dialog while one is up, so a held shortcut can't stack them.
@@ -228,7 +228,7 @@ and the presenter itself refuses a second dialog while one is up, so a held shor
 ### Show confirmation
 
 The pill shows the command's **last line of output**, falling back to `Ran <name>` for one that
-printed nothing — a command that says "3 files cleaned" is worth more than one that says it ran. Only
+printed nothing - a command that says "3 files cleaned" is worth more than one that says it ran. Only
 the non-streaming path fills this: `run` keeps a 4 KiB stdout tail purely to find that line, and a
 command showing its output reports through the window instead.
 
@@ -238,7 +238,7 @@ Hudku dismisses an open palette before starting a custom command. With **Show ou
 exit status is silent; a launch failure or non-zero status opens a Hudku dialog with the bounded
 error detail. When the
 status is 127 and **Load shell environment** is off, the dialog adds a one-line hint and an **Open
-Settings…** button that lands on the Commands pane — the hint is gated on the status alone, not
+Settings…** button that lands on the Commands pane - the hint is gated on the status alone, not
 on grepping stderr, since 127 is equally a plain typo. The command string itself is never logged.
 
 ### Manual checks
@@ -252,19 +252,19 @@ Foundation-only harness. Verify by hand:
 4. A gated command triggered by hotkey with no palette open still confirms.
 5. An rc-file-only alias with the flag off shows the 127 hint, and **Open Settings…** opens the pane.
 6. A command with arguments triggered by hotkey opens root search on that row alone, first required
-   field focused — including a command hidden from the launcher.
+   field focused - including a command hidden from the launcher.
 7. A gated command with arguments asks for every value first, and confirms only once.
 8. Running a second output-showing command reuses the one window and does **not** kill the first.
 9. A long command's output appears while it runs, not at the end; scrolling up stops the follow.
-10. Stop during `brew update` leaves nothing behind — check with `pgrep -f brew`.
+10. Stop during `brew update` leaves nothing behind - check with `pgrep -f brew`.
 11. Clicking the Dock icon while a command runs raises the output window, not the launcher.
 12. **Run Again clears the log before the new run prints.** The view draws deltas, so it keys what
-    it has drawn on the run's id as well as the trim counter — a fresh run starts back at revision
+    it has drawn on the run's id as well as the trim counter - a fresh run starts back at revision
     zero, and keying on the counter alone left the previous run's output on screen.
 13. **Import Raycast Scripts** opens a folder chooser, then a warning dialog; Cancel there imports
     nothing. A folder holding no script commands says so instead of reporting zero.
 14. Re-importing the same folder says nothing was left to import, rather than reporting zero.
-15. An imported command with arguments asks for them and the script receives them — the `"$@"`
+15. An imported command with arguments asks for them and the script receives them - the `"$@"`
     forwarding has no harness coverage of the inline fields that fill it.
 16. Two arguments sharing a name are separate fields; ↵ with a required one empty focuses it.
 
@@ -281,7 +281,7 @@ and runs on a detached task because it opens every file in the folder.
 
 A file becomes a command only when it has **both** a shebang and an `@raycast.title`. Both are
 mandatory in Raycast's own format, so anything failing either is a helper script the user keeps
-alongside their commands, not a command — leaving them out is what lets one folder hold both. Only the
+alongside their commands, not a command - leaving them out is what lets one folder hold both. Only the
 first 8 KiB of a file is read: the shebang and the metadata block are always at the top, and a
 script's body can run to megabytes.
 
@@ -309,10 +309,10 @@ The generated command text is the shebang's interpreter, the script's path singl
 
 Naming the interpreter rather than executing the file means the import never has to `chmod` a user's
 script. The `"$@"` matters: [the runner](#execution-contract) puts argument values on **zsh's**
-positional list, so without forwarding them the script would see none — and forwarding them quoted is
+positional list, so without forwarding them the script would see none - and forwarding them quoted is
 what keeps the [never-spliced invariant](#invariants) true across the extra hop.
 
 An import warns before it applies, the same as a backup carrying custom commands, and it goes in as
-one `CustomCommandStore.add(contentsOf:)` — one persist and one launcher rebuild for the whole folder
+one `CustomCommandStore.add(contentsOf:)` - one persist and one launcher rebuild for the whole folder
 rather than one per script. A name already in the library is skipped and counted, so re-importing a
 folder after adding one script to it adds only that script.

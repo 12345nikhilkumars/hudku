@@ -19,7 +19,7 @@ struct SelectionRevealTests {
             passes += 1
         } else {
             failures += 1
-            print("FAIL: \(message) — got \(String(describing: actual)), want \(expected as Any)")
+            print("FAIL: \(message) - got \(String(describing: actual)), want \(expected as Any)")
         }
     }
 

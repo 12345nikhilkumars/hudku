@@ -50,7 +50,7 @@ enum ImageThumbnail {
         return image
     }
 
-    /// Pixel dimensions read from image metadata — no full decode.
+    /// Pixel dimensions read from image metadata - no full decode.
     static func pixelSize(of url: URL) -> CGSize? {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
             let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],

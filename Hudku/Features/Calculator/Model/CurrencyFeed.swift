@@ -9,7 +9,7 @@ enum CurrencyFeed {
         let quotes: [String: Double]
     }
 
-    /// Crypto is quoted the other way round — one unit costs this much of `target`.
+    /// Crypto is quoted the other way round - one unit costs this much of `target`.
     private struct CryptoPayload: Decodable {
         let success: Bool
         let target: String

@@ -23,7 +23,7 @@ A backup carries five independently selectable categories, ticked on export and 
   arm **Run Shell Command** in someone's launcher. This change adds *content*, never a capability.
 - **No absolute path may enter a `.hudku`.** A clip's `imagePath` names a file on the Mac that wrote
   it, so `BackupClipboardItem` carries a bundle-relative `imageName` instead. `backup-archive-test`
-  asserts the produced file contains neither `/Users` nor `/Library` — the analogue of
+  asserts the produced file contains neither `/Users` nor `/Library` - the analogue of
   `settings-backup-test`'s `snippetsEnabled` check, and for the same reason: this file gets sent to
   people.
 - **The file carries a format version and a reader accepts only its own.** That is a guard, not a
@@ -33,7 +33,7 @@ A backup carries five independently selectable categories, ticked on export and 
   extension is third-party code and third-party data; chat history and API keys stay on the Mac that
   had them; a cache regenerates on its own.
 - **`BackupCategory` names every category, and its `descriptor` switch is exhaustive.** A new case
-  fails to build until it names a label, a symbol, a bundle subpath and a count noun — the same
+  fails to build until it names a label, a symbol, a bundle subpath and a count noun - the same
   bargain `AppEntry.Kind` makes, and why the bundle layout is never spelled out twice.
 
 ## Layout
@@ -77,7 +77,7 @@ import picker greys a row out instead of importing nothing and saying nothing.
 **Clipboard history is JSONL, everything else is JSON.** A single JSON array of 200,000 clips has to be
 built in memory to encode and again to decode; a line per clip is one small encode through an open
 `FileHandle` on the way out and one mapped read on the way back. Splitting on `\n` is legal precisely
-because a newline inside a clip is escaped as `\n` by the encoder and can never appear raw —
+because a newline inside a clip is escaped as `\n` by the encoder and can never appear raw -
 `backup-archive-test` asserts the line count equals the clip count for exactly that reason.
 
 **AppleArchive, LZFSE, and a deliberately narrow keyset.** `"TYP,PAT,DAT,MOD,MTM"` rather than
@@ -88,7 +88,7 @@ payload and are already compressed.
 
 **Extraction is filtered, not trusted.** `BackupArchive.open` passes an `ArchiveHeader.EntryFilter`
 that returns `.skip` for any entry whose path is absolute or contains `..`, and then refuses an extract
-holding a symbolic link — a link entry names no `..` at all, so the path filter passes it, and reading
+holding a symbolic link - a link entry names no `..` at all, so the path filter passes it, and reading
 through one would leave the tree the caller chose. Composing resolves a link for the same reason, so a
 symlinked note travels as a file. `backup-archive-test` builds both hostile archives header-by-header
 and asserts nothing escapes.
@@ -102,22 +102,22 @@ anything a day old on the next run, since a run killed mid-flight leaves its tre
 
 `SettingsBackupCoverage` holds three tables:
 
-- `mirrored` — each `SettingsData` field paired with the `AppSettings` key it carries.
-- `externallySourced` — fields no `AppSettings` key stands behind, each saying what it reads instead.
+- `mirrored` - each `SettingsData` field paired with the `AppSettings` key it carries.
+- `externallySourced` - fields no `AppSettings` key stands behind, each saying what it reads instead.
   `launchAtLogin` comes from `LaunchAtLogin`, which owns the login item.
-- `deliberatelyExcluded` — keys kept out on purpose, each with its reason as a string.
+- `deliberatelyExcluded` - keys kept out on purpose, each with its reason as a string.
 
 `settings-backup-test` asserts that every `AppSettingsKey` appears in exactly one table, that no field
 claims a key twice, that every exclusion names a real key and carries a non-empty reason, and that each
-capability-granting key — `snippetsEnabled`, `extensionsEnabled`, `calendarEnabled`,
-`autoJoinMeetings`, `cameraPreview`, `quickActionsEnabled` — is named individually as excluded. The
+capability-granting key - `snippetsEnabled`, `extensionsEnabled`, `calendarEnabled`,
+`autoJoinMeetings`, `cameraPreview`, `quickActionsEnabled` - is named individually as excluded. The
 duplication between `AppSettings` and this file is the point: it forces a decision about every new
 setting rather than defaulting it into a backup.
 
 ## Importing
 
 Applying an import writes through `AppSettings` like any other change, so feature switches reproject into
-the launcher through the normal observation path. An import reports a summary of what it applied — it is
+the launcher through the normal observation path. An import reports a summary of what it applied - it is
 not silent, because a settings file that quietly changes hotkeys is hostile.
 
 Per category:

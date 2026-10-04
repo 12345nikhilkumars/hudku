@@ -61,7 +61,7 @@ enum ColorFormat: CaseIterable, Hashable, Sendable {
     }
 }
 
-/// The digits a notation is spelled in — private, because writing a colour is this file's business.
+/// The digits a notation is spelled in - private, because writing a colour is this file's business.
 private enum ColorDigits {
     /// Uppercase, the spelling a hex colour is conventionally written in.
     static func hex(_ color: ColorValue, includingAlpha: Bool) -> String {

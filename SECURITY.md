@@ -17,12 +17,12 @@ Current stable and beta only. Update (`brew upgrade --cask hudku`) before report
 
 Of particular interest:
 
-- **Accessibility (TCC)** — anything that widens what the paste grant enables.
-- **Clipboard history** — text and images cached on disk; unintended exposure or capture.
-- **Network** — Hudku is offline by default and every networked feature is consent-gated. A path
+- **Accessibility (TCC)** - anything that widens what the paste grant enables.
+- **Clipboard history** - text and images cached on disk; unintended exposure or capture.
+- **Network** - Hudku is offline by default and every networked feature is consent-gated. A path
   that reaches the network without consent, or survives consent being withdrawn, is high severity.
-- **Hotkeys** — the in-house hotkey stack and the Input Monitoring grant.
-- **Signing and distribution** — the DMG and Homebrew cask chain.
+- **Hotkeys** - the in-house hotkey stack and the Input Monitoring grant.
+- **Signing and distribution** - the DMG and Homebrew cask chain.
 
 Out of scope: builds being self-signed rather than notarized (known, see
 [`docs/signing.md`](docs/signing.md)), and anything needing existing code execution or admin rights on

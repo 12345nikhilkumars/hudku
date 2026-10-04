@@ -98,13 +98,13 @@ struct CalculatorHistoryScreen: PaletteScreen {
         }
     }
 
-    /// ⌘⌫ / ⌃X — the screen owns the chord, but the inline card can't be deleted.
+    /// ⌘⌫ / ⌃X - the screen owns the chord, but the inline card can't be deleted.
     private func delete(at selection: Int) {
         guard let entry = entry(at: selection) else { return }
         history.remove(entry)
     }
 
-    /// ⌃⇧X — mirrors the Actions row, confirmation included; the live inline card isn't history.
+    /// ⌃⇧X - mirrors the Actions row, confirmation included; the live inline card isn't history.
     private func deleteAll() {
         Task { await core.calculatorCoordinator.deleteAllHistory() }
     }

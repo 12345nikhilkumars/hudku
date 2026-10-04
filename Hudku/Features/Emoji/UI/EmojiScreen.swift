@@ -35,7 +35,7 @@ struct EmojiScreen: PaletteScreen {
             filter: vm.emojiCategoryFilter, columns: columns)
     }
 
-    /// Flat grid order across sections — what the selection indexes.
+    /// Flat grid order across sections - what the selection indexes.
     var rows: [EmojiEntry] { sections.flatMap(\.entries) }
 
     var primaryActionTitle: String { "Copy Emoji" }

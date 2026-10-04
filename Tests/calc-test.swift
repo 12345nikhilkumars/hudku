@@ -40,7 +40,7 @@ struct CalcTests {
         expectDisplay("2**3**2", "512")  // right-associative, same as "^"
         expectDisplay("(5+2)*3", "21")
         expectDisplay("5!", "120")
-        expectDisplay("3!!", "720")  // (3!)! — chained postfix
+        expectDisplay("3!!", "720")  // (3!)! - chained postfix
         expectDisplay("-5+3", "-2")
         expectDisplay("-2^2", "-4")  // unary minus binds looser than ^
         expectDisplay("10/4", "2.5")
@@ -48,7 +48,7 @@ struct CalcTests {
         expectDisplay("2.5 * 4", "10")
         expectDisplay("1,000 + 234", "1,234")  // grouping commas accepted in input
 
-        // Compact thousands suffix — attached `k` is a number suffix; spaced `k` remains Kelvin
+        // Compact thousands suffix - attached `k` is a number suffix; spaced `k` remains Kelvin
         expectDisplay("10k", "10,000")
         expectCopy("10k", "10000")
         expectDisplay("2.5K", "2,500")
@@ -85,7 +85,7 @@ struct CalcTests {
         expectDisplay("10em", "160 px")  // partial "e" isn't an exponent, so `em` stays a unit
         expectDisplay("1e3k + 1", "1,000,001")  // exponent then compact suffix, both applied
 
-        // Exact up to 2^53, past the old 1e15 cutoff — truncating these lost real digits on copy
+        // Exact up to 2^53, past the old 1e15 cutoff - truncating these lost real digits on copy
         expectDisplay("2^49", "562,949,953,421,312")
         expectDisplay("2^50", "1,125,899,906,842,624")
         expectCopy("2^50", "1125899906842624")
@@ -138,7 +138,7 @@ struct CalcTests {
         expectDisplay("2*(3)kg", "6 kg")
         expectDisplay("2(3)kg x 2", "12 kg")
 
-        // Scientific notation — only when the exponent hugs the mantissa
+        // Scientific notation - only when the exponent hugs the mantissa
         expectDisplay("1e5", "100,000")
         expectDisplay("2e10", "20,000,000,000")
         expectDisplay("1E5", "100,000")
@@ -148,8 +148,8 @@ struct CalcTests {
         expectDisplay("2e10/2", "10,000,000,000")
         expectDisplay("1e5 to hex", "0x186A0")
         expectDisplay("5e-3km", "0.003106855961 mi")
-        expectDisplay("2e", "5.436563657")  // no digits after "e" — still 2 × Euler's e
-        expectDisplay("1 e", "2.718281828")  // detached — never an exponent
+        expectDisplay("2e", "5.436563657")  // no digits after "e" - still 2 × Euler's e
+        expectDisplay("1 e", "2.718281828")  // detached - never an exponent
         expectNil("1e400")  // overflows to infinity, so not calculator input
         expectNil("1e308k")
         expectNil("-1e308k")
@@ -167,7 +167,7 @@ struct CalcTests {
         expectDisplay("450 - 15%", "382.5")
         expectDisplay("20%", "0.2")
 
-        // Modulo — spelled out, so it never competes with the percent cases above
+        // Modulo - spelled out, so it never competes with the percent cases above
         expectDisplay("10 mod 3", "1")
         expectDisplay("17 mod 5", "2")
         expectDisplay("10k mod 3", "1")
@@ -177,7 +177,7 @@ struct CalcTests {
         expectNil("10 % 3")  // "%" stays percent, whatever follows it
         expectDisplay("450 + 20% - 5", "535")
 
-        // Unit conversion — length / weight / temperature / time / area / volume / storage
+        // Unit conversion - length / weight / temperature / time / area / volume / storage
         expectDisplay("10km to mi", "6.213711922 mi")
         expectDisplay("10 km in miles", "6.213711922 mi")
         expectDisplay("5ft in cm", "152.4 cm")
@@ -310,7 +310,7 @@ struct CalcTests {
         expectNil("100 c")
         expectNil("32f")
 
-        // Unit expressions — addition/subtraction converts the RHS and keeps the leftmost unit
+        // Unit expressions - addition/subtraction converts the RHS and keeps the leftmost unit
         expectDisplay("10kg + 5kg", "15 kg")
         expectCopy("10kg + 5kg", "15 kg")
         expectExpression("10kg + 5kg", "10 kg + 5 kg")
@@ -465,7 +465,7 @@ struct CalcTests {
         expectDisplay("8hr * 25 USD/hr", "200.00 USD")
         expectDisplay("25 USD/hr to EUR/min", "0.3833333333 EUR/min")
         expectDisplay("25 USD/hr / 23 EUR/hr", "1")
-        expectErrorWithoutRates("25 USD/hr to EUR/hr", "Exchange rates unavailable — check your connection.")
+        expectErrorWithoutRates("25 USD/hr to EUR/hr", "Exchange rates unavailable - check your connection.")
         expectError("2 celsius * 3m", "Multiplication of these unit values is not supported.")
         expectDisplay("1 / 1kg", "1 kg^-1")
         expectDisplay("(2m)^2", "4 m²")
@@ -611,7 +611,7 @@ struct CalcTests {
         expectDisplay("1234kg + 1kg", "1,235 kg")
         expectCopy("1234kg + 1kg", "1235 kg")
 
-        // Date/time — evaluated against a fixed clock: Fri 2026-07-24 00:18 UTC
+        // Date/time - evaluated against a fixed clock: Fri 2026-07-24 00:18 UTC
         expectDisplayAt("hrs till 9am", "8.7 hours")
         expectBadgesAt("hrs till 9am", source: "12:18 AM", target: "9:00 AM")
         expectDisplayAt("hrs till july", "8,207.7 hours")
@@ -693,7 +693,7 @@ struct CalcTests {
         expectBadges("3*3", source: "Expression", target: "Result")
         expectBadges("20% off 500", source: "Expression", target: "Discounted")
 
-        // days since — past elapsed, against the fixed clock (Fri 2026-07-24)
+        // days since - past elapsed, against the fixed clock (Fri 2026-07-24)
         expectDisplayAt("days since 9jul", "15 days")
         expectBadgesAt("days since 9jul", source: "Thursday, 9 July", target: "Friday, 24 July")
         expectDisplayAt("weeks since 3jul", "3 weeks")
@@ -701,7 +701,7 @@ struct CalcTests {
         // The answer's weekday is the badge, so the date itself does not repeat it.
         expectBadgesAt("today + 3 weeks", source: "Friday, 24 July", target: "Friday")
 
-        // Currency — against the fixed `fx` table below (1 USD = 0.92 EUR = 0.79 GBP = 157 JPY)
+        // Currency - against the fixed `fx` table below (1 USD = 0.92 EUR = 0.79 GBP = 157 JPY)
         expectDisplay("1 euro to dollars", "1.09 USD")
         expectExpression("1 euro to dollars", "1 EUR")
         expectBadges("1 euro to dollars", source: "Euro", target: "US Dollar")
@@ -734,7 +734,7 @@ struct CalcTests {
         // A known currency the snapshot doesn't quote, and no snapshot at all
         expectError("5 usd to npr", "No exchange rate for NPR.")
         expectErrorWithoutRates(
-            "1 eur to usd", "Exchange rates unavailable — check your connection.")
+            "1 eur to usd", "Exchange rates unavailable - check your connection.")
         expectNil("10 usd to nonsense")
         expectNil("usd")  // a lone code is still an app search
         expectNil("btc")  // …and a lone ticker no more than a lone code
@@ -752,7 +752,7 @@ struct CalcTests {
         // Badges come from CLDR's label, which is shorter than the registry name where it matters
         expectBadges("1 chf to usd", source: "Swiss Franc", target: "US Dollar")
         expectBadges("1 aed to usd", source: "UAE Dirham", target: "US Dollar")
-        // Nouns only one currency claims are generated — nobody hand-typed these
+        // Nouns only one currency claims are generated - nobody hand-typed these
         expectError("1 zloty to usd", "No exchange rate for PLN.")
         expectError("1 forint to usd", "No exchange rate for HUF.")
         expectError("1 taka to usd", "No exchange rate for BDT.")
@@ -774,7 +774,7 @@ struct CalcTests {
         // Slang is no longer carried: CLDR has no "quid", and we don't hand-maintain synonyms
         expectNil("50 quid to usd")
         expectNil("100 bucks to eur")
-        // The last word of a name isn't always its noun — Special Drawing Rights.
+        // The last word of a name isn't always its noun - Special Drawing Rights.
         expectNil("1 rights to usd")
         // A result too small to show at all reads as a clean zero, never "-0.00"
         expectDisplay("-0.0000000000001 usd to eur", "0.00 EUR")
@@ -783,7 +783,7 @@ struct CalcTests {
         // CUP (Cuban peso) is a generated code that collides with a unit; volume still wins
         expectDisplay("1 cup to ml", "236.5882365 mL")
 
-        // Currency expressions — still pure and deterministic against the injected rate table
+        // Currency expressions - still pure and deterministic against the injected rate table
         expectDisplay("10$", "10.00 USD")
         expectExpression("10$", "10 USD")
         expectBadges("10$", source: "Expression", target: "US Dollar")
@@ -832,13 +832,13 @@ struct CalcTests {
         expectDisplay("$5(2) to eur", "9.20 EUR")
         expectError("$10 + 5kg", "Cannot add Currency and Weight.")
         expectErrorWithoutRates(
-            "$10 + $5", "Exchange rates unavailable — check your connection.")
+            "$10 + $5", "Exchange rates unavailable - check your connection.")
         expectErrorWithoutRates(
-            "$100 * 3%", "Exchange rates unavailable — check your connection.")
+            "$100 * 3%", "Exchange rates unavailable - check your connection.")
         expectErrorWithoutRates(
-            "10$", "Exchange rates unavailable — check your connection.")
+            "10$", "Exchange rates unavailable - check your connection.")
 
-        // Crypto — priced by the same table, so a coin converts against fiat with no special case
+        // Crypto - priced by the same table, so a coin converts against fiat with no special case
         expectDisplay("1 btc to usd", "60,000.00 USD")
         expectDisplay("1 bitcoin to usd", "60,000.00 USD")
         expectDisplay("0.5 sol to eur", "46.00 EUR")
@@ -907,7 +907,7 @@ struct CalcTests {
             "feed reported failure",
             fiat: Data(#"{"success":false,"source":"USD","quotes":{"USDEUR":0.9}}"#.utf8))
 
-        // Slashed rate spellings — the tokenizer keeps a known `unit/unit` whole
+        // Slashed rate spellings - the tokenizer keeps a known `unit/unit` whole
         expectDisplay("100 km/h to mph", "62.13711922 mph")
         expectDisplay("60 mph in km/h", "96.56064 km/h")
         expectDisplay("5 m/s to km/h", "18 km/h")
@@ -1784,7 +1784,7 @@ struct CalcTests {
     /// A pair whose base isn't the source and a nonsense rate, both of which must be dropped.
     static let fiatJSON = Data(
         #"{"success":true,"source":"USD","quotes":{"USDEUR":0.9,"EURGBP":0.8,"USDBAD":-1}}"#.utf8)
-    /// Quoted the other way round — 1 BTC costs 20,000 USD, so the table stores 0.00005.
+    /// Quoted the other way round - 1 BTC costs 20,000 USD, so the table stores 0.00005.
     static let cryptoJSON = Data(#"{"success":true,"target":"USD","rates":{"BTC":20000}}"#.utf8)
 
     // MARK: - Helpers
@@ -1879,7 +1879,7 @@ struct CalcTests {
         check(query, expected: expected, got: message)
     }
 
-    /// No snapshot has landed yet — first run, or still offline.
+    /// No snapshot has landed yet - first run, or still offline.
     static func expectErrorWithoutRates(_ query: String, _ expected: String) {
         guard
             case .error(let message)? = CalcEngine.evaluate(

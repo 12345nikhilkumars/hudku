@@ -16,7 +16,7 @@ struct VolumeLevelTests {
     }
 
     static func expect(_ actual: Double, _ expected: Double, _ message: String) {
-        expect(abs(actual - expected) < 1e-9, "\(message) — got \(actual), want \(expected)")
+        expect(abs(actual - expected) < 1e-9, "\(message) - got \(actual), want \(expected)")
     }
 
     static func main() {

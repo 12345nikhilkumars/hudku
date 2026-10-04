@@ -76,7 +76,7 @@ struct RootPaletteView: View {
         count == 0 ? 0 : min(max(vm.selection, 0), count - 1)
     }
 
-    /// Takes a resolved screen — reaching `rows` costs a list build, so callers resolve it once.
+    /// Takes a resolved screen - reaching `rows` costs a list build, so callers resolve it once.
     private func selection(in screen: any PaletteScreen) -> Int {
         selection(count: screen.rows.count)
     }
@@ -480,7 +480,7 @@ struct RootPaletteView: View {
                 guard !isCollapsed else { return .handled }
                 let screen = screen
                 guard !screen.rows.isEmpty || screen.actsWithoutRows else { return .handled }
-                // An error calc card is the selection but has no actions — don't open an empty panel.
+                // An error calc card is the selection but has no actions - don't open an empty panel.
                 guard screen.hasPrimaryAction(at: selection(in: screen)) else { return .handled }
                 // Same for a menu the footer doesn't offer: ⌘K opens exactly what the bar advertises.
                 guard screen.hasActions(at: selection(in: screen)) else { return .handled }
@@ -522,7 +522,7 @@ struct RootPaletteView: View {
             .windowDraggable(settings.paletteDraggable, onBegan: beginDrag, onEnded: endDrag)
     }
 
-    /// A header sliver nothing occupies — safe to drag; the search field handles its own.
+    /// A header sliver nothing occupies - safe to drag; the search field handles its own.
     private func headerGutter(width: CGFloat) -> some View {
         Color.clear
             .frame(width: width)
@@ -622,7 +622,7 @@ struct RootPaletteView: View {
         vm.mode.placeholder
     }
 
-    /// The one search field — empty it's a drag handle, and any text hands every press to editing.
+    /// The one search field - empty it's a drag handle, and any text hands every press to editing.
     private var searchField: some View {
         @Bindable var vm = vm
         return TextField("", text: $vm.query)
@@ -645,7 +645,7 @@ struct RootPaletteView: View {
             }
             // The prompt used to carry this; without it the field would be unlabelled.
             .accessibilityLabel(Text(searchPrompt))
-            // Never branches on query — that tore down the field editor mid-keystroke once.
+            // Never branches on query - that tore down the field editor mid-keystroke once.
             .overlay {
                 if settings.paletteDraggable {
                     EmptyFieldDragHandle(
@@ -1017,7 +1017,7 @@ struct RootPaletteView: View {
         _ = screen.perform(shortcut, at: selection(in: screen))
     }
 
-    /// A ring hop leaves a step back — except the hop closing the ring on the launcher, its root.
+    /// A ring hop leaves a step back - except the hop closing the ring on the launcher, its root.
     private func cycleMode() {
         switch PaletteTabAction.resolve(
             mode: vm.mode, clipboardEnabled: settings.clipboardEnabled)

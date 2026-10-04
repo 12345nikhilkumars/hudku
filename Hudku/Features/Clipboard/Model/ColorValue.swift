@@ -104,7 +104,7 @@ extension ColorValue {
             || ((byte | 0x20) >= UInt8(ascii: "a") && (byte | 0x20) <= UInt8(ascii: "f"))
     }
 
-    /// `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa` — the four lengths CSS defines.
+    /// `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa` - the four lengths CSS defines.
     private static func parseHex(_ digits: Substring) -> ColorValue? {
         // ASCII, since `isHexDigit` also accepts the fullwidth forms no colour is written in.
         guard digits.allSatisfy({ $0.isASCII && $0.isHexDigit }) else { return nil }
@@ -182,7 +182,7 @@ extension ColorValue {
         text.hasSuffix("%") ? component(text, scale: 1) : nil
     }
 
-    /// Comma-separated or space-with-slash, never mixed — so the comma decides which is read.
+    /// Comma-separated or space-with-slash, never mixed - so the comma decides which is read.
     private static func arguments(of body: Substring) -> [String]? {
         let parts: [String]
         if body.contains(",") {

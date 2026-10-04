@@ -21,7 +21,7 @@ MARKER="<!-- hudku:install -->"
 DISCORD_BUDGET=1200
 DISCORD_BULLETS=15
 
-# Beta and stable tags interleave on main — the same commit carries both — so "the previous release"
+# Beta and stable tags interleave on main - the same commit carries both - so "the previous release"
 # is only ever right per channel.
 if [ "$CHANNEL" = "stable" ]; then
     CHANNEL_FILTER='test("-beta\\.") | not'
@@ -32,7 +32,7 @@ PREVIOUS="$(gh release list --repo "$REPO" --limit 200 --json tagName,isDraft --
     "[.[] | select(.isDraft | not) | .tagName
       | select(. != \"${TAG}\") | select(${CHANNEL_FILTER})] | first // empty")"
 
-# The tag does not exist yet — this runs before `gh release create` makes it.
+# The tag does not exist yet - this runs before `gh release create` makes it.
 NOTES_ARGS=(-f "tag_name=${TAG}" -f "target_commitish=${SHA}")
 if [ -n "$PREVIOUS" ]; then NOTES_ARGS+=(-f "previous_tag_name=${PREVIOUS}"); fi
 echo "▸ Generating notes for ${TAG}${PREVIOUS:+ since ${PREVIOUS}}"
@@ -53,11 +53,11 @@ CHANGELOG="$(printf '%s\n' "$GENERATED" | sed -E \
     printf 'Built from %s.' "$SHA"
     if [ -n "$COMPARE_URL" ]; then printf ' [Full changelog](%s)' "$COMPARE_URL"; fi
     printf '\n\n'
-    printf '%s\n' "**Recommended:** install via Homebrew — it clears the quarantine flag automatically on every install and update, so there's nothing to run by hand:"
+    printf '%s\n' "**Recommended:** install via Homebrew - it clears the quarantine flag automatically on every install and update, so there's nothing to run by hand:"
     printf '```sh\nbrew trust --tap abue-ammar/hudku\nbrew install --cask abue-ammar/hudku/%s\n```\n' "$CASK"
     # The stable DMG is arm64-only; macOS 26 is the last release that boots on Intel.
     if [ "$CHANNEL" = "stable" ]; then
-        printf '%s\n' "On an **Intel** Mac, install \`abue-ammar/hudku/hudku-universal\` instead — same app, built with both slices."
+        printf '%s\n' "On an **Intel** Mac, install \`abue-ammar/hudku/hudku-universal\` instead - same app, built with both slices."
     fi
     printf '%s\n' "This build is self-signed. If you download the DMG directly instead of using Homebrew, macOS will refuse to open it until you clear the quarantine flag once:"
     printf '```sh\nxattr -dr com.apple.quarantine "/Applications/%s.app"\n```\n' "$DISPLAY_NAME"
@@ -67,7 +67,7 @@ printf '%s\n' "$CHANGELOG" | awk -v budget="$DISCORD_BUDGET" -v bullets="$DISCOR
     { line = $0 }
     /^[*-] / { seen++ }
     { used += length(line) + 1 }
-    used > budget || seen > bullets { print "…and more — see the release page."; exit }
+    used > budget || seen > bullets { print "…and more - see the release page."; exit }
     { print line }
 ' > "$DISCORD_OUT"
 

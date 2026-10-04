@@ -4,7 +4,7 @@ import SwiftUI
 @MainActor
 final class SettingsCoordinator {
     private let window: AppWindowController
-    /// Environment injection only — never for state this type owns.
+    /// Environment injection only - never for state this type owns.
     private unowned let core: AppCore
     /// The open window's session; the window's chrome and view tree own it, so this self-nils.
     private weak var navigation: SettingsNavigationState?

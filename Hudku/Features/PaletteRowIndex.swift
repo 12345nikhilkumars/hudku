@@ -34,7 +34,7 @@ struct PaletteRowIndex: Equatable {
         return nil
     }
 
-    /// The inverse of `row(at:)` — where a screen puts the highlight after its own list moves.
+    /// The inverse of `row(at:)` - where a screen puts the highlight after its own list moves.
     func index(section: Int, offset: Int) -> Int? {
         guard sectionCounts.indices.contains(section), offset >= 0,
             offset < sectionCounts[section]

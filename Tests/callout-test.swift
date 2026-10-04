@@ -37,7 +37,7 @@ struct CalloutPlacementTests {
     }
 
     static func expect(_ actual: CGFloat, _ expected: CGFloat, _ message: String) {
-        expect(abs(actual - expected) < 0.001, "\(message) — got \(actual), want \(expected)")
+        expect(abs(actual - expected) < 0.001, "\(message) - got \(actual), want \(expected)")
     }
 
     static func main() {
@@ -72,7 +72,7 @@ struct CalloutPlacementTests {
 
         expect(
             size.width / 2 + inset <= fieldInsetFromPaneEdge,
-            "the callout is narrow enough to centre on a trailing-edge recorder — widen it and the caret skews"
+            "the callout is narrow enough to centre on a trailing-edge recorder - widen it and the caret skews"
         )
     }
 

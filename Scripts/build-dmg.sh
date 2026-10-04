@@ -8,7 +8,7 @@ IDENTITY="Hudku Self-Signed"
 DERIVED="build/DerivedData"
 
 if ! security find-identity -p codesigning | grep -q "$IDENTITY"; then
-    echo "✗ '$IDENTITY' code-signing identity not found — create it once (docs/signing.md)." >&2
+    echo "✗ '$IDENTITY' code-signing identity not found - create it once (docs/signing.md)." >&2
     exit 1
 fi
 

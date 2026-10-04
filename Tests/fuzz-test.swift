@@ -380,7 +380,7 @@ struct FuzzTest {
         ]
         for test in cases {
             let ranked = rank(test.query, index)
-            check("'\(test.query)' — \(test.why)", ranked.first == test.first, "got \(ranked.prefix(3))")
+            check("'\(test.query)' - \(test.why)", ranked.first == test.first, "got \(ranked.prefix(3))")
         }
         check("an alternate title mints no pinyin", !rank("ll", index).contains("Safari"))
         check("High keeps letter soup out", !rank("olu", index).contains("Set Volume"))

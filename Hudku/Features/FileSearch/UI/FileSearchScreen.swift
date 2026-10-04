@@ -53,21 +53,21 @@ struct FileSearchScreen: PaletteScreen {
         }
     }
 
-    /// ⌃X — mirrors the Actions row, as the clipboard's delete does; trashing asks nothing first.
+    /// ⌃X - mirrors the Actions row, as the clipboard's delete does; trashing asks nothing first.
     private func trash(at selection: Int) -> Bool {
         guard let result = result(at: selection) else { return false }
         core.fileSearchCoordinator.trash(result)
         return true
     }
 
-    /// ⌘Y — the overlay follows the selection, so toggling is all the state it needs.
+    /// ⌘Y - the overlay follows the selection, so toggling is all the state it needs.
     private func toggleQuickLook(at selection: Int) -> Bool {
         guard result(at: selection) != nil else { return false }
         vm.fileSearchQuickLook.toggle()
         return true
     }
 
-    /// ⇧⌘C / ⌥⌘C / ⌃⌘C / ⇧⌘V — the pasteboard rows, each on the selection the menu would act on.
+    /// ⇧⌘C / ⌥⌘C / ⌃⌘C / ⇧⌘V - the pasteboard rows, each on the selection the menu would act on.
     private func run(_ action: FileSearchPasteboardAction, at selection: Int) -> Bool {
         guard let result = result(at: selection) else { return false }
         let coordinator = core.fileSearchCoordinator

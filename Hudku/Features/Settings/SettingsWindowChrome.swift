@@ -11,7 +11,7 @@ final class SettingsWindowChrome: WindowChrome {
         window.titlebarSeparatorStyle = .none
         // Transparent opts the titlebar out of the system's glass band; Settings wants it drawn.
         window.titlebarAppearsTransparent = false
-        // Stock Settings isn't dragged by its content — a drag on a `Form` shouldn't move the window.
+        // Stock Settings isn't dragged by its content - a drag on a `Form` shouldn't move the window.
         window.isMovableByWindowBackground = false
     }
 }

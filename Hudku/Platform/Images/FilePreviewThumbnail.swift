@@ -1,7 +1,7 @@
 import AppKit
 import QuickLookThumbnailing
 
-/// Content thumbnails for any file type — a poster frame, a PDF's page, else the type's icon.
+/// Content thumbnails for any file type - a poster frame, a PDF's page, else the type's icon.
 enum FilePreviewThumbnail {
     private static let cache = ThumbnailCache(
         rowBytes: 8 * 1024 * 1024, previewBytes: 16 * 1024 * 1024)

@@ -13,7 +13,7 @@ final class UninstallCoordinator {
     private let visibility: VisibilityStore
     private let ranking: LauncherRankingStore
     private let aliases: AliasStore
-    /// Dialog and message-HUD presentation only — never for state this type owns.
+    /// Dialog and message-HUD presentation only - never for state this type owns.
     private unowned let core: AppCore
 
     init(
@@ -126,7 +126,7 @@ final class UninstallCoordinator {
             core.showMessage("Moved \(count) to the Trash · \(freed)")
             return
         }
-        let listed = report.failed.prefix(5).map { "\($0.name) — \($0.reason)" }
+        let listed = report.failed.prefix(5).map { "\($0.name) - \($0.reason)" }
         let remaining = report.failed.count - listed.count
         await core.showNotice(
             title: report.trashedCount > 0 ? "Some Items Weren’t Moved" : "Nothing Was Moved",

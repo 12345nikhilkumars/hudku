@@ -3,10 +3,10 @@
   "tasks": [
     {
       // Build the .app with xcodebuild into a fixed path (build/DerivedData) so the app
-      // location is stable — that's what lets F5 find it and keeps the Accessibility grant.
+      // location is stable - that's what lets F5 find it and keeps the Accessibility grant.
       // DEVELOPER_DIR forces Xcode's toolchain (the SwiftUI macros aren't in the CLT).
       // The build log is handed to Scripts/sync-lsp.sh, which rebuilds SourceKit-LSP's flag
-      // database from it — that's what keeps cross-file symbols resolving in VS Code as you
+      // database from it - that's what keeps cross-file symbols resolving in VS Code as you
       // add and rename files. pipefail preserves the xcodebuild exit code so a failed build
       // still blocks F5 / the run step.
       "label": "Build Hudku.app (debug)",

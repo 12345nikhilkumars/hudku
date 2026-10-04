@@ -22,7 +22,7 @@ struct SettingsSearchEntry: Identifiable, Hashable, Sendable {
         self.init(.row(anchor, title), title, keywords)
     }
 
-    /// A whole group, for a result no single row answers — a list, or a section's master switch.
+    /// A whole group, for a result no single row answers - a list, or a section's master switch.
     init(group anchor: SettingsAnchor, _ title: String, keywords: [String] = []) {
         self.init(.section(anchor), title, keywords)
     }
@@ -38,7 +38,7 @@ struct SettingsSearchEntry: Identifiable, Hashable, Sendable {
 
     var id: String { "\(tab.title)/\(anchor?.title ?? "")/\(title)" }
 
-    /// The result row's second line — "General", or "General › Hyper Key".
+    /// The result row's second line - "General", or "General › Hyper Key".
     var breadcrumb: String {
         guard let anchor, anchor.title != tab.title else { return tab.title }
         return "\(tab.title) › \(anchor.title)"
