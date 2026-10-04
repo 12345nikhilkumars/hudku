@@ -1,4 +1,8 @@
-# Hudku
+# Hudku (ಹುಡ್ಕು)
+
+Find → apps, files, emoji, clipboard  
+Do → calculations, conversions, uninstall, trash  
+Done → disappear and get out of the way
 
 A tiny, fully native macOS launcher: one hotkey for everything you reach for all day.
 A stripped, renamed fork of an upstream AGPL launcher (see [LICENSE](LICENSE) and
