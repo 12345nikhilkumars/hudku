@@ -27,11 +27,15 @@ enum FuzzyMatch {
         fileprivate let text: String
         /// Folded once too: the subsequence pass needs random access on every candidate.
         fileprivate let characters: [Character]
+        /// The byte form when the fold is ASCII — the walks skip the grapheme machinery.
+        fileprivate let bytes: [UInt8]?
         var isEmpty: Bool { text.isEmpty }
 
         init(_ raw: String) {
-            text = FuzzyMatch.normalized(raw)
+            let text = FuzzyMatch.normalized(raw)
+            self.text = text
             characters = Array(text)
+            bytes = text.utf8.allSatisfy { $0 < 0x80 } ? Array(text.utf8) : nil
         }
     }
 
@@ -39,10 +43,12 @@ enum FuzzyMatch {
     struct Candidate: Sendable {
         let text: String
         fileprivate let length: Int
+        fileprivate let isASCII: Bool
 
         init(_ raw: String) {
             text = FuzzyMatch.normalized(raw)
             length = text.count
+            isASCII = text.utf8.allSatisfy { $0 < 0x80 }
         }
     }
 
@@ -73,6 +79,23 @@ enum FuzzyMatch {
             return Match(
                 tier: .prefix, offset: 0, queryLength: query.characters.count,
                 candidateLength: length, spread: 0)
+        }
+        // Folded ASCII is byte-comparable: the literal search and the word-start test
+        // both skip the String index machinery, which per candidate is most of the cost.
+        if let queryBytes = query.bytes, candidate.isASCII {
+            switch asciiFirstIndex(of: q, in: c) {
+            case .found(let offset, let wordStart):
+                return Match(
+                    tier: wordStart ? .wordStart : .substring, offset: offset,
+                    queryLength: queryBytes.count, candidateLength: length, spread: 0)
+            case .absent:
+                guard let spread = subsequenceScore(queryBytes, c) else { return nil }
+                return Match(
+                    tier: .subsequence, offset: 0, queryLength: queryBytes.count,
+                    candidateLength: length, spread: spread)
+            case .unsupported:
+                break
+            }
         }
         if let range = c.range(of: q) {
             let offset = c.distance(from: c.startIndex, to: range.lowerBound)
@@ -133,8 +156,128 @@ enum FuzzyMatch {
         return !before.isLetter && !before.isNumber
     }
 
+    private enum LiteralSearch {
+        case found(offset: Int, wordStart: Bool)
+        case absent
+        case unsupported
+    }
+
+    /// Byte-level literal search over folded ASCII, where a byte is a character.
+    private static func asciiFirstIndex(of needle: String, in haystack: String) -> LiteralSearch {
+        var outcome = LiteralSearch.unsupported
+        _ = needle.utf8.withContiguousStorageIfAvailable { n in
+            haystack.utf8.withContiguousStorageIfAvailable { h in
+                guard !n.isEmpty, n.count <= h.count else {
+                    outcome = .absent
+                    return
+                }
+                var position = 0
+                let last = h.count - n.count
+                while position <= last {
+                    if h[position] == n[0], byteMatches(h, n, at: position) {
+                        let wordStart = position == 0 || !isASCIILetterOrNumber(h[position - 1])
+                        outcome = .found(offset: position, wordStart: wordStart)
+                        return
+                    }
+                    position += 1
+                }
+                outcome = .absent
+            }
+        }
+        return outcome
+    }
+
+    private static func byteMatches(
+        _ haystack: UnsafeBufferPointer<UInt8>, _ needle: UnsafeBufferPointer<UInt8>,
+        at position: Int
+    ) -> Bool {
+        var index = 1
+        while index < needle.count {
+            if haystack[position + index] != needle[index] { return false }
+            index += 1
+        }
+        return true
+    }
+
     /// Walks in place, carrying the previous character: `Array(c)` was an allocation per keystroke.
     private static func subsequenceScore(_ q: [Character], _ c: String) -> Int? {
+        // ASCII is a byte a character: the byte walk skips the grapheme machinery.
+        if q.allSatisfy(\.isASCII) {
+            var qi = 0
+            var score = 0
+            var run = 0
+            var prev = -2
+            var ci = 0
+            var previous: UInt8?
+            for byte in c.utf8 {
+                guard byte < 0x80 else { return subsequenceScoreSlow(q, c) }
+                if qi < q.count, q[qi].asciiValue == byte {
+                    var bonus = 1
+                    if ci == prev + 1 {
+                        run += 1
+                        bonus += run * 3
+                    } else {
+                        run = 0
+                    }
+                    if ci == 0 {
+                        bonus += 12
+                    } else if let previous, !isASCIILetterOrNumber(previous) {
+                        bonus += 8
+                    }
+                    score += bonus
+                    prev = ci
+                    qi += 1
+                    if qi == q.count { return score }
+                }
+                previous = byte
+                ci += 1
+            }
+            return nil
+        }
+        return subsequenceScoreSlow(q, c)
+    }
+
+    private static func isASCIILetterOrNumber(_ byte: UInt8) -> Bool {
+        switch byte {
+        case 0x30...0x39, 0x41...0x5A, 0x61...0x7A: true
+        default: false
+        }
+    }
+
+    /// The byte walk, for a folded-ASCII query against a folded-ASCII candidate.
+    private static func subsequenceScore(_ q: [UInt8], _ c: String) -> Int? {
+        var qi = 0
+        var score = 0
+        var run = 0
+        var prev = -2
+        var ci = 0
+        var previous: UInt8?
+        for byte in c.utf8 {
+            if qi < q.count, q[qi] == byte {
+                var bonus = 1
+                if ci == prev + 1 {
+                    run += 1
+                    bonus += run * 3
+                } else {
+                    run = 0
+                }
+                if ci == 0 {
+                    bonus += 12
+                } else if let previous, !isASCIILetterOrNumber(previous) {
+                    bonus += 8
+                }
+                score += bonus
+                prev = ci
+                qi += 1
+                if qi == q.count { return score }
+            }
+            previous = byte
+            ci += 1
+        }
+        return nil
+    }
+
+    private static func subsequenceScoreSlow(_ q: [Character], _ c: String) -> Int? {
         var qi = 0
         var score = 0
         var run = 0

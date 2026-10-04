@@ -6,6 +6,8 @@ struct SearchText: Sendable, Hashable {
     let units: [UInt16]
     /// Word starts no separator marks, such as a capital after a lowercase letter.
     let humps: [Int]
+    /// Which characters the text holds, so a query can be rejected before any scoring.
+    let mask: UInt64
 
     var isEmpty: Bool { units.isEmpty }
     var string: String { String(decoding: units, as: UTF16.self) }
@@ -13,14 +15,20 @@ struct SearchText: Sendable, Hashable {
     /// `transliterated` reads another script the way it is typed: `微信` as `wei xin`.
     init(_ raw: String, transliterated: Bool) {
         let latin = transliterated ? ScriptRomanization.latin(raw) : nil
-        units = Array((latin ?? FuzzyMatch.normalized(raw)).utf16)
+        let units = Array((latin ?? FuzzyMatch.normalized(raw)).utf16)
+        self.units = units
         humps = latin == nil ? Self.humps(in: raw) : []
+        mask = LauncherMatch.mask(of: units)
     }
 
     init(units: [UInt16], humps: [Int] = []) {
         self.units = units
         self.humps = humps
+        mask = LauncherMatch.mask(of: units)
     }
+
+    /// True when this text could hold every character `needed` requires; false rules a match out.
+    func covers(_ needed: UInt64) -> Bool { LauncherMatch.covers(needed, in: mask) }
 
     /// Two texts as one phrase, so `brew search` reaches `Search` under `Brew`.
     func joined(with other: SearchText) -> SearchText {
@@ -69,12 +77,39 @@ enum LauncherMatch {
         }
     }
 
+    /// Reused alignment rows, so a keystroke's scan allocates nothing per candidate.
+    final class Scratch {
+        fileprivate var a: [Int] = []
+        fileprivate var b: [Int] = []
+    }
+
     static let space: UInt16 = 0x20
 
     /// Below this many letters the pre-check costs more than the alignment it would skip.
     private static let precheckThreshold = 2
 
+    /// True when `mask` could hold every character `needed` requires; false rules a match out.
+    static func covers(_ needed: UInt64, in mask: UInt64) -> Bool { needed & ~mask == 0 }
+
+    /// One bit per letter, digit, or "anything else"; separators never need landing on.
+    static func mask(of units: [UInt16]) -> UInt64 {
+        var mask: UInt64 = 0
+        for unit in units {
+            switch unit {
+            case 0x61...0x7A: mask |= 1 << (unit - 0x61)
+            case 0x30...0x39: mask |= 1 << (unit - 0x30 + 26)
+            default:
+                if !isSeparator(unit) { mask |= 1 << 36 }
+            }
+        }
+        return mask
+    }
+
     static func match(_ query: SearchText, in target: SearchText) -> Outcome? {
+        match(query, in: target, scratch: Scratch())
+    }
+
+    static func match(_ query: SearchText, in target: SearchText, scratch: Scratch) -> Outcome? {
         let q = query.units
         let t = target.units
         guard !q.isEmpty else { return nil }
@@ -82,7 +117,7 @@ enum LauncherMatch {
         let letters = q.reduce(0) { isSeparator($1) ? $0 : $0 + 1 }
         guard letters <= t.count else { return nil }
         if letters > precheckThreshold, !isRoughSubsequence(q, of: t) { return nil }
-        return align(q, t, humps: target.humps, letters: letters)
+        return align(q, t, humps: target.humps, letters: letters, scratch: scratch)
     }
 
     static func isSeparator(_ unit: UInt16) -> Bool {
@@ -107,64 +142,95 @@ enum LauncherMatch {
     }
 
     /// One row per query character; a running maximum keeps a row linear in the text.
-    private static func align(_ q: [UInt16], _ t: [UInt16], humps: [Int], letters: Int) -> Outcome? {
+    private static func align(
+        _ q: [UInt16], _ t: [UInt16], humps: [Int], letters: Int, scratch: Scratch
+    ) -> Outcome? {
         let width = t.count
-        var previous = [Int](repeating: .min, count: width)
-        var current = [Int](repeating: .min, count: width)
-        // The first column the last kept row matched at; the next row starts after it.
-        var anchor = -1
-        var rowStart = 0
-        var rowEnd = 0
-        var matched = 0
+        // Rows come out of the scratch and go back below, so no candidate ever allocates.
+        var previous = scratch.a.count >= width ? scratch.a : [Int](repeating: .min, count: width)
+        var current = scratch.b.count >= width ? scratch.b : [Int](repeating: .min, count: width)
+        scratch.a = []
+        scratch.b = []
         var skipped = 0
+        var failed = false
+        var best = Int.min
+        previous.withUnsafeMutableBufferPointer { prevBuffer in
+            current.withUnsafeMutableBufferPointer { curBuffer in
+                // Local copies, so swapping the row pointers never reassigns the inout buffers.
+                var prev = prevBuffer
+                var cur = curBuffer
+                for column in 0..<width {
+                    prev[column] = .min
+                    cur[column] = .min
+                }
+                // The first column the last kept row matched at; the next row starts after it.
+                var anchor = -1
+                var rowStart = 0
+                var rowEnd = 0
+                var matched = 0
 
-        for unit in q {
-            let unitIsSeparator = isSeparator(unit)
-            let lower = anchor + 1
-            // Matched separators count against letters still owed, so the bound can pass the end.
-            let upper = min(width, width - (letters - 1 - matched))
-            var first = -1
-            var gapBest = Int.min
-            if lower < upper {
-                for column in lower..<upper {
-                    if anchor >= 0, column - 2 >= anchor { gapBest = max(gapBest, previous[column - 2]) }
-                    let candidate = t[column]
-                    let same = candidate == unit
-                    let bothSeparators = !same && unitIsSeparator && isSeparator(candidate)
-                    guard same || bothSeparators else {
-                        current[column] = .min
-                        continue
+                for unit in q {
+                    let unitIsSeparator = isSeparator(unit)
+                    let lower = anchor + 1
+                    // Matched separators count against letters still owed, so the bound can pass.
+                    let upper = min(width, width - (letters - 1 - matched))
+                    var first = -1
+                    var gapBest = Int.min
+                    if lower < upper {
+                        for column in lower..<upper {
+                            if anchor >= 0, column - 2 >= anchor {
+                                gapBest = max(gapBest, prev[column - 2])
+                            }
+                            let candidate = t[column]
+                            let same = candidate == unit
+                            let bothSeparators = !same && unitIsSeparator && isSeparator(candidate)
+                            guard same || bothSeparators else {
+                                cur[column] = .min
+                                continue
+                            }
+                            let points =
+                                bothSeparators
+                                ? 1
+                                : (anchor < 0 && column == 0
+                                    ? 4 : wordPoints(t, column, humps: humps))
+                            if anchor < 0 {
+                                cur[column] = points
+                            } else {
+                                var cell = Int.min
+                                let adjacent = prev[column - 1]
+                                if adjacent != .min { cell = adjacent + points }
+                                if gapBest != .min { cell = max(cell, gapBest + points - 1) }
+                                cur[column] = cell
+                            }
+                            if first < 0 { first = column }
+                        }
                     }
-                    let points =
-                        bothSeparators
-                        ? 1 : (anchor < 0 && column == 0 ? 4 : wordPoints(t, column, humps: humps))
-                    if anchor < 0 {
-                        current[column] = points
+                    if first >= 0 {
+                        anchor = first
+                        matched += 1
+                        rowStart = lower
+                        rowEnd = upper
+                        swap(&prev, &cur)
+                    } else if unitIsSeparator {
+                        skipped += 1
                     } else {
-                        var best = Int.min
-                        let adjacent = previous[column - 1]
-                        if adjacent != .min { best = adjacent + points }
-                        if gapBest != .min { best = max(best, gapBest + points - 1) }
-                        current[column] = best
+                        failed = true
+                        break
                     }
-                    if first < 0 { first = column }
+                }
+                if !failed, anchor >= 0 {
+                    var maximum = Int.min
+                    for column in rowStart..<rowEnd where prev[column] > maximum {
+                        maximum = prev[column]
+                    }
+                    best = maximum
                 }
             }
-            if first >= 0 {
-                anchor = first
-                matched += 1
-                rowStart = lower
-                rowEnd = upper
-                swap(&previous, &current)
-            } else if unitIsSeparator {
-                skipped += 1
-            } else {
-                return nil
-            }
         }
-        guard anchor >= 0 else { return nil }
-        let best = previous[rowStart..<rowEnd].max() ?? .min
-        return best == .min ? nil : .scored(score: best, skipped: skipped)
+        scratch.a = previous
+        scratch.b = current
+        guard !failed, best != .min else { return nil }
+        return .scored(score: best, skipped: skipped)
     }
 
     private static func wordPoints(_ t: [UInt16], _ column: Int, humps: [Int]) -> Int {

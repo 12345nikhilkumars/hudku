@@ -97,9 +97,10 @@ enum IconCache {
 
     private static let displayPixel: CGFloat = 48
 
+    // Sized to hold every launcher tile with room for previews, and not a byte more.
     private static let cache: Cache = {
         let cache = Cache()
-        cache.totalCostLimit = 32 * 1024 * 1024
+        cache.totalCostLimit = 16 * 1024 * 1024
         return cache
     }()
 

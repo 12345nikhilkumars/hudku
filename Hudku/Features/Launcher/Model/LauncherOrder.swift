@@ -35,39 +35,63 @@ enum LauncherOrder {
         profile: (Item) -> SearchProfile, signals: (Item) -> Signals
     ) -> [Item] {
         guard !query.isEmpty else { return [] }
-        let scored = items.enumerated().compactMap { position, item -> (Item, Candidate)? in
+        // One scratch for the whole pass: the per-candidate alignment never allocates.
+        let scratch = LauncherMatch.Scratch()
+        let latinMask = query.latin.mask
+        let typedMask = query.typed.mask
+        // Scored by index, so sorting swaps compact values and each item is touched once.
+        var scored: [(index: Int, candidate: Candidate)] = []
+        scored.reserveCapacity(items.count)
+        for index in items.indices {
+            let item = items[index]
             let signals = signals(item)
             guard
                 let facts = Facts(
-                    profile: profile(item), signals: signals, query: query, sensitivity: sensitivity)
-            else { return nil }
-            return (item, Candidate(facts: facts, signals: signals, position: position))
+                    profile: profile(item), signals: signals, query: query,
+                    sensitivity: sensitivity, latinMask: latinMask, typedMask: typedMask,
+                    scratch: scratch)
+            else { continue }
+            scored.append(
+                (index, Candidate(facts: facts, signals: signals, position: index)))
         }
         let length = query.latin.units.count
         return
             scored
-            .sorted { orders($0.1, before: $1.1, length: length) }
+            .sorted { orders($0.candidate, before: $1.candidate, length: length) }
             .prefix(limit)
-            .map(\.0)
+            .map { items[$0.index] }
     }
 
     /// The empty list: most frecent first, then aliased entries, then by kind and name.
     static func byUsage<Item>(_ items: [Item], signals: (Item) -> Signals) -> [Item] {
-        items.enumerated()
-            .map { ($0.element, Candidate(facts: nil, signals: signals($0.element), position: $0.offset)) }
+        items.indices
+            .map { (index: $0, candidate: Candidate(facts: nil, signals: signals(items[$0]), position: $0)) }
             .sorted {
-                let order = tiebreak($0.1, $1.1)
-                return order != 0 ? order < 0 : $0.1.position < $1.1.position
+                let order = tiebreak($0.candidate, $1.candidate)
+                return order != 0 ? order < 0 : $0.candidate.position < $1.candidate.position
             }
-            .map(\.0)
+            .map { items[$0.index] }
     }
 
     // MARK: - One entry's match
 
+    /// Only what the comparator reads: the heavyweight `Signals` is consumed once, here.
     private struct Candidate {
         let facts: Facts?
-        let signals: Signals
+        let frecency: Double
+        let priority: Int
+        let title: String
+        let hasAlias: Bool
         let position: Int
+
+        init(facts: Facts?, signals: Signals, position: Int) {
+            self.facts = facts
+            frecency = signals.usage.frecency
+            priority = signals.priority
+            title = signals.title
+            hasAlias = signals.alias != nil
+            self.position = position
+        }
     }
 
     private enum AliasHit: Equatable {
@@ -113,33 +137,68 @@ enum LauncherOrder {
         let subtitle: Int
         let term: TermHit
 
-        init?(profile: SearchProfile, signals: Signals, query: Query, sensitivity: SearchSensitivity) {
+        init?(
+            profile: SearchProfile, signals: Signals, query: borrowing Query,
+            sensitivity: SearchSensitivity, latinMask: UInt64, typedMask: UInt64,
+            scratch: LauncherMatch.Scratch
+        ) {
             let latinLength = query.latin.units.count
             let typedLength = query.typed.units.count
             alias = signals.alias.map { Self.aliasHit($0, query.typed) } ?? .none
             isBoosted = signals.boostedTerms.contains(query.term)
-            let titleMatch = LauncherMatch.match(query.latin, in: profile.title)
-            var alternateTitles = profile.alternateTitles
-            if alias == .none, let text = signals.alias { alternateTitles.append(text) }
-            let alternates = alternateTitles.map { LauncherMatch.match(query.typed, in: $0) }
-            let subtitleMatch = profile.subtitle.flatMap { LauncherMatch.match(query.latin, in: $0) }
+            // A field whose characters cannot hold the query is skipped before any scoring.
+            let titleMatch =
+                LauncherMatch.covers(latinMask, in: profile.titleMask)
+                ? LauncherMatch.match(query.latin, in: profile.title, scratch: scratch) : nil
+            let aliasText = alias == .none ? signals.alias : nil
+            var titleExactFound = titleMatch == .exact
+            var titleValue = Self.value(titleMatch)
+            var prefixFound = profile.title.units.starts(with: query.latin.units)
+            var alternatePasses = false
+
+            func foldAlternate(_ text: SearchText) {
+                let outcome = LauncherMatch.match(query.typed, in: text, scratch: scratch)
+                if outcome == .exact { titleExactFound = true }
+                titleValue = max(titleValue, Self.value(outcome))
+                if !alternatePasses, let outcome,
+                    sensitivity.accepts(outcome, queryLength: typedLength)
+                {
+                    alternatePasses = true
+                }
+                if !prefixFound, text.units.starts(with: query.typed.units) { prefixFound = true }
+            }
+            for alternate in profile.alternateTitles where alternate.covers(typedMask) {
+                foldAlternate(alternate)
+            }
+            if let aliasText, aliasText.covers(typedMask) { foldAlternate(aliasText) }
+
+            let subtitleMatch =
+                LauncherMatch.covers(latinMask, in: profile.subtitleMask)
+                ? profile.subtitle.flatMap {
+                    LauncherMatch.match(query.latin, in: $0, scratch: scratch)
+                } : nil
+            var keywordPasses = false
+            if LauncherMatch.covers(latinMask, in: profile.keywordMask) {
+                for keyword in profile.keywords where keyword.covers(latinMask) {
+                    guard let outcome = LauncherMatch.match(query.latin, in: keyword, scratch: scratch),
+                        sensitivity.accepts(outcome, queryLength: latinLength)
+                    else { continue }
+                    keywordPasses = true
+                    break
+                }
+            }
 
             func passes(_ outcome: LauncherMatch.Outcome?, _ length: Int) -> Bool {
                 outcome.map { sensitivity.accepts($0, queryLength: length) } ?? false
             }
             let isMatching =
                 alias != .none || passes(titleMatch, latinLength)
-                || alternates.contains { passes($0, typedLength) } || passes(subtitleMatch, latinLength)
-                || profile.keywords.contains {
-                    passes(LauncherMatch.match(query.latin, in: $0), latinLength)
-                }
+                || alternatePasses || passes(subtitleMatch, latinLength) || keywordPasses
             guard isMatching else { return nil }
 
-            titleExact = titleMatch == .exact || alternates.contains { $0 == .exact }
-            title = alternates.reduce(Self.value(titleMatch)) { max($0, Self.value($1)) }
-            titlePrefix =
-                profile.title.units.starts(with: query.latin.units)
-                || alternateTitles.contains { $0.units.starts(with: query.typed.units) }
+            titleExact = titleExactFound
+            title = titleValue
+            titlePrefix = prefixFound
             subtitleExact = subtitleMatch == .exact
             subtitle = Self.value(subtitleMatch)
             term = Self.termHit(signals.usage.searchTerms, query.latin.units)
@@ -162,13 +221,13 @@ enum LauncherOrder {
         private static func termHit(_ terms: [String], _ query: [UInt16]) -> TermHit {
             var best = TermHit.none
             for term in terms.reversed() {
-                let stored = Array(term.utf16)
+                let stored = term.utf16
                 guard !stored.isEmpty else { continue }
                 if stored.count > query.count {
                     guard stored.starts(with: query) else { continue }
                     if !best.isPrefix { best = .prefix(length: stored.count) }
                 } else if stored.count == query.count {
-                    if stored == query { return .exact(length: stored.count) }
+                    if stored.elementsEqual(query) { return .exact(length: stored.count) }
                 } else if query.starts(with: stored) {
                     let extra = query.count - stored.count
                     guard extra <= LauncherOrder.overboundsReach else { continue }
@@ -203,8 +262,8 @@ enum LauncherOrder {
         }
         if x.isBoosted != y.isBoosted {
             let (boosted, other) = x.isBoosted ? (a, b) : (b, a)
-            let used = other.signals.usage.frecency
-            if !(used > 1 && used > boosted.signals.usage.frecency) { return x.isBoosted ? -1 : 1 }
+            let used = other.frecency
+            if !(used > 1 && used > boosted.frecency) { return x.isBoosted ? -1 : 1 }
         }
         if length > 3, x.titleExact || y.titleExact {
             guard x.titleExact, y.titleExact else { return x.titleExact ? -1 : 1 }
@@ -234,14 +293,14 @@ enum LauncherOrder {
         let order = first(
             descending(max(x.title, x.subtitle), max(y.title, y.subtitle)), frecency(a, b),
             descending(x.title, y.title), descending(x.titlePrefix, y.titlePrefix),
-            descending(a.signals.priority, b.signals.priority))
+            descending(a.priority, b.priority))
         return order ?? collate(a, b)
     }
 
     /// What decides two entries the query cannot tell apart.
     private static func tiebreak(_ a: Candidate, _ b: Candidate) -> Int {
-        let aliased = descending(a.signals.alias != nil, b.signals.alias != nil)
-        return first(frecency(a, b), aliased, descending(a.signals.priority, b.signals.priority))
+        let aliased = descending(a.hasAlias, b.hasAlias)
+        return first(frecency(a, b), aliased, descending(a.priority, b.priority))
             ?? collate(a, b)
     }
 
@@ -252,12 +311,12 @@ enum LauncherOrder {
     }
 
     private static func frecency(_ a: Candidate, _ b: Candidate) -> Int {
-        descending(a.signals.usage.frecency, b.signals.usage.frecency)
+        descending(a.frecency, b.frecency)
     }
 
     /// Numeric and case-blind: `Item 2` before `Item 10`.
     private static func collate(_ a: Candidate, _ b: Candidate) -> Int {
-        switch a.signals.title.localizedStandardCompare(b.signals.title) {
+        switch a.title.localizedStandardCompare(b.title) {
         case .orderedAscending: -1
         case .orderedDescending: 1
         case .orderedSame: 0

@@ -175,7 +175,15 @@ extension AppEntry.Kind {
 
     /// The category a query names outright. Exact only — a prefix would take a word from an entry.
     static func named(by query: String) -> AppEntry.Kind? {
-        byCategoryName[query.trimmingCharacters(in: .whitespaces).lowercased()]
+        // Every key starts with a, c or s; anything else is ruled out before any folding.
+        var index = query.startIndex
+        while index < query.endIndex, query[index].isWhitespace { index = query.index(after: index) }
+        guard index < query.endIndex else { return nil }
+        switch query[index] {
+        case "a", "A", "c", "C", "s", "S": break
+        default: return nil
+        }
+        return byCategoryName[query.trimmingCharacters(in: .whitespaces).lowercased()]
     }
 }
 
@@ -210,10 +218,89 @@ final class AppIndex {
     }
 
     /// Repeated renders for the same query reuse the ranking instead of re-matching every frame.
-    @ObservationIgnored private var matchMemo = Memo<MatchKey, [AppEntry]>()
-    @ObservationIgnored private var resultsMemo = Memo<ResultsKey, Results>()
+    @ObservationIgnored private var matchMemo = SmallMemo<MatchKey, [AppEntry]>()
+    @ObservationIgnored private var resultsMemo = SmallMemo<ResultsKey, Results>()
+    /// Typing re-sends the same string on every render, and folding it is not free.
+    @ObservationIgnored private var queryMemo = Memo<String, LauncherOrder.Query>()
     /// Bumped whenever `apps` changes, so both memos above name the entry set they were built from.
     private var entriesRevision = 0
+
+    /// One bit per entry, per character any of its fields (or its alias) can hold. A query
+    /// enumerates the entries holding its characters instead of scanning every entry.
+    private struct CharPostings {
+        var words = 0
+        var postings: [Int: [UInt64]] = [:]
+        var entriesStamp = -1
+        var aliasStamp = -1
+    }
+    @ObservationIgnored private var charPostings = CharPostings()
+
+    private func ensureCharPostings() {
+        guard charPostings.entriesStamp != entriesRevision
+            || charPostings.aliasStamp != aliases.revision
+        else { return }
+        let words = (apps.count + 63) / 64
+        var postings: [Int: [UInt64]] = [:]
+        if words > 0 {
+            for (index, entry) in apps.enumerated() {
+                var mask = entry.search.mask
+                if let alias = aliases.alias(for: entry.preferenceKey) {
+                    mask |= SearchText(alias, transliterated: false).mask
+                }
+                guard mask != 0 else { continue }
+                let word = index >> 6
+                let bit = UInt64(1) << UInt64(index & 63)
+                while mask != 0 {
+                    let character = mask.trailingZeroBitCount
+                    mask &= mask - 1
+                    postings[character, default: [UInt64](repeating: 0, count: words)][word] |= bit
+                }
+            }
+        }
+        charPostings = CharPostings(
+            words: words, postings: postings, entriesStamp: entriesRevision,
+            aliasStamp: aliases.revision)
+    }
+
+    /// Entries whose characters can hold every bit of `mask`; nil when some character is nowhere.
+    private func entriesHolding(_ mask: UInt64) -> [UInt64]? {
+        var bits = [UInt64](repeating: ~0, count: charPostings.words)
+        var remaining = mask
+        while remaining != 0 {
+            let character = remaining.trailingZeroBitCount
+            remaining &= remaining - 1
+            guard let posting = charPostings.postings[character] else { return nil }
+            for word in bits.indices { bits[word] &= posting[word] }
+        }
+        return bits
+    }
+
+    /// The entries a query could match: both folded forms must be tried, since they differ
+    /// only for transliterated input — and then by union, never intersection.
+    private func candidatePool(for query: LauncherOrder.Query) -> [AppEntry]? {
+        guard !query.isEmpty else { return nil }
+        ensureCharPostings()
+        guard charPostings.words > 0 else { return [] }
+        let latinMask = query.latin.mask
+        let latinBits = entriesHolding(latinMask)
+        let typedMask = query.typed.mask
+        let typedBits = typedMask != latinMask ? entriesHolding(typedMask) : latinBits
+        guard latinBits != nil || typedBits != nil else { return [] }
+        var bits = latinBits ?? [UInt64](repeating: 0, count: charPostings.words)
+        if let typedBits {
+            for word in bits.indices { bits[word] |= typedBits[word] }
+        }
+        var pool: [AppEntry] = []
+        for word in bits.indices {
+            var w = bits[word]
+            while w != 0 {
+                let bit = w.trailingZeroBitCount
+                w &= w - 1
+                pool.append(apps[(word << 6) + bit])
+            }
+        }
+        return pool
+    }
 
     private static let systemActionEntries: [AppEntry] = SystemActionCatalog.all
         .map { command in
@@ -458,8 +545,10 @@ final class AppIndex {
     private func rank(_ q: String, limit: Int) -> [AppEntry] {
         Signposts.interval("AppIndex.rank") {
             let usage = ranking.snapshot()
+            let query = queryMemo.value(for: q) { LauncherOrder.Query(q) }
+            let pool = candidatePool(for: query) ?? apps
             return LauncherOrder.ranked(
-                apps, query: LauncherOrder.Query(q), sensitivity: sensitivity, limit: limit,
+                pool, query: query, sensitivity: sensitivity, limit: limit,
                 profile: \.search, signals: { self.signals(for: $0, usage: usage) })
         }
     }

@@ -140,8 +140,10 @@ struct LauncherScreen: PaletteScreen {
 
     /// `def word` / `define:word` — the word to look up, said outright.
     static func definitionTerm(in query: String) -> String? {
+        guard let first = query.first, first == "d" || first == "D" else { return nil }
+        let lowered = query.lowercased()
         for prefix in ["def ", "define ", "def:", "define:"] {
-            guard query.lowercased().hasPrefix(prefix) else { continue }
+            guard lowered.hasPrefix(prefix) else { continue }
             let term = query.dropFirst(prefix.count).trimmingCharacters(in: .whitespaces)
             return term.isEmpty ? nil : term
         }

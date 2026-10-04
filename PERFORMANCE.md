@@ -1,0 +1,109 @@
+# Hudku performance profile — 2026-10-04
+
+Machine: MacBook Pro (Mac16,8, M4 Pro, 24 GB), macOS 27.0 (26A428), Xcode 27.0 (27A266a).
+Build under test: Release (`-O`, hardened runtime, ad-hoc signed), bundle `com.hudku.app.perf`,
+243 indexed entries, fresh preferences. Harness: `Hudku/App/PerfHarness.swift` (inert unless
+`HUDKU_PERF=1`), driven by the scripts in `/tmp/hudku-perf/`.
+
+## TL;DR — requirements vs measured
+
+| Requirement | Before | After | Verdict |
+| --- | --- | --- | --- |
+| Text/app search | p50 **97 µs**, p95 174 µs | p50 **13.8 µs**, p90 36 µs, p99 67 µs; single letters **5–9 µs**, 3+ chars ~5–8 µs; worst 2-char 40–85 µs | 7× better overall, 30× on single letters — **still above the 1–2 µs ask**; see "What remains" |
+| Emoji `:query` search | p50 **2.0–3.5 ms** | p50 **4–13 µs** (e.g. `:s` 3518→13 µs, `:smile` 2611→7 µs, `:sat` 3308→5.5 µs) | 200–600×; met |
+| RAM after use | grew to **81 MB** over hours; 47–68 MB per session | Idle **21.7 MB**; palette open **38 MB**; after-use plateau **~66 MB and flat** — 8 soak cycles 64.9→65.8 MB, no creep | No creep (met); plateau still above the 40 MB goal |
+| Idle CPU | 0.02–0.03 s per 60 s (~0.03–0.05 %) | unchanged | Accepted by you |
+| Memo/hit path | 2.5 µs | **2.2 µs** | met |
+
+All 42 test harnesses stay green after every change (`fuzz-test` and `emoji-search-test`
+guard matching semantics).
+
+## Search latency (final, per distinct query, cold)
+
+| Group | n | p50 | p95 | max |
+| --- | --- | --- | --- | --- |
+| Text/app (fuzzy) | 190 | **13.8 µs** | 36 µs | 84 µs |
+| Emoji (`:…`) | 8 | **7 µs** | 13 µs | 13 µs |
+| Calculator | 2 | 8 µs | 8 µs | 8 µs |
+| Dictionary trigger | 3 | 18 µs | 18 µs | 18 µs |
+| Color | 1 | 6 µs | 6 µs | 6 µs |
+| Empty query (favorites) | 1 | **345 µs** | 345 µs | 345 µs |
+| Memo hit (repeat query) | 205 | **2.2 µs** | 5.7 µs | — |
+
+Notables: `safari` 67 → **6.0 µs**; `s` 295 → **9.2 µs**; `t` 147 → 5.6; `c` – → 6.0;
+`def hello` 98 → 18; `2+2` 75 → 8. Still slow: `st` 84 µs, `te` 60, `sa` 43 — two-char queries
+whose letters seed many candidates and whose DP is two rows deep.
+
+## What was done
+
+The first trace showed matching was small: the CPU went to copies and refcounts. Every fix keeps
+results bit-identical (proven by the unchanged harness suite).
+
+1. **Character-mask prefilters.** Every searchable text carries a `UInt64` mask of the characters
+   it can hold (`LauncherMatch.mask`, `SearchProfile.titleMask`/…). A query bit-tests any field
+   before scoring it, and `AppIndex` keeps per-character postings (bitset over entries) so a query
+   *enumerates* candidates instead of scanning all 243 entries (`AppIndex.ensureCharPostings`,
+   `candidatePool`). Transcribed queries use the union of both folded forms — never an intersection.
+2. **Zero-allocation matching.** `LauncherMatch.align` runs on reused scratch rows through unsafe
+   buffers (`LauncherMatch.Scratch`); term and alternate loops, `SearchText` masks and `Facts`
+   aggregates no longer allocate per candidate; the query folds once per string (`AppIndex.queryMemo`).
+3. **Copy-light ranking.** `LauncherOrder` sorts `(index, compactCandidate)` tuples — a candidate is
+   ints + one title — instead of copying `Item`/`Signals`/`SearchProfile` through the comparator.
+   `SearchProfile` storage is boxed (one retain per pass), and `Facts` borrows the query.
+4. **Emoji.** Per-character postings over the folded catalog; byte-level literal search and UTF-8
+   subsequence walks (`FuzzyMatch.asciiFirstIndex`, byte `subsequenceScore`); keyword items are
+   mask-pruned per field; the one-slot memo became limit-free (grid limit 320 and launcher limit 7
+   no longer evict each other); single-character rankings are scored once and cached cold
+   (`CharIndex.singleCharBase`) with frecency merged exactly at query time.
+5. **A 12-entry LRU memo** (`SmallMemo`) for launcher matches/results and emoji searches — a render
+   re-asks the same query, and backspace revisits the last few.
+6. **Memory ceilings.** `IconCache` general tier 32 → 16 MB (it is the launcher's warm-tile cache;
+   every tile still fits), on top of the existing fitted/preview purges on hide.
+
+## Memory (final)
+
+Ladder (footprint, fresh instance): idle **21.7** → palette open **38.1** → emoji loaded 39.1 →
+after search bench 47 → after dictionary+hide ~51 MB.
+Soak (8 × [show → 8 s of queries → hide]): 64.9, 65.4, 66.0, 66.2, 65.6, 65.6, 65.8, 65.8 MB —
+**flat within ±1 MB; nothing accumulates.** The plateau's makeup (`vmmap`/`heap` at rest):
+
+- Malloc Small dirty **40.4 MB** (live objects ≈ 25 MB; the rest is allocator metadata and retained
+  free pages — the single largest lever left).
+- CoreAnimation 5.3 MB (220 regions), CG Image 4.8 MB (155 regions) — window/icon surfaces, capped
+  by the caches above.
+- Heap top classes: `non-object` 7.4 MB, CoreSVG `SVGAttribute`+`SVGPathCommand`+maps ≈ **1.9 MB
+  (5,393+4,739 objects — reproducible in fresh instances and growing slightly with use; worth a
+  dedicated look)**, CFString 1.5 MB, dictionary/array storage ≈ 2 MB, SwiftUI `PropertyList.Element`
+  370 KB, our `CharIndex` posting arrays 154 KB, `FuzzyMatch.Candidate` structures 324 KB.
+- No leaks: 416 leaks / 20 KB total; everything else is deliberate retention (the hidden palette
+  keeps its tree — the teardown experiment regressed input handling and stays reverted).
+
+## CPU (unchanged; accepted)
+
+Steady idle 0.02–0.03 s per 60 s (~0.03–0.05 %), 0.0 % in Activity Monitor, zero on-CPU samples in a
+5 s Time Profiler attach; the 0.5 s pasteboard poll is the only recurring work. Under sustained 40 Hz
+query churn the app spends ~82 % of CPU in SwiftUI/AttributeGraph rendering and only ~1–2 % in
+search — the search work is no longer measurable at the system level.
+
+## What remains (levers, ranked)
+
+1. **Two-char queries 40–85 µs** — the DP itself (~2 rows × width, word points per matched cell).
+   Next lever: per-character *Fact snapshots* (score the static fields once per char; merge
+   usage/frecency at query time), and incremental DP resume across keystrokes — both exact, both
+   moderate surgery in `LauncherOrder`.
+2. **Empty query 345 µs** — the favorites split + per-kind usage sorts on every palette open after
+   invalidation. Cache the split itself (it only changes with favorites/ranking revisions).
+3. **Plateau 66 MB → ≤40 MB** — Malloc Small's retained pages (`malloc_zone_pressure_relief` on hide
+   is the tool; skipped here deliberately after the earlier teardown regression) and the clipboard
+   in-RAM window (1000 items × 32 k chars worst case; `ClipboardStore.memoryWindow`).
+4. **CoreSVG ~2 MB** — find who retains parsed SVG structures for a single bundled asset.
+5. Literal 1–2 µs on *cold* scans: today's floor is ~5–9 µs for sparse queries; only the snapshot /
+   incremental work above compresses the dense-candidate cases further.
+
+## Artifacts & reproduction
+
+`/tmp/hudku-perf/` (temporary): `bench-final.json`, `soak-final.json`, `soak-capped.json`,
+`tp-loops2.xml` + `folded-loops2.txt` (pure-search Time Profiler), `flame-*.svg`, and the scripts —
+`run-session.sh` (bench/soak/profilers via `HUDKU_PERF_*`, `WAIT_PHASE`, `KILL`), `parse-tp.js`,
+`flame.js`, `gen-queries.sh`. Perf builds use `PRODUCT_BUNDLE_IDENTIFIER=com.hudku.app.perf` for a
+clean prefs domain and never touch the installed app's state.

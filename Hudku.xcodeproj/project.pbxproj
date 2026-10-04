@@ -214,6 +214,7 @@
 		A336FD0344DBDF9DC0989D67 /* RegionNumberFormatMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2AD676AFAA8BE8C852FF152 /* RegionNumberFormatMonitor.swift */; };
 		A357F770CF96CD01947B4250 /* ColorPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B6DB9105AF210D6C329AD51 /* ColorPreview.swift */; };
 		A362F0628D4D72A73FCE1272 /* DialogChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BC66BD994BAA5E1D8DB799A /* DialogChip.swift */; };
+		A39977E0D67B81DE1D6D8854 /* PerfHarness.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47345E516963E92520E2D5C5 /* PerfHarness.swift */; };
 		A41F3E340ADEEDEBC8DC3CF4 /* PDFSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74ADAF9ADB5B9E0B69910D79 /* PDFSurface.swift */; };
 		A4B8BCDC654119C065A23370 /* RegionCurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = E527A2DD44D4A972AB98859F /* RegionCurrency.swift */; };
 		A54335B07271E0624A4F5483 /* ClipboardSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4AEA1D3F94FEC326368F561 /* ClipboardSettingsView.swift */; };
@@ -437,6 +438,7 @@
 		445E313A0E938B6CF336703C /* SettingsRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsRootView.swift; sourceTree = "<group>"; };
 		44C879AE0A27417EF32E8746 /* CommandsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandsSettingsView.swift; sourceTree = "<group>"; };
 		45B4E914FF069EE283F09336 /* ScreenTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenTarget.swift; sourceTree = "<group>"; };
+		47345E516963E92520E2D5C5 /* PerfHarness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerfHarness.swift; sourceTree = "<group>"; };
 		4877A3E27E313E1B379C9438 /* ClipboardTextExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardTextExtractor.swift; sourceTree = "<group>"; };
 		4A62F1D1406A88B9470C12DF /* LauncherList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherList.swift; sourceTree = "<group>"; };
 		4AED3FA6A4F67CBB4F7D1787 /* EmojiSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmojiSettingsView.swift; sourceTree = "<group>"; };
@@ -858,6 +860,7 @@
 				12E0401919392828F28993DF /* AppCore.swift */,
 				4CA5A11FBB5758351BFE00CF /* AppDelegate.swift */,
 				156115994F59590C6EDC6E96 /* HudkuApp.swift */,
+				47345E516963E92520E2D5C5 /* PerfHarness.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -1856,6 +1859,7 @@
 				B6D37A907E11EF0F2F312FC8 /* PasteSequence.swift in Sources */,
 				1A1ECC35DCA4AAA12FE8B9DE /* PasteboardFiles.swift in Sources */,
 				4ABECB7DE987B08314A3E977 /* Paster.swift in Sources */,
+				A39977E0D67B81DE1D6D8854 /* PerfHarness.swift in Sources */,
 				C7E7FBB1A13759A63A78A4B8 /* Permissions.swift in Sources */,
 				BEA30258DF5C5C6F2094F185 /* PermissionsSettingsView.swift in Sources */,
 				D0F591DAD345EDAB5EA538CB /* PinnedEmojiStore.swift in Sources */,
