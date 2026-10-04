@@ -41,8 +41,9 @@ feature is enabled in Settings.
   after the synchronous Spotlight call, so a late result cannot replace the newer query's rows. Editing
   the scopes or the patterns cancels the session for the same reason: a result found under the old
   rules must not land under the new ones.
-- **Share is the one system popover, and the palette stays up under it.** `AGENTS.md` keeps Hudku's
-  own dialogs because a question or a report is Hudku's to word. A share sheet is neither: it is
+- **Share is the one system popover, and the palette stays up under it.** The dialogs non-negotiable
+  keeps Hudku's own dialogs because a question or a report is Hudku's to word
+  ([standards.md](../standards.md#non-negotiables)). A share sheet is neither: it is
   AirDrop, Mail and Messages, and re-drawing it would mean re-implementing the transports and losing
   whatever the system adds. So this row hands off, and the two rules it does keep are that the palette
   is never hidden and that the row stays visible beside the sheet - which is what anchoring to

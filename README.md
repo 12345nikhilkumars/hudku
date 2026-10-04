@@ -38,7 +38,8 @@ then `open` it.
 ## Development
 
 - Tests: `./Scripts/run-tests.sh` (standalone Swift harnesses; there is no XCTest target).
-- Architecture, conventions, and invariants: [AGENTS.md](AGENTS.md).
+- Architecture, conventions, and invariants: [docs/architecture.md](docs/architecture.md) and
+  [docs/standards.md](docs/standards.md).
 - Performance profile and the `HUDKU_PERF` harness: [PERFORMANCE.md](PERFORMANCE.md).
 - The upstream author's reference docs: [docs/](docs/README.md).
 

@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Pins `AGENTS.md`: a token's dark branch is the literal the forced-dark build shipped.
+/// Pins the dark-branch rule: a token's dark branch is the literal the forced-dark build shipped.
 @main
 @MainActor
 struct AppearanceTests {

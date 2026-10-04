@@ -4,15 +4,16 @@ How code in Hudku is written. This is **guidance** - it describes what the codeb
 like so that new code reads like it was there all along, and a good reason to depart from it is a good
 reason. What is actually checked is the bar in
 [testing.md](testing.md#definition-of-done); the rules that may not be broken at all are the
-Non-negotiables in [`AGENTS.md`](../AGENTS.md).
+[Non-negotiables](#non-negotiables) further down this document.
 
 When this document and the code disagree, the code is probably right and this file is stale. Fix it.
 
 ## Posture
 
-The rule - latest-only, prefer modern APIs, no compatibility layers, never add backwards compatibility
-unasked - is stated in [`AGENTS.md`](../AGENTS.md#posture-latest-only-always). This section is the
-reasoning and the concrete shape it takes.
+The rule is **latest-only, always**: Hudku targets one macOS (the current stable release, macOS 26+,
+the Xcode toolchain and Swift 6 language mode), prefers the modern API of the day, and never carries a
+compatibility layer or a backwards-compatibility shim unless a task explicitly asks for one. This
+section is the reasoning and the concrete shape it takes.
 
 The reason it is worth being strict about: a compatibility floor is not a one-time cost. Every shim
 outlives the platform that needed it, gets copied by the next feature that sees it, and turns a
@@ -31,6 +32,50 @@ because nothing modern can register a system-wide chord, and `CGEventTap` cannot
 press. `InputSourceSwitcher` uses HIToolbox's TIS APIs because they remain the public mechanism for
 enumerating and selecting keyboard input sources. Neither use is inertia, and every raw C pointer is
 decoded to plain values before it crosses into actor code.
+
+## Non-negotiables
+
+Never break these without an explicit task to do so. Anything feature-specific lives in that
+feature's doc, under its own `## Invariants`.
+
+- **`AppCore` is the sole owner.** New long-lived state goes on `AppCore`, wired in `start()` - never a
+  competing singleton. Views reach a feature's **coordinator** through `@Environment`, not `AppCore`.
+- **A file under `Features/*/Model/` may not import AppKit or SwiftUI**, and takes every environment
+  fact - clock, filesystem, home directory, rates - as an injected parameter. The harnesses compile the
+  shipped sources, so this is enforced by compilation rather than convention.
+- **Swift 6 language mode: data-race violations are hard errors.** `@MainActor` is the default,
+  cross-actor model types are `Sendable`, and heavy or IO-bound work goes off-main as `nonisolated`
+  functions driven by `Task.detached`. Do not add a second actor.
+- **Dark is the baseline, and a colour's dark branch is the literal it always was.** `Theme.Colors`
+  resolves per appearance through `ramp`/`adaptive`; every dark value is the `Color.white.opacity(…)`
+  the forced-dark build shipped, restated rather than re-derived. Retune a light branch freely - change
+  a dark one only when the task is to change Dark. `AppAppearance` drives `NSApp.appearance`, and
+  `.system` maps to `nil` so AppKit follows macOS on its own.
+- **Hudku presents its own dialogs - never `NSAlert` or a system popover.** A question
+  goes through `DialogController`, a report through a HUD via `HUDPresenter`.
+- **A networked feature fetches on a private `.ephemeral`, `urlCache = nil` session**, never
+  `URLSession.shared`, so its own cache file stays the only copy on disk. `CurrencyRateStore` is the
+  reference - copy it rather than inventing a second shape.
+- **`AppEntry.Kind` is the only thing that says what an entry is.** One case per launcher section and
+  per `VisibilityStore` category - never re-derive a category by sniffing an entry ID. Which *pane*
+  lists a command is a separate fact, and `SettingsTab.ownedCommands` is the only place that states it.
+- **Generated files are never hand-edited.** `EmojiData.generated.swift` and
+  `Resources/EmojiKeywords/` come from `node Scripts/gen-emoji.js`, `CurrencyData.generated.swift` from
+  `node Scripts/gen-currencies.js`, and `CountryZoneData.generated.swift` from
+  `node Scripts/gen-countries.js`.
+- **`DesignSystem/Scrolling/EdgeDissolve.swift` and `ThinScrollbar.swift` are off-limits.** Both are
+  tuned by eye against the palette's floating bars, so any edit is a visual regression. Needing to touch
+  one to fix a scroll bug means the real fix belongs elsewhere.
+
+## Before you finish
+
+Each item is explained in [testing.md](testing.md#definition-of-done).
+
+- `./Scripts/run-tests.sh` passes.
+- The Debug build compiles with **no new warnings**.
+- `./Scripts/lint.sh` is clean.
+- `grep -rln 'import AppKit\|import SwiftUI\|import Cocoa' Hudku/Features/*/Model/` returns nothing.
+- Any doc your change made wrong is fixed in the same commit.
 
 ## Architecture and feature organization
 

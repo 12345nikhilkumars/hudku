@@ -1,7 +1,8 @@
 # Hudku documentation
 
-Start with [`AGENTS.md`](../AGENTS.md) at the repo root - it is the short version, and it links here for
-anything that needs more than a line.
+Start with [architecture.md](architecture.md) for how the app is wired, and
+[standards.md](standards.md) for how code here is written. Both link out for anything that needs more
+than a line.
 
 Each document below has one job and one trigger: the change that obliges you to edit it. A document that
 contradicts the code is a defect, so fix it in the commit that made it wrong.

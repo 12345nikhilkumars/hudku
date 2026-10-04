@@ -223,8 +223,8 @@ Beyond these, `.secondary`/`.tertiary` foreground styles are fine for SF Symbols
 the environment's appearance). **Selection always beats hover** when a row is both.
 
 An extension's own surfaces live in `ExtensionColors` (`Features/Extensions/UI/`), not here - the
-`ramp` mechanism is shared, the values are the feature's. See the Extensions non-negotiable in
-[`AGENTS.md`](../AGENTS.md).
+`ramp` mechanism is shared, the values are the feature's. See the colour non-negotiable in
+[standards.md](standards.md#non-negotiables).
 
 ---
 
