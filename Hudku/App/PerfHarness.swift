@@ -127,18 +127,24 @@ enum PerfHarness {
         let settingsCycles = Int(env["HUDKU_PERF_SETTINGS_CYCLES"] ?? "") ?? 1
         if env["HUDKU_PERF_SETTINGS"] == "1", settingsCycles > 0 {
             for cycle in 1...settingsCycles {
-                phase("settings_open_\(cycle)")
-                core.settingsCoordinator.showSettings()
-                await sleep(2)
-                snapshot("settings_open_\(cycle)")
-                phase("settings_open_done_\(cycle)")
+                if env["HUDKU_PERF_SETTINGS_PANES"] == "1" {
+                    for tab in SettingsTab.allCases {
+                        phase("settings_pane_\(tab)_\(cycle)")
+                        core.settingsCoordinator.showSettings(tab: tab)
+                        await sleep(2)
+                        snapshot("settings_pane_\(tab)_\(cycle)")
+                    }
+                } else {
+                    phase("settings_open_\(cycle)")
+                    core.settingsCoordinator.showSettings()
+                    await sleep(2)
+                    snapshot("settings_open_\(cycle)")
+                }
+                phase("settings_close_\(cycle)")
                 core.settingsCoordinator.closeSettings()
                 await sleep(2)
                 snapshot("settings_closed_\(cycle)")
                 notes["windows_after_close_\(cycle)"] = NSApp.windows.count
-                notes["leftover_windows_\(cycle)"] = NSApp.windows.map {
-                    "\($0.title)|visible=\($0.isVisible)|toolbarItems=\($0.toolbar?.items.count ?? 0)|vcs=\(String(describing: type(of: $0.contentViewController)))"
-                }
                 phase("settings_closed_done_\(cycle)")
             }
         }

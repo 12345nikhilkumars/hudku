@@ -10,13 +10,32 @@ struct AboutView: View {
 
     // Cached, and read from the bundle: the app icon is generic until LaunchServices registers.
     @MainActor private static let appIcon: NSImage = {
+        let source: NSImage
         if let name = Bundle.main.infoDictionary?["CFBundleIconFile"] as? String,
             let url = Bundle.main.url(forResource: name, withExtension: "icns"),
             let image = NSImage(contentsOf: url)
         {
-            return image
+            source = image
+        } else {
+            source = NSApp.applicationIconImage
         }
-        return NSApp.applicationIconImage
+        // The icns carries every rep to 1024px; keep only what the 88pt tile actually draws.
+        let side = iconSize * 2
+        guard
+            let rep = NSBitmapImageRep(
+                bitmapDataPlanes: nil, pixelsWide: Int(side), pixelsHigh: Int(side),
+                bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0),
+            let context = NSGraphicsContext(bitmapImageRep: rep)
+        else { return source }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        context.imageInterpolation = .high
+        source.draw(in: NSRect(x: 0, y: 0, width: side, height: side))
+        NSGraphicsContext.restoreGraphicsState()
+        let image = NSImage(size: NSSize(width: iconSize, height: iconSize))
+        image.addRepresentation(rep)
+        return image
     }()
 
     private static let iconSize: CGFloat = 88

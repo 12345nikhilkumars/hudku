@@ -33,6 +33,7 @@
 		0EF72E155F8E300B1B2B68E9 /* PalettePlacement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40DDCB8C92B4613CE85F10A0 /* PalettePlacement.swift */; };
 		0F71CE4D67932741CDE57D60 /* CalloutShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = D364A42C78F2723DEC6A3F36 /* CalloutShape.swift */; };
 		102905B2903A546C852B0F95 /* EmojiData.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71A4212CC9F30DB4254AD0FB /* EmojiData.generated.swift */; };
+		1190838EEEC93EABC9EC362B /* MemoryPressureMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = EACC7F4401EFD3E63E1C3CD0 /* MemoryPressureMonitor.swift */; };
 		12FA13D2F37C142F216C6053 /* PaletteCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 840F0283DCD656F8D8923483 /* PaletteCoordinator.swift */; };
 		13928BD780F70A65DA4B42BB /* PopoverMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CEE7ACDC0D92BF94C908562 /* PopoverMenu.swift */; };
 		13CA3B71087127737F35884D /* CalcMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43F7C6B960C934E3E21910B4 /* CalcMath.swift */; };
@@ -646,6 +647,7 @@
 		E81F1F302F1A5A1DF3619517 /* ColorSwatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorSwatch.swift; sourceTree = "<group>"; };
 		E8431345BE5D0795C25B6C7D /* Memo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memo.swift; sourceTree = "<group>"; };
 		E8906BE03592089788488027 /* ShortcutCaptureSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutCaptureSession.swift; sourceTree = "<group>"; };
+		EACC7F4401EFD3E63E1C3CD0 /* MemoryPressureMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryPressureMonitor.swift; sourceTree = "<group>"; };
 		EB52E17C9ED0381742C8AB44 /* FileSearchPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSearchPolicy.swift; sourceTree = "<group>"; };
 		EC7B22180A92EB42BBD1455A /* OverflowFade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverflowFade.swift; sourceTree = "<group>"; };
 		ECBF98D14D67DEF1E5135131 /* Permissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Permissions.swift; sourceTree = "<group>"; };
@@ -1378,6 +1380,7 @@
 				C0AEC4420799E07B020A73C7 /* LaunchAtLogin.swift */,
 				E8431345BE5D0795C25B6C7D /* Memo.swift */,
 				848A16BA612E7954572AE1B6 /* MemoryPressure.swift */,
+				EACC7F4401EFD3E63E1C3CD0 /* MemoryPressureMonitor.swift */,
 				29E99D81BFF4623BD40A41F6 /* NotificationToken.swift */,
 				CF773139288B36A19DB4DDAF /* PasteboardFiles.swift */,
 				ECBF98D14D67DEF1E5135131 /* Permissions.swift */,
@@ -1824,6 +1827,7 @@
 				220F3DFDF93067C3E0A0395F /* LeadCard.swift in Sources */,
 				38FFD4F10661DCADE012367B /* Memo.swift in Sources */,
 				24845C6C6FBB4FB09C2FDE0B /* MemoryPressure.swift in Sources */,
+				1190838EEEC93EABC9EC362B /* MemoryPressureMonitor.swift in Sources */,
 				BFB5AC53EDBAD419B071AEE7 /* MenuPanel.swift in Sources */,
 				C7F3FC4DA0A17BC2E7DE761A /* MessageHUDController.swift in Sources */,
 				5223B7E4DD3189E0FE144945 /* MessageHUDView.swift in Sources */,

@@ -91,6 +91,7 @@ final class AppCore {
             isShowingDialog = isPresenting
         })
     private let healthTicker = HealthTicker()
+    private let memoryPressure = MemoryPressureMonitor()
 
     private init() {
         let launcherRanking = LauncherRankingStore()
@@ -160,6 +161,15 @@ final class AppCore {
             hotKeys.start()
             // Keeps running while Carbon pauses: the recorder needs its rewritten flags.
             hyperKeyTap.start(settings: settings)
+
+            // When the system runs short, give back everything a closed surface left behind.
+            memoryPressure.onPressureWarning = {
+                IconCache.purgeForHidden()
+                ImageThumbnail.purgePreviews()
+                FilePreviewThumbnail.purgePreviews()
+                MemoryPressure.relieve()
+            }
+            memoryPressure.start()
 
             observeFeatureSwitches()
             // Last, so an edit made while Hudku was quit reaches every sink wired above.

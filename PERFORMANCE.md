@@ -92,6 +92,14 @@ memory is framework machinery — objc method caches, CoreSVG rasterizations, vi
 pipelines, font and icon subsystem caches — that later opens reuse instead of re-buying. Emptying
 the tree on close is still done, so the hosting controller and its panes do not sit on the budget.
 
+**A full pane sweep** peaks at ~152 MB (System Actions highest, then About) and settles to ~106 MB
+closed. A/B'd against the identical sweep on the previous build (peak 151.7 MB, settled 121.6 MB)
+the current build is 15 MB better and no worse anywhere — a reported "growth to 200 MB during use"
+did not reproduce as a regression; it tracks what is open at watch time (peaks run ~150 MB while
+browsing) and the RSS reading, which is ~2× footprint. Two trims shipped anyway: the About pane
+downsamples its 1024px icns to the drawn size, and a system memory-pressure monitor purges icon
+tiers and relieves the allocator whenever macOS reports pressure.
+
 ## CPU (unchanged; accepted)
 
 Steady idle 0.02–0.03 s per 60 s (~0.03–0.05 %), 0.0 % in Activity Monitor, zero on-CPU samples in a
