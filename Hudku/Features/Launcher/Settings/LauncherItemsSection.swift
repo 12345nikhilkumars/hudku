@@ -69,10 +69,9 @@ struct LauncherItemsList: View {
             Text(query.isEmpty ? "Nothing here yet." : "No matches for “\(query)”.")
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
-        } else if entries.first?.kind != .application && entries.first?.kind != .appleShortcut {
-            ForEach(entries) { entry in LauncherItemRow(entry: entry) }
         } else {
-            // One row holding the table: a `Form` realizes every row it is handed.
+            // One row holding the table: a `Form` realizes every row it is handed, and each
+            // hosted row is heavy enough that the 151-row panes cost real hundreds of MB.
             LauncherItemsTable(
                 entries: entries, isEnabled: isEnabled,
                 visibility: visibility, aliases: aliases, hotKeys: hotKeys,

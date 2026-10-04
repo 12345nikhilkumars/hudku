@@ -85,6 +85,18 @@ struct LauncherItemsTable: NSViewRepresentable {
 
         func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
             guard let list else { return nil }
+            // A row outside the visible viewport gets a blank placeholder, never a hosted
+            // SwiftUI tree: this table spans the outer Form's whole scroll, so AppKit
+            // prepares every row eagerly and only scrolling decides what is worth hosting.
+            guard let table = tableView as? HostedRowsTableView, table.isRowInViewport(row) else {
+                // Take the departing row's tree down whole: a cell parked in the reuse pool
+                // would keep hosting it, and the pool never expires on its own.
+                (tableView.view(atColumn: 0, row: row, makeIfNecessary: false) as? LauncherItemCellView)?
+                    .tearDown()
+                (tableView as? HostedRowsTableView)?.markBlank(row)
+                return HostedRowsTableView.blankCell(in: tableView)
+            }
+            table.markReal(row)
             let content = content(for: row, of: list)
             let reused = tableView.makeView(withIdentifier: LauncherItemCellView.reuseID, owner: nil)
             let cell = reused as? LauncherItemCellView ?? LauncherItemCellView(content)
@@ -100,7 +112,7 @@ struct LauncherItemsTable: NSViewRepresentable {
             let row = table.row(for: cell) + 1
             guard row > 0, row < table.numberOfRows else { return false }
             table.scrollRowToVisible(row)
-            let next = table.view(atColumn: 0, row: row, makeIfNecessary: true) as? LauncherItemCellView
+            let next = (table as? HostedRowsTableView)?.prepareRow(row) as? LauncherItemCellView
             return next?.focusAlias() ?? false
         }
 
@@ -125,6 +137,12 @@ struct LauncherItemsTable: NSViewRepresentable {
                 visibility: list.visibility, aliases: list.aliases, hotKeys: list.hotKeys)
         }
     }
+}
+
+/// What the row virtualization actually did, for the perf harness to read.
+@MainActor
+enum TableVirtualizationProbe {
+    static var report = "no table constructed"
 }
 
 /// Hangs the table into the `Form` row's padding: negative padding doesn't move an AppKit view.
@@ -155,9 +173,105 @@ private final class OverhangingTableView: NSView {
 }
 
 /// Hands every click to the hosted row; a table otherwise claims clicks that miss an `NSControl`.
+/// It also reports its visible area as the enclosing `Form`'s viewport: laid out at its full
+/// content height, a bare `NSTableView` considers every row visible and hosts them all — for a
+/// 243-row Applications list that is hundreds of SwiftUI trees nobody can see.
 private final class HostedRowsTableView: NSTableView {
+    private var viewportObserver: NSObjectProtocol?
+    /// Rows currently hosting a real cell, placeholders everywhere else. Rows can materialize
+    /// before the table is ever attached to a viewport, so this is recorded where it happens
+    /// and reconciled against the viewport afterwards.
+    private var realRows = IndexSet()
+
+    func markReal(_ row: Int) {
+        realRows.insert(row)
+    }
+
+    func markBlank(_ row: Int) {
+        realRows.remove(row)
+    }
+
     override func validateProposedFirstResponder(_ responder: NSResponder, for event: NSEvent?) -> Bool {
         true
+    }
+
+    override var visibleRect: NSRect {
+        guard let clip = enclosingScrollView?.contentView else { return super.visibleRect }
+        return clip.convert(clip.bounds, to: self).intersection(super.visibleRect)
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if let observer = viewportObserver {
+            NotificationCenter.default.removeObserver(observer)
+            viewportObserver = nil
+        }
+        guard let clip = enclosingScrollView?.contentView else { return }
+        // The outer scroll moves the whole table; only its bounds notifications say so.
+        clip.postsBoundsChangedNotifications = true
+        viewportObserver = NotificationCenter.default.addObserver(
+            forName: NSView.boundsDidChangeNotification, object: clip, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.syncViewport() }
+        }
+        DispatchQueue.main.async { [weak self] in self?.syncViewport() }
+    }
+
+    override func layout() {
+        super.layout()
+        syncViewport()
+    }
+
+    isolated deinit {
+        if let observer = viewportObserver { NotificationCenter.default.removeObserver(observer) }
+    }
+
+    /// Rows inside the outer `Form`'s viewport, so `viewFor` can tell real from placeholder.
+    func isRowInViewport(_ row: Int) -> Bool {
+        guard window != nil else { return true }
+        let rows = self.rows(in: visibleRect)
+        guard rows.location != NSNotFound, rows.length > 0 else { return false }
+        return (rows.location..<rows.location + rows.length).contains(row)
+    }
+
+    /// Force one row real even before a scroll notification lands; used by Tab-into-alias.
+    func prepareRow(_ row: Int) -> NSView? {
+        reloadData(forRowIndexes: IndexSet(integer: row), columnIndexes: IndexSet(integer: 0))
+        return view(atColumn: 0, row: row, makeIfNecessary: true)
+    }
+
+    static let blankID = NSUserInterfaceItemIdentifier("blankRow")
+
+    static func blankCell(in tableView: NSTableView) -> NSTableCellView {
+        if let reused = tableView.makeView(withIdentifier: blankID, owner: nil) as? NSTableCellView {
+            return reused
+        }
+        let cell = NSTableCellView()
+        cell.identifier = blankID
+        return cell
+    }
+
+    /// Swap real and placeholder cells as the viewport moves under the outer scroll.
+    private func syncViewport() {
+        let rows = self.rows(in: visibleRect)
+        let visible =
+            rows.location == NSNotFound || rows.length == 0
+            ? IndexSet() : IndexSet(integersIn: rows.location..<rows.location + rows.length)
+        if PerfHarness.isEnabled {
+            TableVirtualizationProbe.report =
+                "rows=\(numberOfRows) window=\(window != nil) scroll=\(enclosingScrollView != nil)"
+                + " visibleRange=\(rows.location)+\(rows.length) realRows=\(realRows.count)"
+        }
+        guard window != nil, numberOfRows > 0 else { return }
+        let stale = realRows.subtracting(visible)
+        if !stale.isEmpty {
+            realRows.subtract(stale)
+            reloadData(forRowIndexes: stale, columnIndexes: IndexSet(integer: 0))
+        }
+        let missing = visible.subtracting(realRows)
+        if !missing.isEmpty {
+            reloadData(forRowIndexes: missing, columnIndexes: IndexSet(integer: 0))
+        }
     }
 }
 
@@ -191,6 +305,13 @@ private final class LauncherItemCellView: NSTableCellView {
         content.onRecorderFrame = { [weak self] frame in self?.recorderMoved(to: frame) }
         content.onTab = { [weak self] in self?.tabbed() ?? false }
         host.rootView = content
+    }
+
+    /// The row left the viewport: release the hosted SwiftUI tree and keep the cell out of
+    /// the reuse pool, since a pooled cell would go on retaining the whole tree.
+    func tearDown() {
+        host.removeFromSuperview()
+        identifier = nil
     }
 
     fileprivate func focusAlias() -> Bool {

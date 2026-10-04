@@ -127,12 +127,15 @@ enum PerfHarness {
         let settingsCycles = Int(env["HUDKU_PERF_SETTINGS_CYCLES"] ?? "") ?? 1
         if env["HUDKU_PERF_SETTINGS"] == "1", settingsCycles > 0 {
             for cycle in 1...settingsCycles {
+                let panePause = Double(env["HUDKU_PERF_SETTINGS_PANE_PAUSE"] ?? "") ?? 0
                 if env["HUDKU_PERF_SETTINGS_PANES"] == "1" {
                     for tab in SettingsTab.allCases {
                         phase("settings_pane_\(tab)_\(cycle)")
                         core.settingsCoordinator.showSettings(tab: tab)
                         await sleep(2)
                         snapshot("settings_pane_\(tab)_\(cycle)")
+                        notes["table_diag_\(tab)"] = TableVirtualizationProbe.report
+                        if panePause > 0 { await sleep(panePause) }
                     }
                 } else {
                     phase("settings_open_\(cycle)")

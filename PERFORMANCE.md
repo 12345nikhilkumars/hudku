@@ -92,12 +92,16 @@ memory is framework machinery — objc method caches, CoreSVG rasterizations, vi
 pipelines, font and icon subsystem caches — that later opens reuse instead of re-buying. Emptying
 the tree on close is still done, so the hosting controller and its panes do not sit on the budget.
 
-**A full pane sweep** peaks at ~152 MB (System Actions highest, then About) and settles to ~106 MB
-closed. A/B'd against the identical sweep on the previous build (peak 151.7 MB, settled 121.6 MB)
-the current build is 15 MB better and no worse anywhere — a reported "growth to 200 MB during use"
-did not reproduce as a regression; it tracks what is open at watch time (peaks run ~150 MB while
-browsing) and the RSS reading, which is ~2× footprint. Two trims shipped anyway: the About pane
-downsamples its 1024px icns to the drawn size, and a system memory-pressure monitor purges icon
+**A full pane sweep** originally peaked at ~152 MB and settled to ~106 MB closed — the heavy panes
+(System Settings, 52 rows; System Actions, 31) were the fixable part: only the Applications and
+Shortcuts panes used the row-virtualizing table, while the rest fell into a plain `ForEach` that a
+`Form` realizes *in full* — every ~450-node SwiftUI row tree alive, ~1 MB per materialized row.
+Every list now goes through the table, whose rows are virtualized against the enclosing scroll's
+actual viewport: real cells only inside it, blank placeholders elsewhere, and departing rows are
+torn down whole (a cell parked in the AppKit reuse pool would keep hosting its tree forever). Full
+sweep now peaks at **113 MB** and settles to **~88 MB**; the System Settings pane dropped 135 → 105
+and System Actions 152 → 113. Repeated sweeps add ~1 MB per cycle — first-touch plateau, no leak.
+The About pane also downsamples its 1024px icns, and a system memory-pressure monitor purges icon
 tiers and relieves the allocator whenever macOS reports pressure.
 
 ## CPU (unchanged; accepted)
