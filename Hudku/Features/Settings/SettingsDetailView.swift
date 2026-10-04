@@ -17,7 +17,6 @@ struct SettingsDetailView: View {
             case .fallbacks: FallbacksSettingsView()
             case .fileSearch: FileSearchSettingsView()
             case .clipboard: ClipboardSettingsView()
-            case .emoji: EmojiSettingsView()
             case .permissions: PermissionsSettingsView()
             case .about: AboutView()
             }

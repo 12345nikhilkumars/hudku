@@ -177,9 +177,6 @@ enum Theme {
         static let settingsSidebarGlyph: CGFloat = 14
         /// A grouped `Form` row's control height.
         static let settingsControlHeight: CGFloat = 28
-        static let emojiSkinToneGlyph: CGFloat = 13
-        /// One density preview; five fit across the Emoji settings detail pane.
-        static let emojiSettingsGridPreview: CGFloat = 72
         /// What the system leaves either side of a segment's label once the control has settled.
         static let segmentLabelInset: CGFloat = 13
         /// The confirmation HUD's width ceiling, and its distance above the screen bottom.

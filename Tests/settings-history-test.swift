@@ -57,8 +57,8 @@ struct SettingsHistoryTests {
         history.select(.general)
         expect(!history.canGoBack, "re-selecting the current pane pushes nothing")
 
-        history.select(.emoji)
-        history.select(.emoji)
+        history.select(.permissions)
+        history.select(.permissions)
         history.goBack()
         expect(history.current == .general, "and one Back still reaches the pane before it")
     }
@@ -66,7 +66,7 @@ struct SettingsHistoryTests {
     static func roundTrips() {
         var history = SettingsHistory(current: .general)
         history.select(.fallbacks)
-        history.select(.emoji)
+        history.select(.permissions)
 
         history.goBack()
         expect(history.current == .fallbacks, "Back walks one entry at a time")
@@ -77,14 +77,14 @@ struct SettingsHistoryTests {
 
         history.goForward()
         history.goForward()
-        expect(history.current == .emoji, "Forward retraces the same path")
+        expect(history.current == .permissions, "Forward retraces the same path")
         expect(!history.canGoForward, "and stops where we had got to")
     }
 
     static func aNewBranchDiscardsTheOldOne() {
         var history = SettingsHistory(current: .general)
         history.select(.fileSearch)
-        history.select(.emoji)
+        history.select(.permissions)
         history.goBack()
         history.goBack()
 
@@ -151,7 +151,6 @@ struct SettingsHistoryTests {
             ("caps lock", .general),
             ("launch at login", .general),
             ("paste history", .clipboard),
-            ("skin tone", .emoji),
             ("spotlight", .fileSearch),
             ("apple shortcuts", .appleShortcuts)
         ]

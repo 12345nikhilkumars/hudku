@@ -52,7 +52,6 @@ extension SettingsTab {
         switch self {
         case .fileSearch: [.searchFiles]
         case .clipboard: [.clipboardHistory, .pasteSequentially]
-        case .emoji: [.searchEmoji]
         default: []
         }
     }
