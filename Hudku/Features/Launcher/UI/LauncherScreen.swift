@@ -28,6 +28,9 @@ struct LauncherScreen: PaletteScreen {
     private let suggestionCount: Int
     /// The `Use "…" with` section, below every result; empty unless something is typed.
     private let fallbacks: [(fallback: Fallback, entry: AppEntry)]
+    /// `@word` typed in root search: files and folders under the search scopes, by name.
+    private let fileTerm: String?
+    private let fileMatches: [FileSearchResult]
     /// `:smile` typed in root search: Slack/Discord-style emoji matches, answered from the index.
     private let emojiMatches: [EmojiEntry]
     /// `def word` typed in root search: the dictionary page fills the palette in place.
@@ -63,6 +66,12 @@ struct LauncherScreen: PaletteScreen {
         let calc = CalcMemo.evaluate(vm.query, rates: currencyRates.rates, format: core.calcNumberFormat)
         // After the calculator: `#FF5733` is never arithmetic, so the two can't both answer.
         let color = calc == nil ? ColorValue.parse(vm.query) : nil
+        let fileTerm = Self.fileSearchTerm(in: vm.query)
+        // The session publishes whatever it last ran; only its own term's results are answers.
+        let fileMatches: [FileSearchResult] =
+            fileTerm.flatMap { term in
+                core.fileSearch.publishedQuery == term ? core.fileSearch.results : nil
+            } ?? []
         let emojiTerm = Self.emojiSearchTerm(in: vm.query)
         let emojiMatches = emojiTerm.map { term in
             // A bare `:` opens the section with favourites first, then the top of the catalog —
@@ -76,7 +85,7 @@ struct LauncherScreen: PaletteScreen {
         }
         // A keyword answer is an instruction, not a search: no "Use … with" rows under it.
         let fallbacks =
-            emojiTerm != nil || definitionTerm != nil
+            emojiTerm != nil || definitionTerm != nil || fileTerm != nil
             ? [] : core.fallbackCoordinator.entries(for: vm.query)
         let entries = results.map(Row.entry) + fallbacks.map { Row.fallback($0.fallback, $0.entry) }
         let pinsFavorites = vm.query.trimmingCharacters(in: .whitespaces).isEmpty
@@ -84,6 +93,8 @@ struct LauncherScreen: PaletteScreen {
         self.calc = calc
         self.fallbacks = fallbacks
         self.color = color
+        self.fileTerm = fileTerm
+        self.fileMatches = fileMatches
         self.emojiMatches = emojiMatches
         self.definitionTerm = definitionTerm
         self.dictionaryMatch = dictionaryMatch
@@ -96,15 +107,17 @@ struct LauncherScreen: PaletteScreen {
         } else if definitionTerm != nil, core.dictionary.lookup?.term == definitionTerm {
             // The term resolved to nothing: the page states that instead of copying a blank.
             self.rows = []
+        } else if fileTerm != nil, fileMatches.isEmpty {
+            // Until the search lands (or when it finds nothing) the files are the whole answer.
+            self.rows = []
         } else {
-            let rows = emojiMatches.map(Row.emoji)
+            var rows = emojiMatches.map(Row.emoji)
             if let calc {
-                self.rows = [.calc(calc)] + rows + entries
+                rows = [.calc(calc)] + rows
             } else if let color {
-                self.rows = [.color(color)] + rows + entries
-            } else {
-                self.rows = rows + entries
+                rows = [.color(color)] + rows
             }
+            self.rows = fileMatches.map(Row.file) + rows + entries
         }
     }
 
@@ -138,6 +151,13 @@ struct LauncherScreen: PaletteScreen {
         return picked
     }
 
+    /// `@word` / `?word` — a file or folder under the search scopes, by name.
+    static func fileSearchTerm(in query: String) -> String? {
+        guard let first = query.first, first == "@" || first == "?" else { return nil }
+        let term = query.dropFirst().trimmingCharacters(in: .whitespaces)
+        return term.isEmpty ? nil : term
+    }
+
     /// `def word` / `define:word` — the word to look up, said outright.
     static func definitionTerm(in query: String) -> String? {
         guard let first = query.first, first == "d" || first == "D" else { return nil }
@@ -154,6 +174,7 @@ struct LauncherScreen: PaletteScreen {
     enum Row: Equatable, Identifiable {
         case calc(CalcResult)
         case color(ColorValue)
+        case file(FileSearchResult)
         case emoji(EmojiEntry)
         case definition(DictionaryEntry)
         case entry(AppEntry)
@@ -164,6 +185,7 @@ struct LauncherScreen: PaletteScreen {
             switch self {
             case .calc: return "calc-card"
             case .color: return "color-card"
+            case .file(let result): return "file-" + result.id
             case .emoji(let entry): return "emoji-" + entry.glyph
             case .definition(let entry): return "definition-" + entry.term
             case .entry(let app): return app.id
@@ -182,6 +204,7 @@ struct LauncherScreen: PaletteScreen {
         switch row(at: clampedSelection) {
         case .calc: return "Copy Answer"
         case .color: return "Copy Color"
+        case .file(let result): return result.isDirectory ? "Open Folder" : "Open File"
         case .emoji: return "Copy Emoji"
         case .definition: return "Copy Definition"
         case .entry(let app): return app.kind.descriptor.openVerb
@@ -202,7 +225,7 @@ struct LauncherScreen: PaletteScreen {
     private func isCardSelected(_ selection: Int) -> Bool {
         switch row(at: selection) {
         case .calc, .color, .definition: return true
-        case .emoji, .entry, .fallback, nil: return false
+        case .file, .emoji, .entry, .fallback, nil: return false
         }
     }
 
@@ -225,6 +248,9 @@ struct LauncherScreen: PaletteScreen {
             return result.isActionable ? CalcActionsMenu.content(result: result, core: core) : nil
         case .color(let color):
             return ColorActionsMenu.content(color: color, core: core)
+        case .file(let result):
+            return FileSearchActionsMenu.content(
+                result: result, core: core, vm: vm, target: vm.pasteTarget)
         case .emoji:
             return nil
         case .definition(let entry):
@@ -266,6 +292,7 @@ struct LauncherScreen: PaletteScreen {
         case .calc(let result): core.calculatorCoordinator.copyCalculatorResult(result)
         case .color(let color):
             core.clipboardCoordinator.copyColor(color, as: ColorFormat.primary(for: color))
+        case .file(let result): core.fileSearchCoordinator.open(result)
         case .emoji(let entry): core.emojiCoordinator.copyEmoji(entry)
         case .definition(let entry): core.dictionaryCoordinator.copy(entry)
         case .entry(let app):
@@ -276,10 +303,14 @@ struct LauncherScreen: PaletteScreen {
         }
     }
 
-    /// ⌘↵ — the definition opens in Dictionary itself; only an entry on disk is revealed.
+    /// ⌘↵ — the definition opens in Dictionary itself; a file shows in Finder; an app reveals.
     func secondary(at selection: Int) -> Bool {
         if case .definition(let entry) = row(at: selection) {
             core.dictionaryCoordinator.openInDictionary(entry)
+            return true
+        }
+        if case .file(let result) = row(at: selection) {
+            core.fileSearchCoordinator.showInFinder(result)
             return true
         }
         guard let app = entry(at: selection), app.canRevealInFinder else { return false }
@@ -440,6 +471,13 @@ struct LauncherScreen: PaletteScreen {
             DictionaryEntryView(entry: dictionaryMatch)
         } else if let definitionTerm, core.dictionary.lookup?.term == definitionTerm {
             EmptyResults(text: "No definition found")
+        } else if let fileTerm, fileMatches.isEmpty {
+            if core.fileSearch.publishedQuery == fileTerm {
+                EmptyResults(text: "No files found")
+            } else {
+                // The search is still running; an empty list would only flash a message.
+                Color.clear
+            }
         } else {
         LauncherList(
             results: results,
@@ -467,6 +505,12 @@ struct LauncherScreen: PaletteScreen {
                 openActions()
             },
             onDropped: { core.paletteCoordinator.dragLanded() },
+            fileMatches: fileMatches,
+            onFileActivate: { core.fileSearchCoordinator.open($0) },
+            onFileActions: { result in
+                if let index = rows.firstIndex(of: .file(result)) { vm.selection = index }
+                openActions()
+            },
             emojiMatches: emojiMatches,
             onEmojiActivate: { core.emojiCoordinator.copyEmoji($0) },
             onEmojiActions: { entry in

@@ -54,7 +54,8 @@ struct FileSearchList: View {
     }
 }
 
-private struct FileSearchRow: View {
+/// Shared with the launcher's `@`/`?` rows, so both surfaces draw a result the same way.
+struct FileSearchRow: View {
 
     @Environment(\.metrics) private var metrics
     let result: FileSearchResult

@@ -15,6 +15,8 @@ final class FileSearchSession {
 
     private(set) var results: [FileSearchResult] = []
     private(set) var state: State = .idle
+    /// The query `results` answers, so a root-search keyword can tell "not yet" from "none".
+    var publishedQuery: String? { request?.query }
     /// The published search: the filter belongs to it, so narrowing re-runs the same words.
     private var request: Request?
     private var revision = 0

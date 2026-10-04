@@ -4,7 +4,11 @@ import Foundation
 /// gitignore-flavoured: a bare pattern matches any component, one with `/` the path.
 struct FileSearchIgnoreList: Sendable, Equatable {
     /// Compiled in, not stored, so changing the shipped rules reaches existing installs.
-    static let defaults = ["node_modules", "DerivedData", "build", "dist", "target", "Pods"]
+    /// Hidden trees (`.git`, `.venv`, `.next`, …) are already excluded structurally.
+    static let defaults = [
+        "node_modules", "DerivedData", "build", "dist", "target", "Pods", "__pycache__",
+        "venv", "vendor", "bower_components", "out", "coverage",
+    ]
 
     private let literalNames: Set<String>
     private let nameGlobs: [Glob]

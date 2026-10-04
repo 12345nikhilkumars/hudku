@@ -19,6 +19,10 @@ struct LauncherList: View {
     let onActivate: (AppEntry) -> Void
     let onActions: (AppEntry) -> Void
     let onDropped: () -> Void
+    /// `@word` matches, drawn as their own leading section.
+    var fileMatches: [FileSearchResult] = []
+    var onFileActivate: (FileSearchResult) -> Void = { _ in }
+    var onFileActions: (FileSearchResult) -> Void = { _ in }
     /// `:smile` matches, drawn as their own leading section.
     var emojiMatches: [EmojiEntry] = []
     var onEmojiActivate: (EmojiEntry) -> Void = { _ in }
@@ -64,6 +68,7 @@ struct LauncherList: View {
         /// `slot` is the row's ⌘-digit, carried from the section build rather than searched.
         case app(AppEntry, slot: Character?)
         case fallback(AppEntry, index: Int)
+        case file(FileSearchResult)
         case emoji(EmojiEntry)
         var id: String {
             switch self {
@@ -72,6 +77,7 @@ struct LauncherList: View {
             case .card(let card): return card.rowID
             case .app(let app, _): return app.id
             case .fallback(let app, _): return "fallback-" + app.id
+            case .file(let result): return "file-" + result.id
             case .emoji(let entry): return "emoji-" + entry.glyph
             }
         }
@@ -92,7 +98,12 @@ struct LauncherList: View {
     private var rows: [Row] {
         var rows: [Row] = []
         if let card { rows += [.header(card.sectionTitle), .card(card)] }
-        // Keyword answers lead: the typed `:smile` or `def word` is an instruction, not a search.
+        // Keyword answers lead: the typed `@file`, `:smile` or `def word` is an instruction,
+        // not a search.
+        if !fileMatches.isEmpty {
+            rows.append(.header("Files"))
+            rows += fileMatches.map { .file($0) }
+        }
         if !emojiMatches.isEmpty {
             rows.append(.header("Emoji"))
             rows += emojiMatches.map { .emoji($0) }
@@ -141,7 +152,9 @@ struct LauncherList: View {
     var body: some View {
         let rows = rows
         return Group {
-            if results.isEmpty && card == nil && fallbacks == nil && emojiMatches.isEmpty {
+            if results.isEmpty && card == nil && fallbacks == nil && emojiMatches.isEmpty
+                && fileMatches.isEmpty
+            {
                 EmptyResults(text: "No apps found")
             } else {
                 ScrollViewReader { proxy in
@@ -183,6 +196,12 @@ struct LauncherList: View {
                                     .onTapGesture { fallbacks?.onActivate(index) }
                                     .onRightClick { fallbacks?.onActions(index) }
                                     .selectionFrame(row.id == selectedRowID)
+                                case .file(let result):
+                                    FileSearchRow(result: result, selected: row.id == selectedRowID)
+                                        .contentShape(Rectangle())
+                                        .onTapGesture { onFileActivate(result) }
+                                        .onRightClick { onFileActions(result) }
+                                        .selectionFrame(row.id == selectedRowID)
                                 case .emoji(let entry):
                                     EmojiRow(entry: entry, selected: row.id == selectedRowID)
                                         .contentShape(Rectangle())

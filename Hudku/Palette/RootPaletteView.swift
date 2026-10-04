@@ -32,6 +32,8 @@ struct RootPaletteView: View {
     @State private var scroll = ScrollIntent(kind: .top)
     /// Bumped when the dictionary's lookup lands, so a `def word` row re-renders deterministically.
     @State private var dictionaryRevision = 0
+    /// The same trick for `@word`: file results land asynchronously and the rows follow them.
+    @State private var fileResultsRevision = 0
 
     /// Compact vs. full; the source of truth is on `AppCore`, so the two can't disagree.
     private var isCollapsed: Bool { core.paletteCoordinator.paletteIsCollapsed }
@@ -179,6 +181,7 @@ struct RootPaletteView: View {
     var body: some View {
         // Read so the lookup landing re-runs this body, whatever else observation does.
         _ = dictionaryRevision
+        _ = fileResultsRevision
         // Resolve the screen once per render, so the flat index can't drift from the rows.
         let screen = screen
         let count = screen.rows.count
@@ -281,7 +284,7 @@ struct RootPaletteView: View {
                 land()
                 if vm.mode == .fileSearch { fileSearch.search(vm.query, filter: vm.fileSearchFilter) }
                 if vm.mode == .dictionary { dictionary.lookUp(vm.query) }
-                // Root-search keywords: `:smile` and `def word` answer without leaving the launcher.
+                // Root-search keywords: `@file`, `:smile` and `def word` answer in the launcher.
                 if vm.mode == .launcher {
                     if vm.query.hasPrefix(":"), !emojiIndex.isLoaded {
                         Task { await emojiIndex.load(languages: Locale.preferredLanguages) }
@@ -289,10 +292,18 @@ struct RootPaletteView: View {
                     if let term = LauncherScreen.definitionTerm(in: vm.query) {
                         dictionary.lookUp(term)
                     }
+                    if let term = LauncherScreen.fileSearchTerm(in: vm.query) {
+                        fileSearch.search(term)
+                    } else {
+                        // A stale session holds search state for a term nobody is showing.
+                        fileSearch.cancel()
+                    }
                 }
             }
             // A `def word` answer lands asynchronously; this makes its row show the moment it does.
             .onChange(of: dictionary.lookup) { dictionaryRevision &+= 1 }
+            // `@word` results land the same way, and the file rows follow them the same way.
+            .onChange(of: fileSearch.results) { fileResultsRevision &+= 1 }
             // A narrower list means the old index points at a different row, or at none.
             .onChange(of: vm.clipboardFilter) { land() }
             // The filter is part of the query, so narrowing re-runs it rather than thinning rows.
