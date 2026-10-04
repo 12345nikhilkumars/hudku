@@ -1,0 +1,67 @@
+# Raycast import
+
+Hudku reads the `.rayconfig` written by Raycast v2.x: a `RAYCFG3` container holding an AES-256-GCM
+payload under a scrypt-derived key. It is the only format read — the v1.x export and the Raycast X beta
+between them are both gone, deleted rather than carried, as of **v0.10.5**.
+
+## Invariants
+
+- **`RaycastDecoder` stays platform-UI-free** so `raycast-test` compiles it standalone. Which is why the
+  decoder returns the payload's own bytes and `RaycastImportReader`, not the decoder, validates them
+  against `PopToRootTimeout` / `EmojiSkinTone` / `HyperKeyPhysicalKey` / `KeyShortcut`.
+- **Recognition is the container signature and nothing else.** `RaycastDecoder.isExport` needs no
+  passphrase, so the Backup pane runs it the moment a file is chosen and a wrong passphrase reports a
+  wrong passphrase instead of "not a Raycast export".
+- **Never commit a real `.rayconfig` as a fixture.** The harness builds its own.
+- **Every scrypt derive costs seconds in the unoptimized harness.** `raycast-test` derives once for its
+  fixture and keeps the cases that reach key derivation to the few that need it; anything testing the
+  container's framing is written to fail before it.
+- **The payload gunzip cap is a memory bound, not a zip-bomb guard.** AES-GCM has already authenticated
+  those bytes. The unauthenticated header stays at 1 MB. A clipboard-heavy export decompresses past
+  64 MB, so the payload cap is 512 MB.
+
+## Wire format
+
+```
+file = "RAYCFG3\n" ‖ UInt32LE(header.count) ‖ gzip(header JSON) ‖ ciphertext ‖ tag(16)
+body = AES-256-GCM(gzip(payload JSON))
+key  = scrypt(passphrase, salt, N=16384, r=8, p=1, dkLen=32)
+```
+
+The header carries `schemaVersion`, `iv` and `salt`, hex-encoded, 16 bytes each. `schemaVersion` is
+Raycast's own container number and is **3**; anything else is rejected. The payload is category-keyed
+JSON: `settings`, `clipboardHistory`, a top-level `snippets` whose entries name themselves `title`,
+and a `quicklinks` object holding `quicklinks` plus `openWithPlatforms`.
+
+Raycast encrypts even when the user never chose a password — it generates one and stores it in the
+login keychain (service `Raycast`, account `export_passphrase`), viewable at Raycast → Settings →
+Extensions → Export Settings & Data. **Hudku never reads the keychain**; the user supplies the
+passphrase.
+
+## Mapping
+
+An applications command hides the launched app's path after `::=::` in its id, resolved through
+`Bundle` to a bundle ID — the same resolution the hotkey, favorite and alias mappers all use. Hotkeys
+are `LayoutIndependent` key codes with named modifiers, and always import as a `.combo`: Raycast has no
+double-tap binding. A clipboard record's representations are nested and its timestamps carry fractional
+seconds; only an `image/*` representation whose file still exists becomes an image clip, and the rest
+are counted as missing rather than dropped silently. Quicklinks land through `QuicklinkArchive.merge`,
+so they add to the library and never replace it. `{Query}` is rewritten to `{argument}`; an `openWith`
+app path (or a platform id in `openWithPlatforms`) resolves to a bundle ID the same way application
+hotkeys do. Raycast's ULID is discarded — each imported row gets a fresh UUID, as a JSON quicklink
+import already does. Importing at least one quicklink turns `quicklinksEnabled` on: opening a link
+grants no permission class.
+
+Script commands are not in a `.rayconfig` — they are files in a folder Raycast points at — so they
+have their own importer, described in
+[custom-commands.md](custom-commands.md#importing-raycast-scripts).
+
+## Layout
+
+`RaycastDecoder` unwraps the container and returns Raycast's own values; `RaycastImportReader` turns
+those into Hudku's domain types. That is the same pure-layer / platform-layer split
+`Features/WindowManagement/` uses — the reader needs AppKit, so it lives in `Service/` and is covered by
+the app build rather than the harness.
+
+`RaycastImport` is only the data: `Result`, `selecting(_:)` and `RaycastImportOptions`.
+`BackupActions.importRaycast` runs the reader off the main actor.

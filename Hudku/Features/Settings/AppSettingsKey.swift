@@ -1,0 +1,36 @@
+import Foundation
+
+/// The UserDefaults keys `AppSettings` owns; `CaseIterable` so the backup harness enumerates them.
+enum AppSettingsKey: String, CaseIterable {
+    // Every raw value is spelled out so renaming a case can never rename a persisted key.
+    case clipboardEnabled = "clipboardEnabled"
+    case clipboardTextSearchEnabled = "clipboardTextSearchEnabled"
+    case clipboardRetention = "clipboardRetentionDays"
+    case clipboardDefaultAction = "clipboardDefaultAction"
+    case clipboardDisabledApps = "clipboardDisabledApps"
+    case hyperKey = "hyperKeyPhysicalKey"
+    case hyperKeyIncludesShift = "hyperKeyIncludesShift"
+    case hyperKeyQuickPress = "hyperKeyQuickPress"
+    case emojiSkinTone = "emojiSkinTone"
+    case emojiGridColumns = "emojiGridColumns"
+    case popToRootTimeout = "popToRootTimeout"
+    case escapeKeyBehavior = "escapeKeyBehavior"
+    case appearance = "appearance"
+    case calcNumberStyle = "calculatorNumberStyle"
+    case interfaceSize = "interfaceSize"
+    case compactMode = "compactMode"
+    case showFavoritesInCompactMode = "showFavoritesInCompactMode"
+    case searchScopes = "launcherSearchScopes"
+    case launcherShowsSuggestions = "launcherShowsSuggestions"
+    case rootSearchSensitivity = "rootSearchSensitivity"
+    case openOnCursorScreen = "openOnCursorScreen"
+    case autoSwitchInputSource = "autoSwitchInputSource"
+    case paletteDraggable = "paletteDraggable"
+    case palettePosition = "palettePosition"
+    case paletteExpandedCenterDisplays = "paletteExpandedCenterDisplays"
+    case fileSearchEnabled = "fileSearchEnabled"
+    case fileSearchScopes = "fileSearchScopes"
+    case fileSearchIgnorePatterns = "fileSearchIgnorePatterns"
+    case appleShortcutsEnabled = "appleShortcutsEnabled"
+    case settingsFileEnabled = "settingsFileEnabled"
+}

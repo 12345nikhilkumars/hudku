@@ -1,0 +1,62 @@
+/// Flat-index navigation over sectioned rows; vertical moves keep the column across sections.
+struct EmojiGridGeometry {
+    let counts: [Int]
+    let columns: Int
+    private let starts: [Int]
+
+    init(counts: [Int], columns: Int = 8) {
+        self.counts = counts
+        self.columns = columns
+        var starts: [Int] = []
+        var running = 0
+        for count in counts {
+            starts.append(running)
+            running += count
+        }
+        self.starts = starts
+    }
+
+    private func section(of sel: Int) -> Int? {
+        for (index, start) in starts.enumerated().reversed() where sel >= start {
+            return counts[index] > 0 && sel < start + counts[index] ? index : nil
+        }
+        return nil
+    }
+
+    func down(from sel: Int) -> Int {
+        guard let s = section(of: sel) else { return sel }
+        let local = sel - starts[s]
+        let candidate = local + columns
+        if candidate < counts[s] { return starts[s] + candidate }
+        // A lower partial row in this section clamps to its last cell before spilling over.
+        if local / columns < (counts[s] - 1) / columns { return starts[s] + counts[s] - 1 }
+        guard s + 1 < counts.count else { return sel }
+        return starts[s + 1] + min(local % columns, counts[s + 1] - 1)
+    }
+
+    func up(from sel: Int) -> Int {
+        guard let s = section(of: sel) else { return sel }
+        let local = sel - starts[s]
+        if local - columns >= 0 { return starts[s] + local - columns }
+        guard s > 0 else { return sel }
+        let previousCount = counts[s - 1]
+        let lastRowStart = ((previousCount - 1) / columns) * columns
+        return starts[s - 1] + min(lastRowStart + local % columns, previousCount - 1)
+    }
+
+    /// Keep the same visual slot after a pin disappears, falling back to the preceding last slot.
+    static func selectionAfterRemovingPin(at index: Int, remainingCount: Int) -> Int {
+        min(max(index, 0), max(remainingCount - 1, 0))
+    }
+
+    /// Follow the selected glyph through a rewritten section, clamping when it drops out.
+    static func selection(
+        _ sel: Int, afterSectionAt start: Int, changesFrom old: [String], to new: [String]
+    ) -> Int {
+        guard sel >= start else { return sel }
+        let offset = sel - start
+        guard offset < old.count else { return sel + new.count - old.count }
+        if let moved = new.firstIndex(of: old[offset]) { return start + moved }
+        return start + min(offset, max(new.count - 1, 0))
+    }
+}

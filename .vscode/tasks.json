@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      // Build the .app with xcodebuild into a fixed path (build/DerivedData) so the app
+      // location is stable — that's what lets F5 find it and keeps the Accessibility grant.
+      // DEVELOPER_DIR forces Xcode's toolchain (the SwiftUI macros aren't in the CLT).
+      // The build log is handed to Scripts/sync-lsp.sh, which rebuilds SourceKit-LSP's flag
+      // database from it — that's what keeps cross-file symbols resolving in VS Code as you
+      // add and rename files. pipefail preserves the xcodebuild exit code so a failed build
+      // still blocks F5 / the run step.
+      "label": "Build Hudku.app (debug)",
+      "type": "shell",
+      "command": "bash -c 'set -o pipefail; xcodebuild -project Hudku.xcodeproj -scheme Hudku -configuration Debug -derivedDataPath build/DerivedData build 2>&1 | tee \"${TMPDIR:-/tmp}/hudku-build.log\"; ec=$?; ./Scripts/sync-lsp.sh \"${TMPDIR:-/tmp}/hudku-build.log\" >/dev/null 2>&1 || true; exit $ec'",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "DEVELOPER_DIR": "/Applications/Xcode.app/Contents/Developer" }
+      },
+      "group": "build",
+      "problemMatcher": ["$swiftc"]
+    },
+    {
+      // Rebuild, then relaunch the menu-bar app. Default build task (⌘⇧B).
+      "label": "Build & Run Hudku (debug)",
+      "type": "shell",
+      "command": "killall 'Hudku Dev' 2>/dev/null; open 'build/DerivedData/Build/Products/Debug/Hudku Dev.app'",
+      "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": "Build Hudku.app (debug)",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint project",
+      "type": "shell",
+      "command": "./Scripts/lint.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    }
+  ]
+}

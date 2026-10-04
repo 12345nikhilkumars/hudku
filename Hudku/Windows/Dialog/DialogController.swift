@@ -1,0 +1,176 @@
+import AppKit
+import SwiftUI
+
+/// Hudku's own dialogs; `NSAlert`'s nested run loop would let hotkeys stack them.
+@MainActor
+final class DialogController: NSObject, NSWindowDelegate {
+    private let settings: AppSettings
+    private let onPresentationChanged: (Bool) -> Void
+    private var panel: DialogPanel?
+    private var continuation: CheckedContinuation<Int, Never>?
+
+    init(settings: AppSettings, onPresentationChanged: @escaping (Bool) -> Void) {
+        self.settings = settings
+        self.onPresentationChanged = onPresentationChanged
+    }
+
+    func confirm(
+        title: String, message: String?, symbol: String?, tone: DialogTone, confirmTitle: String,
+        confirmRole: DialogAction.Role, dismissTitle: String = "Cancel"
+    ) async -> Bool {
+        let request = DialogRequest(
+            title: title, message: message, symbol: symbol, tone: tone,
+            actions: [
+                DialogAction(title: confirmTitle, role: confirmRole),
+                DialogAction(title: dismissTitle, role: .cancel)
+            ],
+            defaultIndex: 0, cancelIndex: 1)
+        return await present(request) == 0
+    }
+
+    /// More than two ways forward; `options` is in dispatch order and the last one is the cancel.
+    func choose(
+        title: String, message: String?, symbol: String?, tone: DialogTone,
+        options: [DialogAction], defaultIndex: Int
+    ) async -> Int {
+        let request = DialogRequest(
+            title: title, message: message, symbol: symbol, tone: tone, actions: options,
+            defaultIndex: defaultIndex, cancelIndex: options.count - 1)
+        return await present(request)
+    }
+
+    func notice(title: String, message: String, symbol: String, tone: DialogTone) async {
+        let request = DialogRequest(
+            title: title, message: message, symbol: symbol, tone: tone,
+            actions: [DialogAction(title: "OK", role: .cancel)], defaultIndex: 0, cancelIndex: 0)
+        _ = await present(request)
+    }
+
+    /// Something already went wrong, unlike `confirm`; true if recovery was taken.
+    func reportFailure(
+        title: String, message: String, symbol: String, recovery: String?
+    ) async
+        -> Bool
+    {
+        var actions = [DialogAction(title: "OK", role: .cancel)]
+        if let recovery { actions.append(DialogAction(title: recovery)) }
+        // ↵ lands on the recovery action when there is one to take, not on the OK dismissal.
+        let recoveryIndex = recovery == nil ? nil : actions.count - 1
+        let request = DialogRequest(
+            title: title, message: message, symbol: symbol, tone: .danger,
+            actions: actions, defaultIndex: recoveryIndex ?? 0, cancelIndex: 0)
+        return await present(request) == recoveryIndex
+    }
+
+    func pickVolume(current: Float32) async -> Float32? {
+        let volume = VolumeState(level: Double(current))
+        let request = DialogRequest(
+            title: "Set Volume", message: "Choose the output volume.", symbol: "speaker.wave.2",
+            tone: .neutral,
+            actions: [
+                DialogAction(title: "Set Volume"),
+                DialogAction(title: "Cancel", role: .cancel)
+            ],
+            defaultIndex: 0, cancelIndex: 1, accessory: .volume(volume))
+        guard await present(request) == 0 else { return nil }
+        return Float32(volume.level)
+    }
+
+    private func present(_ request: DialogRequest) async -> Int {
+        // Keyed on the continuation, so a panel still fading can't swallow the next.
+        guard continuation == nil else { return request.cancelIndex }
+        return await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            onPresentationChanged(true)
+            let width = metrics.size.dialogCompactWidth
+            let content = hostingView(
+                DialogView(
+                    request: request, width: width,
+                    onChoose: { [weak self] index in
+                        self?.finish(index)
+                    }),
+                width: width, minHeight: 0)
+            let panel = DialogPanel(content: content, cornerRadius: metrics.radius.panel)
+            panel.handlesArrowKeys = request.accessory?.claimsArrowKeys ?? false
+            panel.delegate = self
+            panel.onKey = { [weak self] key in
+                guard let self else { return }
+                switch key {
+                case .cancel:
+                    finish(request.cancelIndex)
+                case .confirm:
+                    finish(request.defaultIndex)
+                case .increment, .decrement:
+                    // Keying the slider lands on the same values Volume Up/Down produce.
+                    guard case .volume(let volume) = request.accessory else { return }
+                    volume.level = VolumeLevel.stepped(volume.level, up: key == .increment)
+                }
+            }
+            self.panel = panel
+            place(panel)
+            show(panel)
+        }
+    }
+
+    /// Moves the full-size glass panel, avoiding the transient rim caused by scaling its content.
+    private func show(_ panel: NSPanel) {
+        let destination = panel.frame
+        panel.alphaValue = Theme.DialogMotion.initialOpacity
+        panel.setFrameOrigin(
+            NSPoint(x: destination.minX, y: destination.minY - Theme.DialogMotion.offset))
+        // Non-activating like the palette: key focus without pulling the user out.
+        panel.makeKeyAndOrderFront(nil)
+        panel.orderFrontRegardless()
+
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = Theme.Duration.dialogEnter
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            // Moving a cached surface avoids redrawing the glass at each whole-point frame step.
+            panel.animator().setFrame(destination, display: false)
+            panel.animator().alphaValue = 1
+        }
+    }
+
+    /// Resumes before the fade finishes, so a confirmation isn't held up by animation.
+    private func finish(_ index: Int) {
+        guard let continuation else { return }
+        self.continuation = nil
+        onPresentationChanged(false)
+        let closing = panel
+        panel = nil
+        closing?.delegate = nil
+        closing?.onKey = nil
+        continuation.resume(returning: index)
+        closing?.fadeOut(duration: Theme.Duration.dialogExit)
+    }
+
+    private var metrics: InterfaceMetrics { settings.interfaceSize.metrics }
+
+    private func hostingView(_ view: some View, width: CGFloat, minHeight: CGFloat) -> NSView {
+        let hosting = NSHostingView(rootView: AnyView(view.environment(\.metrics, metrics)))
+        // Measure at the fixed width first: the message wraps, so height follows width.
+        hosting.setFrameSize(NSSize(width: width, height: minHeight))
+        let fitted = hosting.fittingSize
+        hosting.setFrameSize(NSSize(width: width, height: max(fitted.height, minHeight)))
+        return hosting
+    }
+
+    private func place(_ panel: NSPanel) {
+        guard let visible = NSScreen.underCursor?.visibleFrame else { return }
+        let size = panel.frame.size
+        panel.setFrameOrigin(
+            NSPoint(
+                x: visible.midX - size.width / 2,
+                y: visible.midY - size.height / 2 + visible.height * Self.centerLift))
+    }
+
+    /// Optical centering: an exactly centred dialog reads low, as the palette would.
+    private static let centerLift: CGFloat = 0.08
+    // MARK: - NSWindowDelegate
+
+    /// Click-away resolves as a dismissal rather than leaving an orphaned dialog behind.
+    func windowDidResignKey(_ notification: Notification) {
+        guard let panel, notification.object as? NSWindow === panel else { return }
+        panel.onKey?(.cancel)
+    }
+}

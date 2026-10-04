@@ -1,0 +1,225 @@
+import Foundation
+
+/// A screen to return to, held with enough state that going back looks like never having left.
+struct PaletteFrame: Equatable {
+    let mode: PaletteMode
+    let query: String
+    let selection: Int
+}
+
+/// Palette state shared between the panel's SwiftUI tree and the coordinator.
+@MainActor
+@Observable
+final class PaletteState {
+    var mode: PaletteMode = .launcher
+    /// The screens below `mode`, innermost last: a summon starts a new one, navigating pushes on.
+    private(set) var backStack: [PaletteFrame] = []
+    var query: String = ""
+    var selection: Int = 0
+    /// True while an IME holds marked text, which leaves `query` empty. The panel publishes it.
+    var isComposing = false
+    /// The clipboard screen's type filter, reset with the rest of the screen state on each summon.
+    var clipboardFilter: ClipboardFilter = .all
+    /// The file search screen's type filter, reset on each summon like the clipboard's.
+    var fileSearchFilter: FileSearchFilter = .all
+    /// The emoji picker's visible category, reset with the rest of a freshly opened screen.
+    var emojiCategoryFilter: EmojiCategoryFilter = .all
+    /// Nil means the configured default; zoom only overrides it for this picker session.
+    var emojiGridColumnsOverride: EmojiGridColumns?
+    /// Whether file search draws its Quick Look overlay; it follows whatever row is selected.
+    var fileSearchQuickLook = false
+    /// Ordering out leaves the SwiftUI tree mounted, so a media preview needs this to stop playing.
+    private(set) var isVisible = false
+    /// Changes every time the palette is shown so the search field can re-focus.
+    var focusToken = UUID()
+    /// Bumped when a screen opens fresh, so its list lands again even when nothing else changed.
+    var resetToken = UUID()
+    /// Bumped when an action reorders the list, so the highlight scrolls back into view.
+    var followToken = UUID()
+    /// AppKit binds ⌘. to `cancelOperation:`, so the field editor eats it before `onKeyPress`.
+    private(set) var pinChordToken = UUID()
+    /// Bumped when AppKit resolves ⌘1…⌘0 to a slot index from the physical number row.
+    private(set) var favoriteSlotToken = UUID()
+    /// The last slot index from `noteFavoriteSlot`, consumed by the SwiftUI layer.
+    private(set) var favoriteSlotIndex: Int?
+    /// Bumped for ⌘0 / ⌘+ / ⌘-, which the panel claims before the field editor can.
+    private(set) var emojiGridZoomToken = UUID()
+    /// The last zoom from `noteEmojiGridZoom`, consumed by the SwiftUI layer.
+    private(set) var emojiGridZoom: EmojiGridZoom?
+    /// Set by the compact bar's overflow to expand without a query; cleared by `prepare`.
+    var forceExpanded = false
+    /// The paste target, mirrored on every show; `prepare` resets the screen, not this.
+    var pasteTarget: PasteTarget?
+    /// True once ⌘ has been *held*, which numbers the favorite rows. The panel is the only writer.
+    private(set) var commandHeld = false
+    /// A chord is a tap, so the numbering waits out the tap before it claims the trailing labels.
+    @ObservationIgnored private var commandHoldTask: Task<Void, Never>?
+    /// True while a form field owns the keyboard, so the palette's own text keys stay out of it.
+    private(set) var isEditingField = false
+    /// True while a control inside a screen has a list open, which owns the arrows and ↵ whole.
+    private(set) var isControlListOpen = false
+    /// Bumped when a press lands outside an open control list, which is how the list learns of it.
+    private(set) var controlListDismissToken = UUID()
+    /// True only once the pointer has moved of its own accord; untracked, so it never re-renders.
+    @ObservationIgnored private(set) var hoverHighlightArmed = false
+    /// Bumped when the highlight drops, so a lit row clears even though the pointer never left it.
+    private(set) var hoverDisarmToken = UUID()
+    /// Where the pointer stood when the list last moved on its own; movement is measured from here.
+    @ObservationIgnored private var hoverAnchor: CGPoint = .zero
+    /// A containment test, because hit-testing a rebuilding hierarchy misses the field.
+    @ObservationIgnored var searchFieldFrame: CGRect = .zero
+    /// True while a palette menu is open. See docs/features/palette.md#menu-open-input-freeze.
+    @ObservationIgnored var menuOpen = false { didSet { onMenuOpenChanged?(menuOpen) } }
+    var menuQuery = ""
+    /// Fired when `menuOpen` flips, so the panel can hide the caret without a focus swap.
+    @ObservationIgnored var onMenuOpenChanged: ((Bool) -> Void)?
+    /// A fresh presentation resets a long popover to the row it opens with.
+    private(set) var menuPresentationToken = UUID()
+
+    func noteVisible(_ visible: Bool) {
+        isVisible = visible
+        // Ordering out leaves the tree mounted, and a preview must not outlive the window.
+        if !visible { fileSearchQuickLook = false }
+    }
+
+    var canGoBack: Bool { !backStack.isEmpty }
+
+    /// Open `mode` as the root: a fresh screen with nothing behind it to go back to.
+    func prepare(mode: PaletteMode) {
+        backStack.removeAll()
+        replace(mode: mode)
+    }
+
+    /// Swap the screen in place, leaving whatever it was opened over still behind it.
+    func replace(mode: PaletteMode) {
+        openScreen(mode)
+        resetToken = UUID()
+    }
+
+    /// Open `mode` over the current screen, which a back step returns to.
+    func push(mode: PaletteMode) {
+        backStack.append(PaletteFrame(mode: self.mode, query: query, selection: selection))
+        replace(mode: mode)
+    }
+
+    /// Restore the screen underneath, false when this one is the root.
+    func pop() -> Bool {
+        guard let frame = backStack.popLast() else { return false }
+        openScreen(frame.mode)
+        query = frame.query
+        selection = frame.selection
+        // Not `resetToken`: landing the list again would throw away the selection restored here.
+        followToken = UUID()
+        return true
+    }
+
+    /// Tab's step deeper into the ring: the screen crossed from is the step back, query and all.
+    func pushCarryingQuery(mode: PaletteMode) {
+        backStack.append(PaletteFrame(mode: self.mode, query: query, selection: selection))
+        self.mode = mode
+    }
+
+    /// The search field is one line, so pasted line breaks become spaces; true when it rewrote.
+    func collapseQueryLineBreaks() -> Bool {
+        guard query.contains(where: \.isNewline) else { return false }
+        query = query.split(whereSeparator: \.isNewline).joined(separator: " ")
+        return true
+    }
+
+    /// Tab closing the ring on the launcher, which is its root: nothing is left behind it.
+    func resetNavigation() {
+        backStack.removeAll()
+    }
+
+    private func openScreen(_ mode: PaletteMode) {
+        self.mode = mode
+        query = ""
+        selection = 0
+        isComposing = false
+        isEditingField = false
+        isControlListOpen = false
+        clipboardFilter = .all
+        fileSearchFilter = .all
+        emojiCategoryFilter = .all
+        emojiGridColumnsOverride = nil
+        fileSearchQuickLook = false
+        forceExpanded = false
+        dropHoverHighlight()
+        menuOpen = false
+        menuQuery = ""
+        focusToken = UUID()
+    }
+
+    /// Long enough that ⌘↵ or ⌘K never flashes the numbering, short enough to feel like a reveal.
+    private static let commandHoldDelay = Duration.milliseconds(400)
+
+    func notePinChord() {
+        pinChordToken = UUID()
+    }
+
+    func noteMenuPresentation() {
+        menuPresentationToken = UUID()
+    }
+
+    func noteFavoriteSlot(_ index: Int) {
+        favoriteSlotIndex = index
+        favoriteSlotToken = UUID()
+    }
+
+    func noteEmojiGridZoom(_ zoom: EmojiGridZoom) {
+        emojiGridZoom = zoom
+        emojiGridZoomToken = UUID()
+    }
+
+    func noteCommandHeld(_ held: Bool) {
+        commandHoldTask?.cancel()
+        commandHoldTask = nil
+        guard held else {
+            commandHeld = false
+            return
+        }
+        guard !commandHeld else { return }
+        commandHoldTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.commandHoldDelay)
+            guard !Task.isCancelled else { return }
+            self?.commandHeld = true
+        }
+    }
+
+    /// Set by whichever screen hands the keyboard to a control of its own.
+    func noteEditingField(_ editing: Bool) {
+        guard editing != isEditingField else { return }
+        isEditingField = editing
+    }
+
+    /// Set by a control whose own list is up; the palette leaves every navigation key to it.
+    func noteControlListOpen(_ open: Bool) {
+        guard open != isControlListOpen else { return }
+        isControlListOpen = open
+    }
+
+    func dismissControlList() {
+        guard isControlListOpen else { return }
+        controlListDismissToken = UUID()
+    }
+
+    /// The pointer moved, which re-lights the highlight once it has cleared the arming slop.
+    func notePointerMoved(to location: CGPoint) {
+        guard !hoverHighlightArmed, HoverArming.isDeliberate(location, from: hoverAnchor) else {
+            return
+        }
+        hoverHighlightArmed = true
+    }
+
+    /// Movement is measured from where the pointer stands now: drift is not a new choice.
+    func disarmHoverHighlight(pointerAt location: CGPoint) {
+        hoverAnchor = location
+        dropHoverHighlight()
+    }
+
+    private func dropHoverHighlight() {
+        guard hoverHighlightArmed else { return }
+        hoverHighlightArmed = false
+        hoverDisarmToken = UUID()
+    }
+}

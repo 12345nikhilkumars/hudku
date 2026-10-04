@@ -1,0 +1,89 @@
+name: Hudku
+options:
+  bundleIdPrefix: com.hudku
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Manual
+    # Ad-hoc signing: no certificate lives in the keychain. The trade-off is macOS forgets the
+    # Accessibility grant after each rebuild, since ad-hoc leaves no stable identity to remember.
+    CODE_SIGN_IDENTITY: "-"
+    SWIFT_STRICT_CONCURRENCY: complete
+  configs:
+    Release:
+      # Release-only: library validation refuses Debug's `.debug.dylib`, whose team never matches.
+      ENABLE_HARDENED_RUNTIME: YES
+      # Strip the shipped binary (dSYM is still generated first) and drop unused code.
+      DEPLOYMENT_POSTPROCESSING: YES
+      STRIP_INSTALLED_PRODUCT: YES
+      STRIP_SWIFT_SYMBOLS: YES
+      DEAD_CODE_STRIPPING: YES
+
+targets:
+  Hudku:
+    type: application
+    platform: macOS
+    sources:
+      - path: Hudku
+        # The helper's own sources: compiling them in would link Vision and PDFKit into the app,
+        # which is the whole thing running recognition out of process avoids.
+        excludes:
+          - Features/Clipboard/Service/ClipboardTextExtractor.swift
+          - Features/Clipboard/Service/ClipboardTextHelper.swift
+          - Resources/EmojiKeywords
+      # A folder reference keeps the packs in their own directory, which `EmojiIndex` lists.
+      - path: Hudku/Resources/EmojiKeywords
+        type: folder
+      # The MIT mark's licence asks the notice to travel with the binary, not just the repo.
+      - path: NOTICE.md
+        buildPhase: resources
+    dependencies:
+      - target: ClipboardTextHelper
+        link: false
+        embed: true
+        codeSign: true
+        copy:
+          destination: wrapper
+          subpath: Contents/Helpers
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hudku.app
+        # Emptied on purpose: the icon ships as Hudku/Resources/AppIcon.icns, generated with
+        # iconutil from the AppIcon.appiconset masters; actool drops the large reps it compiles.
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        INFOPLIST_FILE: Hudku/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Hudku/Hudku.entitlements
+        COMBINE_HIDPI_IMAGES: YES
+        LD_RUNPATH_SEARCH_PATHS:
+          - "$(inherited)"
+          - "@executable_path/../Frameworks"
+      configs:
+        # Debug is its own channel, like beta/stable in release.yml: a distinct bundle id means a
+        # locally-run build gets its own prefs, caches, TCC grants and login item instead of
+        # inheriting — and corrupting — the installed app's state.
+        Debug:
+          PRODUCT_NAME: Hudku Dev
+          PRODUCT_BUNDLE_IDENTIFIER: com.hudku.app.dev
+
+  ClipboardTextHelper:
+    type: tool
+    platform: macOS
+    sources:
+      - Hudku/Features/Clipboard/Service/ClipboardTextExtractor.swift
+      - Hudku/Features/Clipboard/Service/ClipboardTextHelper.swift
+    settings:
+      base:
+        # release.yml passes PRODUCT_NAME on the xcodebuild line, which hits every target: without
+        # these two pinned, a channel build renames the executable `ClipboardTextWorker` looks for
+        # and gives the module a name with a space in it.
+        EXECUTABLE_NAME: ClipboardTextHelper
+        PRODUCT_MODULE_NAME: ClipboardTextHelper
+        SKIP_INSTALL: YES
