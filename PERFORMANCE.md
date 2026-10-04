@@ -5,6 +5,34 @@ Build under test: Release (`-O`, hardened runtime, ad-hoc signed), bundle `com.h
 243 indexed entries, fresh preferences. Harness: `Hudku/App/PerfHarness.swift` (inert unless
 `HUDKU_PERF=1`), driven by the scripts in `/tmp/hudku-perf/`.
 
+## How Hudku compares on this Mac
+
+Same machine, all three launchers installed side by side and left untouched: **MacBook Pro
+(Mac16,8), Apple M4 Pro, 24 GB, macOS 27.0 (26A428), Xcode 27.0 (27A266a)**. Method: quit, launch
+fresh, wait for the CPU-time counter to settle, sit 30 s, then record `phys_footprint` and the
+CPU time consumed over a 60 s idle window. Every app got the same protocol. One caveat: Raycast
+was showing its first-run onboarding during its window, which inflates both its CPU number (a live
+animation) and its RAM (the onboarding UI); a signed-in steady state is likely lower.
+
+| Launcher | Version | Ready | Idle RAM | Idle CPU (60 s) | Threads |
+| --- | --- | --- | --- | --- | --- |
+| **Hudku** | 0.0.1 | 14 s | **22 MB** | **0.05 s (0.08 %)** | 3 |
+| Tinycast (upstream) | 0.11.3 | 12 s | 33 MB | 0.03 s (0.05 %) | 3 |
+| Raycast | 2.6.2.0 | 12 s | 44 MB | 0.70 s (1.17 %, onboarding live) | 28 |
+
+Search speed: the same benchmark file compiled from both codebases with `-O` on this machine.
+
+| Benchmark | Tinycast 0.11.3 | Hudku 0.0.1 |
+| --- | --- | --- |
+| Emoji search, typing p50 | 3.94 ms | **0.29 ms** (about 13x) |
+| Emoji search, review p50 | 3.12 ms | **~0.001 ms** (all ten queries fit the LRU memo) |
+| Calculator groups | 2.1 - 19.4 µs | 2.2 - 19.4 µs (engine untouched, difference is noise) |
+
+In-app, Hudku's palette answers a keystroke in **13.8 µs p50** across a 205-query corpus (single
+letters 9 µs, full names 6 µs, emoji 4 - 13 µs), with memo hits at 2.2 µs, all measured by the
+in-repo `HUDKU_PERF` harness. Raycast and Tinycast expose no equivalent instrument, so their
+keystroke-to-render latency is not externally measurable and is left out rather than estimated.
+
 ## TL;DR - requirements vs measured
 
 | Requirement | Before | After | Verdict |
