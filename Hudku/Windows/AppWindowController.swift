@@ -75,7 +75,13 @@ final class AppWindowController: NSObject, NSWindowDelegate {
     }
 
     func close() {
-        window?.close()
+        guard let window else { return }
+        window.close()
+        // Something in the AppKit/SwiftUI seam can keep a closed window object alive; emptying
+        // its content and its bridged toolbar releases the whole hosting tree (and its memory)
+        // even when that happens. Every open builds a fresh window, so nothing here is reused.
+        window.toolbar = nil
+        window.contentViewController = NSViewController()
     }
 
     /// The title bar sits inside the frame but outside the layout area, so it is added back.

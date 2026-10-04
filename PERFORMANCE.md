@@ -11,7 +11,7 @@ Build under test: Release (`-O`, hardened runtime, ad-hoc signed), bundle `com.h
 | --- | --- | --- | --- |
 | Text/app search | p50 **97 µs**, p95 174 µs | p50 **13.8 µs**, p90 36 µs, p99 67 µs; single letters **5–9 µs**, 3+ chars ~5–8 µs; worst 2-char 40–85 µs | 7× better overall, 30× on single letters — **still above the 1–2 µs ask**; see "What remains" |
 | Emoji `:query` search | p50 **2.0–3.5 ms** | p50 **4–13 µs** (e.g. `:s` 3518→13 µs, `:smile` 2611→7 µs, `:sat` 3308→5.5 µs) | 200–600×; met |
-| RAM after use | grew to **81 MB** over hours; 47–68 MB per session | Idle **21.7 MB**; palette open **38 MB**; after-use plateau **~66 MB and flat** — 8 soak cycles 64.9→65.8 MB, no creep | No creep (met); plateau still above the 40 MB goal |
+| RAM after use | grew to **81 MB** over hours; 47–68 MB per session | Idle **21.7 MB**; palette open **38 MB**; after-use plateau **~58.5 MB and flat** — with close-time relief the soak even converges *down* (83.8→70.9→58.6→58.5→58.5 MB across cycles) | No creep (met); plateau still above the 40 MB goal |
 | Idle CPU | 0.02–0.03 s per 60 s (~0.03–0.05 %) | unchanged | Accepted by you |
 | Memo/hit path | 2.5 µs | **2.2 µs** | met |
 
@@ -57,15 +57,21 @@ results bit-identical (proven by the unchanged harness suite).
    (`CharIndex.singleCharBase`) with frecency merged exactly at query time.
 5. **A 12-entry LRU memo** (`SmallMemo`) for launcher matches/results and emoji searches — a render
    re-asks the same query, and backspace revisits the last few.
-6. **Memory ceilings.** `IconCache` general tier 32 → 16 MB (it is the launcher's warm-tile cache;
-   every tile still fits), on top of the existing fitted/preview purges on hide.
+6. **Memory ceilings and close-time release.** `IconCache` general tier 32 → 16 MB (it is the
+   launcher's warm-tile cache; every tile still fits). Palette hide now purges every icon tier, and
+   both palette hide and Settings close hand freed pages back via `malloc_zone_pressure_relief`
+   (`MemoryPressure`) — whose zero goal turned out to be a measured no-op on this OS, so it now
+   passes a real goal, a beat after the teardown drains. Closing Settings also empties the closed
+   window's content and bridged toolbar, so the hosting tree dies even though something in the
+   AppKit/SwiftUI seam keeps the (now empty) window object itself.
 
 ## Memory (final)
 
-Ladder (footprint, fresh instance): idle **21.7** → palette open **38.1** → emoji loaded 39.1 →
-after search bench 47 → after dictionary+hide ~51 MB.
-Soak (8 × [show → 8 s of queries → hide]): 64.9, 65.4, 66.0, 66.2, 65.6, 65.6, 65.8, 65.8 MB —
-**flat within ±1 MB; nothing accumulates.** The plateau's makeup (`vmmap`/`heap` at rest):
+Ladder (footprint, fresh instance): idle **22** → palette open **38** → emoji loaded 39 →
+after search bench 54–68 → after dictionary+hide 56–72 MB, depending on what was touched.
+Soak (6 × [show → queries → hide]): 83.8, 70.9, 58.6, 59.0, 58.5, 58.8 MB — with the close-time
+purge and relief the retained set *converges down* over the first cycles, then sits **flat at
+~58.5 MB**; nothing accumulates. The plateau's makeup (`vmmap`/`heap` at rest):
 
 - Malloc Small dirty **40.4 MB** (live objects ≈ 25 MB; the rest is allocator metadata and retained
   free pages — the single largest lever left).
@@ -77,6 +83,14 @@ Soak (8 × [show → 8 s of queries → hide]): 64.9, 65.4, 66.0, 66.2, 65.6, 65
   370 KB, our `CharIndex` posting arrays 154 KB, `FuzzyMatch.Candidate` structures 324 KB.
 - No leaks: 416 leaks / 20 KB total; everything else is deliberate retention (the hidden palette
   keeps its tree — the teardown experiment regressed input handling and stays reverted).
+
+**Settings window.** Opening Settings costs **+37 MB** (56.9 → 94.2 MB in the harness), and closing
+returns only ~5 MB — but the cycles prove it is *first-touch materialization, not a leak*: open 2
+adds +0.7 MB, open 3 +0.1 MB, and each close lands back at the same plateau (87.7 → 88.4 → 88.5).
+The closed-state leftovers are empty window husks (content and toolbar cleared); the retained
+memory is framework machinery — objc method caches, CoreSVG rasterizations, vibrancy/glass
+pipelines, font and icon subsystem caches — that later opens reuse instead of re-buying. Emptying
+the tree on close is still done, so the hosting controller and its panes do not sit on the budget.
 
 ## CPU (unchanged; accepted)
 
@@ -93,9 +107,11 @@ search — the search work is no longer measurable at the system level.
    moderate surgery in `LauncherOrder`.
 2. **Empty query 345 µs** — the favorites split + per-kind usage sorts on every palette open after
    invalidation. Cache the split itself (it only changes with favorites/ranking revisions).
-3. **Plateau 66 MB → ≤40 MB** — Malloc Small's retained pages (`malloc_zone_pressure_relief` on hide
-   is the tool; skipped here deliberately after the earlier teardown regression) and the clipboard
-   in-RAM window (1000 items × 32 k chars worst case; `ClipboardStore.memoryWindow`).
+3. **Plateau 66 MB → ≤40 MB** — with relief fixed (real goal, post-drain) the free-page lever is
+   spent; what remains is fragmented partially-live pages and framework-side caches, plus the
+   first-open Settings materialization (~29 MB) that only a lighter Settings composition would
+   avoid. The clipboard window (1000 items) turned out to be a non-factor on this machine and is
+   not worth trading depth for.
 4. **CoreSVG ~2 MB** — find who retains parsed SVG structures for a single bundled asset.
 5. Literal 1–2 µs on *cold* scans: today's floor is ~5–9 µs for sparse queries; only the snapshot /
    incremental work above compresses the dense-candidate cases further.

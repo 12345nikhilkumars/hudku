@@ -49,6 +49,10 @@ final class SettingsCoordinator {
     func closeSettings() {
         editorPresenter?.dismissAll()
         window.close()
+        // The window's tree is being torn down; give its warmed tiles back now and the
+        // freed pages once the teardown has actually drained.
+        IconCache.purgeForHidden()
+        MemoryPressure.relieveAfterTeardown()
     }
 
     func focusExisting() -> Bool {

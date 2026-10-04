@@ -428,6 +428,13 @@ enum IconCache {
         }
     }
 
+    /// A surface just closed: give every warmed tile back, since the next open re-warms them.
+    @MainActor static func purgeForHidden() {
+        cache.removeAllObjects()
+        rowCache.removeAllObjects()
+        purgeFitted()
+    }
+
     private static func fileKey(_ path: String, _ stamp: Int) -> NSString {
         key("file:\(stamp):\(path)")
     }
