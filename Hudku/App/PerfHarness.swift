@@ -154,11 +154,24 @@ enum PerfHarness {
 
         if env["HUDKU_PERF_FILESEARCH"] == "1" {
             phase("filesearch_show")
+            core.settings.fileSearchEnabled = true
+            if core.settings.fileSearchScopes.isEmpty {
+                core.settings.fileSearchScopes = ["~/Documents", "~/Downloads", "~/Desktop"]
+            }
+            core.fileSearchCoordinator.applyPolicy()
             core.fileSearchCoordinator.show(query: "nikhil")
             await sleep(4)
+            notes["filesearch_count"] = core.fileSearch.results.count
             snapshot("filesearch_results")
+            // Land the overlay on a PDF when one is present: that is the heavy preview.
+            if let pdf = core.fileSearch.results.firstIndex(where: {
+                $0.url.pathExtension.lowercased() == "pdf"
+            }) {
+                core.palette.selection = pdf
+                notes["filesearch_pdf"] = core.fileSearch.results[pdf].url.lastPathComponent
+            }
             core.palette.fileSearchQuickLook = true
-            await sleep(4)
+            await sleep(5)
             snapshot("filesearch_quicklook")
             core.palette.fileSearchQuickLook = false
             await sleep(1)
