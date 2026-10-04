@@ -111,6 +111,15 @@ Steady idle 0.02–0.03 s per 60 s (~0.03–0.05 %), 0.0 % in Activity Monitor, 
 query churn the app spends ~82 % of CPU in SwiftUI/AttributeGraph rendering and only ~1–2 % in
 search — the search work is no longer measurable at the system level.
 
+**File search and Quick Look.** The screen itself retains nothing — a clean harness run is flat
+(58 → 57.5 MB with results up, 57.0 with the overlay open, 57.6 closed). Previewing a real
+document is the cost: the in-process PDF render buffer is a single ~41 MB allocation, PDFKit keeps
+its parsed structures, and each preview engages macOS's Quick Look services (`QuickLookUIService`,
+`QLPreviewGenerationExtension`, `Hudku Graphics and Media` — those child processes in Activity
+Monitor are the system's, working on Hudku's behalf) plus XPC ports and worker threads. That is
+per-preview machinery, released on close (both surfaces nil their document via `dismantleNSView`),
+and the hide path additionally purges thumbnails and relieves the allocator.
+
 ## What remains (levers, ranked)
 
 1. **Two-char queries 40–85 µs** — the DP itself (~2 rows × width, word points per matched cell).

@@ -152,6 +152,22 @@ enum PerfHarness {
             }
         }
 
+        if env["HUDKU_PERF_FILESEARCH"] == "1" {
+            phase("filesearch_show")
+            core.fileSearchCoordinator.show(query: "nikhil")
+            await sleep(4)
+            snapshot("filesearch_results")
+            core.palette.fileSearchQuickLook = true
+            await sleep(4)
+            snapshot("filesearch_quicklook")
+            core.palette.fileSearchQuickLook = false
+            await sleep(1)
+            core.paletteCoordinator.hidePalette(restoreFocus: false)
+            await sleep(3)
+            snapshot("filesearch_closed")
+            phase("filesearch_done")
+        }
+
         let soakCycles = Int(env["HUDKU_PERF_SOAK_CYCLES"] ?? "") ?? 0
         if soakCycles > 0 {
             for cycle in 1...soakCycles {
