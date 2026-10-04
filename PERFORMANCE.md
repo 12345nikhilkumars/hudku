@@ -120,6 +120,16 @@ Monitor are the system's, working on Hudku's behalf) plus XPC ports and worker t
 per-preview machinery, released on close (both surfaces nil their document via `dismantleNSView`),
 and the hide path additionally purges thumbnails and relieves the allocator.
 
+**Clipboard browser.** Measured with 43 fabricated items (40 texts, one 22 k-char text, two 2400px
+images): opening adds ~22 MB (lazy rows; mostly the item window and first-render machinery), the
+large-text preview was +14 MB and is now capped at 12 000 rendered characters (+6.5 MB — copying
+still takes the full text), and image previews decode through ImageIO at the pane's exact pixel
+size into a cost-capped cache purged on hide. After close ~+23 MB remains, diffuse (allocator
+pages plus warm row thumbnails); the pressure monitor is the backstop. The store's in-memory
+window was 1000 rows of item text held eagerly; it is now **300** — search still reaches older
+rows through FTS and pinned rows always stay, so a heavy history's worst case drops to roughly a
+third.
+
 ## What remains (levers, ranked)
 
 1. **Two-char queries 40–85 µs** — the DP itself (~2 rows × width, word points per matched cell).

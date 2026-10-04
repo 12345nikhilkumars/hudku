@@ -205,7 +205,10 @@ final class ClipboardStore {
     /// Same memo for the empty query, so the pinned split runs once per mutation.
     @ObservationIgnored private var orderedCache: [ClipboardItem]?
 
-    nonisolated private static let memoryWindow = 1000
+    /// A warm cache of the newest rows, not a limit: search still reaches older ones, and
+    /// every pinned row stays resident regardless. Sized so text bodies cannot add up to
+    /// tens of MB — the window's rows are the only item data held in memory.
+    nonisolated private static let memoryWindow = 300
     /// The most unpinned rows any one query answers with, ordinary and OCR-only alike.
     nonisolated private static let searchLimit = 200
 

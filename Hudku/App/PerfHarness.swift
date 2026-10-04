@@ -152,6 +152,41 @@ enum PerfHarness {
             }
         }
 
+        if env["HUDKU_PERF_CLIPBOARD"] == "1" {
+            phase("clipboard_fill")
+            for index in 0..<40 {
+                core.clipboardStore.addText(
+                    "perf item \(index) " + String(repeating: "lorem ipsum dolor ", count: 80),
+                    sourceBundleID: nil)
+            }
+            let big = String(repeating: "the quick brown fox jumps over the lazy dog. ", count: 500)
+            core.clipboardStore.addText(big, sourceBundleID: nil)
+            if let data = gradientPNG(side: 2400) {
+                core.clipboardStore.addImage(data, sourceBundleID: nil)
+                core.clipboardStore.addImage(data, sourceBundleID: nil)
+            }
+            await sleep(1)
+            core.paletteCoordinator.showPalette(mode: .clipboard)
+            await sleep(2)
+            notes["clipboard_items"] = core.clipboardStore.items.count
+            snapshot("clipboard_list")
+            // Newest first: index 0 is an image, so this lands the heavy preview.
+            core.palette.selection = 0
+            await sleep(3)
+            snapshot("clipboard_image_preview")
+            if let index = core.clipboardStore.items.firstIndex(where: {
+                ($0.text?.count ?? 0) > 20_000
+            }) {
+                core.palette.selection = index
+            }
+            await sleep(3)
+            snapshot("clipboard_text_preview")
+            core.paletteCoordinator.hidePalette(restoreFocus: false)
+            await sleep(3)
+            snapshot("clipboard_closed")
+            phase("clipboard_done")
+        }
+
         if env["HUDKU_PERF_FILESEARCH"] == "1" {
             phase("filesearch_show")
             core.settings.fileSearchEnabled = true
@@ -207,6 +242,28 @@ enum PerfHarness {
         phase("done")
         await sleep(holdSeconds)
         if env["HUDKU_PERF_EXIT"] == "1" { NSApp.terminate(nil) }
+    }
+
+    /// A real, heavy PNG for the clipboard leg: big enough that its decode dominates a preview.
+    @MainActor private static func gradientPNG(side: Int) -> Data? {
+        guard
+            let rep = NSBitmapImageRep(
+                bitmapDataPlanes: nil, pixelsWide: side, pixelsHigh: side, bitsPerSample: 8,
+                samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+                bytesPerRow: 0, bitsPerPixel: 0),
+            let context = NSGraphicsContext(bitmapImageRep: rep)
+        else { return nil }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        for step in 0...16 {
+            let fraction = CGFloat(step) / 17
+            NSColor(hue: fraction, saturation: 0.7, brightness: 0.9, alpha: 1).setFill()
+            NSRect(
+                x: 0, y: fraction * CGFloat(side), width: CGFloat(side), height: CGFloat(side) / 16
+            ).fill()
+        }
+        NSGraphicsContext.restoreGraphicsState()
+        return rep.representation(using: .png, properties: [:])
     }
 
     @MainActor private static func launcherScreen(_ core: AppCore) -> LauncherScreen {

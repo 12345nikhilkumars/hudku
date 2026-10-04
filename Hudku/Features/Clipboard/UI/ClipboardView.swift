@@ -303,6 +303,14 @@ struct ClipboardPreview: View {
         }
     }
 
+    /// Roughly three hundred monospaced lines: a glance, not a reader.
+    private static let previewCharacterLimit = 12_000
+
+    private static func preview(of text: String) -> String {
+        text.count <= previewCharacterLimit
+            ? text : String(text.prefix(previewCharacterLimit)) + "\n…"
+    }
+
     @ViewBuilder
     private func content(for item: ClipboardItem) -> some View {
         switch item.kind {
@@ -310,8 +318,10 @@ struct ClipboardPreview: View {
             if let color = item.colorValue {
                 ColorPreview(color: color, text: item.text ?? "")
             } else {
+                // Laying out a multi-thousand-character string is what spikes this screen;
+                // the pane renders a long prefix, and copying still takes the full text.
                 ScrollView {
-                    Text(item.text ?? "")
+                    Text(Self.preview(of: item.text ?? ""))
                         .font(.system(.subheadline, design: .monospaced))
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .topLeading)
