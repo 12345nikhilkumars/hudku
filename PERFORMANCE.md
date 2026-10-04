@@ -124,7 +124,8 @@ and the hide path additionally purges thumbnails and relieves the allocator.
 images): opening adds ~22 MB (lazy rows; mostly the item window and first-render machinery), the
 large-text preview was +14 MB and is now capped at 12 000 rendered characters (+6.5 MB — copying
 still takes the full text), and image previews decode through ImageIO at the pane's exact pixel
-size into a cost-capped cache purged on hide. After close ~+23 MB remains, diffuse (allocator
+size into a cache purged on hide — that tier was 48 MB (a browse session held ~15 decodes) and is
+now **12 MB**. After close ~+23 MB remains, diffuse (allocator
 pages plus warm row thumbnails); the pressure monitor is the backstop. The store's in-memory
 window was 1000 rows of item text held eagerly; it is now **300** — search still reaches older
 rows through FTS and pinned rows always stay, so a heavy history's worst case drops to roughly a
