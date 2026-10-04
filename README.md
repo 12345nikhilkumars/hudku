@@ -27,17 +27,40 @@ Spotlight. Builds are ad-hoc signed for local use.
 - **Camera**: a preview, and a photo straight to the clipboard.
 - **Uninstaller**: remove an app with its leftover files.
 
-## Build
+## Install
 
-Requires macOS 26+, Xcode 26+, and [XcodeGen](https://github.com/yonaskolb/XcodeGen):
+### DMG
+
+Download `Hudku-0.0.1.dmg` from the
+[latest release](https://github.com/12345nikhilkumars/hudku/releases), open it, and drag Hudku
+into Applications. The build is ad-hoc signed and not notarized, so macOS may block the first
+launch: right-click the app and choose Open, or clear the quarantine flag yourself:
 
 ```sh
+xattr -d com.apple.quarantine /Applications/Hudku.app
+```
+
+### Homebrew
+
+```sh
+brew tap 12345nikhilkumars/tap
+brew install --cask hudku
+```
+
+## Build from source
+
+Requires the full Xcode (26 or later) from the Mac App Store, not just the Command Line Tools
+(the project uses SwiftUI macros), plus [XcodeGen](https://github.com/yonaskolb/XcodeGen):
+
+```sh
+brew install xcodegen
 xcodegen generate
 xcodebuild -project Hudku.xcodeproj -scheme Hudku -configuration Release -derivedDataPath build build
 ```
 
-Install: quit any running copy, copy `build/Build/Products/Release/Hudku.app` to `/Applications`,
-then `open` it.
+The app lands in `build/Build/Products/Release/Hudku.app`. If `xcode-select` points at the
+Command Line Tools, prefix the build with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`,
+or run `sudo xcode-select -s /Applications/Xcode.app` once.
 
 ## Development
 
