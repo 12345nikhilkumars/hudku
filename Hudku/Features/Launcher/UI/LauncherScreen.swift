@@ -26,8 +26,6 @@ struct LauncherScreen: PaletteScreen {
     private let favoriteCount: Int
     /// How many follow the favorites as Suggestions; zero unless the field is empty.
     private let suggestionCount: Int
-    /// The `Use "…" with` section, below every result; empty unless something is typed.
-    private let fallbacks: [(fallback: Fallback, entry: AppEntry)]
     /// `@word` typed in root search: files and folders under the search scopes, by name.
     private let fileTerm: String?
     private let fileMatches: [FileSearchResult]
@@ -66,7 +64,7 @@ struct LauncherScreen: PaletteScreen {
         let calc = CalcMemo.evaluate(vm.query, rates: currencyRates.rates, format: core.calcNumberFormat)
         // After the calculator: `#FF5733` is never arithmetic, so the two can't both answer.
         let color = calc == nil ? ColorValue.parse(vm.query) : nil
-        let fileTerm = Self.fileSearchTerm(in: vm.query)
+        let fileTerm = core.settings.fileSearchEnabled ? Self.fileSearchTerm(in: vm.query) : nil
         // The session publishes whatever it last ran; only its own term's results are answers.
         let fileMatches: [FileSearchResult] =
             fileTerm.flatMap { term in
@@ -83,15 +81,10 @@ struct LauncherScreen: PaletteScreen {
         let dictionaryMatch = definitionTerm.flatMap { term in
             core.dictionary.lookup.flatMap { $0.term == term ? $0.entry : nil }
         }
-        // A keyword answer is an instruction, not a search: no "Use … with" rows under it.
-        let fallbacks =
-            emojiTerm != nil || definitionTerm != nil || fileTerm != nil
-            ? [] : core.fallbackCoordinator.entries(for: vm.query)
-        let entries = results.map(Row.entry) + fallbacks.map { Row.fallback($0.fallback, $0.entry) }
+        let entries = results.map(Row.entry)
         let pinsFavorites = vm.query.trimmingCharacters(in: .whitespaces).isEmpty
         self.results = results
         self.calc = calc
-        self.fallbacks = fallbacks
         self.color = color
         self.fileTerm = fileTerm
         self.fileMatches = fileMatches
@@ -178,8 +171,6 @@ struct LauncherScreen: PaletteScreen {
         case emoji(EmojiEntry)
         case definition(DictionaryEntry)
         case entry(AppEntry)
-        /// Prefixed, because the same command can also be a ranked hit above its own fallback row.
-        case fallback(Fallback, AppEntry)
 
         var id: String {
             switch self {
@@ -189,7 +180,6 @@ struct LauncherScreen: PaletteScreen {
             case .emoji(let entry): return "emoji-" + entry.glyph
             case .definition(let entry): return "definition-" + entry.term
             case .entry(let app): return app.id
-            case .fallback(let fallback, _): return "fallback-" + fallback.id
             }
         }
     }
@@ -208,7 +198,6 @@ struct LauncherScreen: PaletteScreen {
         case .emoji: return "Copy Emoji"
         case .definition: return "Copy Definition"
         case .entry(let app): return app.kind.descriptor.openVerb
-        case .fallback(let fallback, _): return fallback.openVerb
         case nil: return "Open Application"
         }
     }
@@ -225,7 +214,7 @@ struct LauncherScreen: PaletteScreen {
     private func isCardSelected(_ selection: Int) -> Bool {
         switch row(at: selection) {
         case .calc, .color, .definition: return true
-        case .file, .emoji, .entry, .fallback, nil: return false
+        case .file, .emoji, .entry, nil: return false
         }
     }
 
@@ -250,7 +239,7 @@ struct LauncherScreen: PaletteScreen {
             return ColorActionsMenu.content(color: color, core: core)
         case .file(let result):
             return FileSearchActionsMenu.content(
-                result: result, core: core, vm: vm, target: vm.pasteTarget)
+                result: result, core: core, target: vm.pasteTarget)
         case .emoji:
             return nil
         case .definition(let entry):
@@ -278,9 +267,6 @@ struct LauncherScreen: PaletteScreen {
                     if let index = rows.firstIndex(of: .entry(app)) { vm.selection = index }
                 },
                 onHideFromSearch: { _ = hideFromSearch(at: selection) })
-        case .fallback(let fallback, let app):
-            return FallbackActionsMenu.content(
-                fallback: fallback, entry: app, query: vm.query, core: core)
         case nil:
             return nil
         }
@@ -297,8 +283,6 @@ struct LauncherScreen: PaletteScreen {
         case .definition(let entry): core.dictionaryCoordinator.copy(entry)
         case .entry(let app):
             core.launcherCoordinator.launch(app, searchQuery: vm.query)
-        case .fallback(let fallback, _):
-            core.fallbackCoordinator.run(fallback, query: vm.query)
         case nil: break
         }
     }
@@ -516,26 +500,8 @@ struct LauncherScreen: PaletteScreen {
             onEmojiActions: { entry in
                 if let index = rows.firstIndex(of: .emoji(entry)) { vm.selection = index }
                 openActions()
-            },
-            fallbacks: fallbackSection
+            }
         )
         }
     }
-
-    /// Nil when nothing is typed, which is the one state the section has no input for.
-    private var fallbackSection: LauncherList.FallbackSection? {
-        guard !fallbacks.isEmpty else { return nil }
-        return LauncherList.FallbackSection(
-            title: Fallback.sectionTitle(query: vm.query),
-            entries: fallbacks.map(\.entry),
-            onActivate: { activate(at: fallbackRow(at: $0)) },
-            onActions: {
-                vm.selection = fallbackRow(at: $0)
-                openActions()
-            },
-            onConfigure: core.fallbackCoordinator.showSettings)
-    }
-
-    /// Fallbacks are the tail of `rows`, so a click maps to its flat index without a search.
-    private func fallbackRow(at index: Int) -> Int { rows.count - fallbacks.count + index }
 }

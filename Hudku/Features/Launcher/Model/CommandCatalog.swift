@@ -50,7 +50,6 @@ enum CommandCatalog {
 extension SettingsTab {
     var ownedCommands: [CommandID] {
         switch self {
-        case .fileSearch: [.searchFiles]
         case .clipboard: [.clipboardHistory, .pasteSequentially]
         default: []
         }

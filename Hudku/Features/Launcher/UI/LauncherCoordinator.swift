@@ -8,7 +8,6 @@ final class LauncherCoordinator {
     private let paletteCoordinator: PaletteCoordinator
     private let settingsCoordinator: SettingsCoordinator
     private let systemActionCoordinator: SystemActionCoordinator
-    private let fileSearchCoordinator: FileSearchCoordinator
     /// The commands that reach beyond this type's own collaborators: camera, updates, and quit.
     private unowned let core: AppCore
 
@@ -18,7 +17,6 @@ final class LauncherCoordinator {
         paletteCoordinator: PaletteCoordinator,
         settingsCoordinator: SettingsCoordinator,
         systemActionCoordinator: SystemActionCoordinator,
-        fileSearchCoordinator: FileSearchCoordinator,
         core: AppCore
     ) {
         self.ranking = ranking
@@ -26,7 +24,6 @@ final class LauncherCoordinator {
         self.paletteCoordinator = paletteCoordinator
         self.settingsCoordinator = settingsCoordinator
         self.systemActionCoordinator = systemActionCoordinator
-        self.fileSearchCoordinator = fileSearchCoordinator
         self.core = core
     }
 
@@ -85,8 +82,6 @@ final class LauncherCoordinator {
             core.clipboardCoordinator.pasteNextInSequence()
         case .searchEmoji:
             paletteCoordinator.togglePalette(mode: .emoji)
-        case .searchFiles:
-            fileSearchCoordinator.show()
         case .openCamera:
             dismissPalette()
             Task { await core.cameraCoordinator.show() }

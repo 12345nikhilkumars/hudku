@@ -3,44 +3,32 @@ import AppKit
 @MainActor
 final class FileSearchCoordinator {
     private let settings: AppSettings
-    private let appIndex: AppIndex
     private let session: FileSearchSession
-    private let palette: PaletteState
     private let paletteCoordinator: PaletteCoordinator
     private let windowController: PaletteWindowController
     private var sharePicker: NSSharingServicePicker?
     private unowned let core: AppCore
 
     init(
-        settings: AppSettings, appIndex: AppIndex, session: FileSearchSession,
-        palette: PaletteState, paletteCoordinator: PaletteCoordinator,
+        settings: AppSettings, session: FileSearchSession,
+        paletteCoordinator: PaletteCoordinator,
         windowController: PaletteWindowController, core: AppCore
     ) {
         self.settings = settings
-        self.appIndex = appIndex
         self.session = session
-        self.palette = palette
         self.paletteCoordinator = paletteCoordinator
         self.windowController = windowController
         self.core = core
     }
 
     func applyEnabled() {
-        appIndex.setCommandsVisible([.searchFiles], settings.fileSearchEnabled)
         guard !settings.fileSearchEnabled else { return }
         session.cancel()
-        if palette.mode == .fileSearch { palette.prepare(mode: .launcher) }
     }
 
     func applyPolicy() {
         session.apply(
             scopes: settings.fileSearchScopes, ignorePatterns: settings.fileSearchIgnorePatterns)
-    }
-
-    /// `query` is the fallback row's: the screen opens already narrowed to what was typed.
-    func show(query: String = "") {
-        guard settings.fileSearchEnabled else { return }
-        paletteCoordinator.togglePalette(mode: .fileSearch, seeding: query.isEmpty ? nil : query)
     }
 
     func open(_ result: FileSearchResult) {

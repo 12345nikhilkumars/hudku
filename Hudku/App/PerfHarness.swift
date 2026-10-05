@@ -152,6 +152,66 @@ enum PerfHarness {
             }
         }
 
+        if env["HUDKU_PERF_FEATURES"] == "1" {
+            phase("features_start")
+            var features: [String: Any] = [:]
+
+            var emojiSamples: [Double] = []
+            for _ in 0..<10 {
+                for term in ["s", "smile", "heart", "sm", "sa"] {
+                    let start = clock.now
+                    _ = core.emojiIndex.search(term, frequent: core.frequentEmoji, limit: 7)
+                    emojiSamples.append(micros(start.duration(to: clock.now)))
+                }
+            }
+            features["emoji_engine_us"] = summary(of: emojiSamples)
+
+            if core.clipboardStore.items.count < 30 {
+                for index in 0..<30 {
+                    core.clipboardStore.addText("perf feature item \(index)", sourceBundleID: nil)
+                }
+                await sleep(0.5)
+            }
+            var clipboardSamples: [Double] = []
+            for _ in 0..<10 {
+                for query in ["", "item", "feature 1", "zzzz"] {
+                    let start = clock.now
+                    _ = core.clipboardStore.search(query, filter: .all)
+                    clipboardSamples.append(micros(start.duration(to: clock.now)))
+                }
+            }
+            features["clipboard_filter_us"] = summary(of: clipboardSamples)
+
+            let policy = FileSearchPolicy(
+                scopes: ["/Applications"], ignorePatterns: [],
+                homeDirectory: FileManager.default.homeDirectoryForCurrentUser)
+            var fileSamples: [Double] = []
+            for query in ["safari", "term", "x", "photo"] {
+                for _ in 0..<3 {
+                    let start = clock.now
+                    let results: [FileSearchResult]? = await Task.detached(priority: .userInitiated) {
+                        try? FileSearchService.search(query: query, policy: policy, filter: .all)
+                    }.value
+                    _ = results?.count
+                    fileSamples.append(micros(start.duration(to: clock.now)))
+                }
+            }
+            features["file_search_us"] = summary(of: fileSamples)
+
+            var dictionarySamples: [Double] = []
+            for term in ["hello", "run", "light", "name"] {
+                let start = clock.now
+                _ = await Task.detached(priority: .userInitiated) {
+                    DictionaryService.entry(for: term)
+                }.value
+                dictionarySamples.append(micros(start.duration(to: clock.now)))
+            }
+            features["dictionary_us"] = summary(of: dictionarySamples)
+
+            notes["features"] = features
+            phase("features_done")
+        }
+
         if env["HUDKU_PERF_CLIPBOARD"] == "1" {
             phase("clipboard_fill")
             for index in 0..<40 {
@@ -185,35 +245,6 @@ enum PerfHarness {
             await sleep(3)
             snapshot("clipboard_closed")
             phase("clipboard_done")
-        }
-
-        if env["HUDKU_PERF_FILESEARCH"] == "1" {
-            phase("filesearch_show")
-            core.settings.fileSearchEnabled = true
-            if core.settings.fileSearchScopes.isEmpty {
-                core.settings.fileSearchScopes = ["~/Documents", "~/Downloads", "~/Desktop"]
-            }
-            core.fileSearchCoordinator.applyPolicy()
-            core.fileSearchCoordinator.show(query: "nikhil")
-            await sleep(4)
-            notes["filesearch_count"] = core.fileSearch.results.count
-            snapshot("filesearch_results")
-            // Land the overlay on a PDF when one is present: that is the heavy preview.
-            if let pdf = core.fileSearch.results.firstIndex(where: {
-                $0.url.pathExtension.lowercased() == "pdf"
-            }) {
-                core.palette.selection = pdf
-                notes["filesearch_pdf"] = core.fileSearch.results[pdf].url.lastPathComponent
-            }
-            core.palette.fileSearchQuickLook = true
-            await sleep(5)
-            snapshot("filesearch_quicklook")
-            core.palette.fileSearchQuickLook = false
-            await sleep(1)
-            core.paletteCoordinator.hidePalette(restoreFocus: false)
-            await sleep(3)
-            snapshot("filesearch_closed")
-            phase("filesearch_done")
         }
 
         let soakCycles = Int(env["HUDKU_PERF_SOAK_CYCLES"] ?? "") ?? 0
@@ -327,6 +358,17 @@ enum PerfHarness {
         {
             try? data.write(to: URL(fileURLWithPath: path))
         }
+    }
+
+    private static func summary(of samples: [Double]) -> [String: Any] {
+        guard !samples.isEmpty else { return [:] }
+        let sorted = samples.sorted()
+        return [
+            "n": samples.count,
+            "p50": percentile(sorted, 0.5),
+            "p95": percentile(sorted, 0.95),
+            "max": sorted.last ?? 0,
+        ]
     }
 
     private static func percentile(_ samples: [Double], _ p: Double) -> Double {

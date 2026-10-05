@@ -6,7 +6,6 @@ enum CommandID: String, CaseIterable, Sendable {
     case clipboardHistory = "command:clipboard-history"
     case pasteSequentially = "command:paste-sequentially"
     case searchEmoji = "command:search-emoji"
-    case searchFiles = "command:search-files"
     case openCamera = "command:open-camera"
     case openInBrowser = "command:open-in-browser"
     case define = "command:define"
@@ -20,7 +19,6 @@ enum CommandID: String, CaseIterable, Sendable {
         case .clipboardHistory: return "Clipboard History"
         case .pasteSequentially: return "Paste Sequentially"
         case .searchEmoji: return "Search Emoji & Symbols"
-        case .searchFiles: return "Search Files"
         case .openCamera: return "Open Camera"
         case .openInBrowser: return "Open in Browser"
         case .define: return "Define Word"
@@ -36,7 +34,6 @@ enum CommandID: String, CaseIterable, Sendable {
         case .clipboardHistory: return "doc.on.clipboard"
         case .pasteSequentially: return "list.bullet.clipboard"
         case .searchEmoji: return "face.smiling"
-        case .searchFiles: return "doc.text.magnifyingglass"
         case .openCamera: return "camera"
         case .openInBrowser: return "globe"
         case .define: return "book.closed"
@@ -50,7 +47,6 @@ enum CommandID: String, CaseIterable, Sendable {
     var suggestionPriority: Int? {
         switch self {
         case .clipboardHistory: 80
-        case .searchFiles: 70
         case .searchEmoji: 50
         default: nil
         }

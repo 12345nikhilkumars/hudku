@@ -105,9 +105,6 @@ struct InterfaceSizeTests {
             m.size.clipboardFilterMenuWidth, Theme.Size.clipboardFilterMenuWidth,
             "size.clipboardFilterMenuWidth")
         expect(
-            m.size.fileSearchFilterMenuWidth, Theme.Size.fileSearchFilterMenuWidth,
-            "size.fileSearchFilterMenuWidth")
-        expect(
             m.size.emojiCategoryMenuWidth, Theme.Size.emojiCategoryMenuWidth,
             "size.emojiCategoryMenuWidth")
         expect(m.size.menuIcon, Theme.Size.menuIcon, "size.menuIcon")
@@ -292,7 +289,6 @@ struct InterfaceSizeTests {
             ("size.heroKeyCap", m.size.heroKeyCap), ("size.menuButton", m.size.menuButton),
             ("size.checkbox", m.size.checkbox), ("size.menuWidth", m.size.menuWidth),
             ("size.clipboardFilterMenuWidth", m.size.clipboardFilterMenuWidth),
-            ("size.fileSearchFilterMenuWidth", m.size.fileSearchFilterMenuWidth),
             ("size.emojiCategoryMenuWidth", m.size.emojiCategoryMenuWidth),
             ("size.menuIcon", m.size.menuIcon), ("size.menuBrandIcon", m.size.menuBrandIcon),
             ("size.barBrandIcon", m.size.barBrandIcon),

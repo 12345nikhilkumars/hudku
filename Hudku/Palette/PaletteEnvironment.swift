@@ -22,7 +22,6 @@ extension View {
             .environment(core.favorites)
             .environment(core.visibility)
             .environment(core.aliases)
-            .environment(core.fallbacks)
             .environment(core.calcHistory)
             .environment(core.currencyRates)
             .environment(core.emojiIndex)

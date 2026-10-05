@@ -5,6 +5,124 @@ Build under test: Release (`-O`, hardened runtime, ad-hoc signed), bundle `com.h
 243 indexed entries, fresh preferences. Harness: `Hudku/App/PerfHarness.swift` (inert unless
 `HUDKU_PERF=1`), driven by the scripts in `/tmp/hudku-perf/`.
 
+## How Hudku compares on this Mac
+
+**Device**: MacBook Pro (Mac16,8), Apple M4 Pro, 24 GB, macOS 27.0 (26A428), Xcode 27.0 (27A266a).
+All three launchers installed side by side and left untouched.
+
+Method: quit everything, launch fresh, wait 45 s for startup work to settle, summon the
+launcher's own surface (palette for Hudku and Tinycast, window for Raycast), wait 8 s more, then
+measure for 60 s. Every process in the app's suite counts: the main process plus XPC services,
+app extensions, processes that label themselves after the app (Raycast's Node backend does), and
+any descendants. RAM is the summed `phys_footprint`, CPU the summed per-process CPU-time delta
+over the window, threads and energy from `top`. Three runs per open state, medians shown; the
+closed state is one run each. All runs on AC power.
+
+| Launcher | Version | Processes | RAM (closed) | RAM (open) | Open CPU / 60 s | Energy (top) | Threads |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **Hudku** | 0.0.1 | 1 | **22 MB** | **38 MB** | **0.04 s (0.07 %)** | **~0.02** | **3** |
+| Tinycast (upstream) | 0.11.3 | 1 | 33 MB | 45 MB | 0.02 s (0.03 %) | 0.00 | 4 |
+| Raycast | 2.6.2 | 4 (8 seen) | 272 MB | 287 MB (267-318) | 0.80 s (1.3 %) | ~1.1 | 82 |
+
+Notes: Raycast's suite is its main process (29-30 MB), the Node "Raycast Backend" (195-245 MB),
+and two small XPC services (Accessibility ~6.5 MB, Pasteboard 36 MB); the run-to-run spread is
+almost entirely the backend. Its closed state costs the same as open (272 MB, 0.83 s): the Node
+backend runs whether the window is up or not. The on-demand helpers (Raycast UI, Networking,
+Graphics and Media, AppIntents) were not resident in these captures; a fuller state on this Mac
+showed 8 processes and about 510 MB. Hudku and Tinycast each run a single process; threads are as
+counted at the end of the window.
+
+### Search speed, same harness in both codebases
+
+The in-repo `HUDKU_PERF` harness compiles into both apps (upstream needs three extra
+`LauncherScreen` initializer arguments) and drives the same 205-query corpus through the real
+launcher screen, each query repeated many times. The first row aggregates the corpus (median of
+the per-query medians, and their 90th percentile).
+
+| | Hudku 0.0.1 | Tinycast (upstream HEAD) |
+| --- | --- | --- |
+| Palette search, median query p50 / p90 | **12.4 / 34.2 µs** | 108 / 167 µs |
+| Single letters (`s`) | 7.9 µs | 304 µs |
+| Two letters (`te`) | 53.8 µs | 229 µs |
+| Full name (`safari`) | 5.3 µs | 86.2 µs |
+| Empty query | 298 µs | 525 µs |
+| Calculator, per-query average within each group (standalone, both sources) | 1.9 - 11.8 µs | 1.2 - 11.8 µs |
+
+The same harness also times the feature engines directly in both apps (archived in
+`features-hudku.json` and `features-tinycast.json`):
+
+| Feature call (identical code path in both apps) | Hudku 0.0.1 | Tinycast (upstream HEAD) |
+| --- | --- | --- |
+| Emoji engine, per call p50 / p95 (n=50) | **0.33 / 1.4 µs** | 3054 / 4004 µs |
+| Clipboard filter, p50 / p95 (n=40) | 58 / 126 µs | 31 / 59 µs |
+| File search, MDQuery inside `/Applications`, p50 / p95 (n=12) | 52.3 / 87.5 ms | 53.2 / 75.8 ms |
+| Dictionary lookup, p50 / p95 (n=4) | 4.1 / 7.9 ms | 8.1 / 14.3 ms |
+
+In the emoji row, Hudku's first call in a fresh process builds the catalog (1.6 to 3.5 ms
+depending on the run); every call after that is under a microsecond, while upstream pays
+milliseconds on every call. Clipboard is the one row where upstream wins on today's clean
+runs (31 vs 58 µs at the median); both are microseconds, and earlier runs had the spread the
+other way, so read that row as parity. File search and dictionary are dominated by the system
+services behind them (Spotlight, Dictionary Services), so both apps land in the same range,
+with Hudku about 2x ahead on dictionary.
+
+### Raycast, measured externally with real input
+
+Raycast exposes its window to the Accessibility API, so its full input-to-result path was
+measured with a probe that posts real key events and timestamps the AX notification storm
+(a few ms resolution; the query is committed as one event, not per character):
+
+| Command (typed into the real window) | First UI change p50 | Settled p50 |
+| --- | --- | --- |
+| App search (`safari`) | 7.1 ms | 7.1 ms |
+| App search (`term`) | 13.6 ms | 14.2 ms |
+| Calculator (`2+2`) | 14.6 ms | 14.8 ms |
+| Currency (`10 usd in eur`) | 13.9 ms | 14.0 ms |
+| Color (`#ff5733`) | 12.8 ms | 13.2 ms |
+| Search Files (`nikhil`) | 12.5 ms | 12.7 ms |
+| Search Emoji (`smile`) | 13.7 ms | 13.9 ms |
+| Define Word (`hello`) | 12.3 ms | 12.6 ms |
+
+So every Raycast command answers in roughly 7 to 15 ms end to end. Hudku and Tinycast expose
+no AX tree (their panels are invisible to the Accessibility client), so their equivalent
+external number cannot be taken the same way; their side of the comparison is the in-process
+compute above plus the external CPU cost below.
+
+### External CPU cost per query
+
+Typing a query into the summoned palette and sampling the whole process suite until it idles
+again: Hudku spends 0.00 to 0.01 s of CPU per query (usually below the sampling floor),
+Tinycast 0.04 to 0.09 s. Raycast cannot be measured this way because its Node backend never
+idles; its answer speed is the table above.
+
+### The features are invoked differently, so read those rows with care
+
+Emoji and dictionary have different entry points in each launcher: Hudku answers `:smile` and
+`def word` inline in the root search; Tinycast opens a separate Emoji screen and reaches
+dictionary lookups through a "Define Word" fallback row on the query; Raycast reaches both through
+its own command and picker searches. The emoji and dictionary rows therefore compare the two
+engines and the same service calls, not keystroke flows. The palette-search rows are the
+like-for-like comparison: same corpus, same screen, same machine.
+
+### Energy, honestly
+
+`powermetrics` reports real joules but needs root, which was not available here, so energy comes
+from `top`'s POWER column, a relative energy-impact score that tracked CPU near 1:1 in these
+samples. Across its whole suite Raycast sits at about 1.1 (main process ~1.0, Node backend
+~0.15), Hudku at ~0.02, Tinycast at 0.00 (below the column's resolution). On battery that is the
+difference between a rounding error and a small but continuous background load.
+
+### Flames
+
+Pure-search windows were captured with xctrace Time Profiler for both apps. Tinycast's loop spends
+roughly a quarter of its CPU in the copy and refcount storm around scoring (`swift_release`,
+`swift_retain`, `swift_bridgeObject*`, plus per-candidate dictionary hashing); its actual match
+loop (`align`) is about 2 % of CPU. That is precisely the pattern Hudku's mask index and
+copy-light ranking removed, and it is where the 13x core-search gap lives. Raycast's main process,
+sampled while idle, shows every thread parked on locks and semaphores, with brief JavaScriptCore
+housekeeping as the only active leaves, matching its 1.3 % suite CPU. Artifacts:
+`/tmp/hudku-perf/stats-tinycast.txt`, `folded-tinycast.txt`, and `raycast-idle.txt`.
+
 ## TL;DR - requirements vs measured
 
 | Requirement | Before | After | Verdict |

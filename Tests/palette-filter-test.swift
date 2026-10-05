@@ -29,9 +29,6 @@ struct PaletteFilterTests {
             resolve(mode: .clipboard), .clipboardFilter,
             "the clipboard's type filter is what ⌘P has always opened")
         expect(
-            resolve(mode: .fileSearch), .fileSearchFilter,
-            "file search has a header filter of its own")
-        expect(
             resolve(mode: .emoji), .emojiCategory,
             "the emoji picker exposes its category selector through ⌘P")
 
@@ -45,7 +42,7 @@ struct PaletteFilterTests {
         }
 
         // Collapsed there is no header to hang a button off, so no filter may open.
-        for mode in [PaletteMode.clipboard, .fileSearch, .emoji, .launcher] {
+        for mode in [PaletteMode.clipboard, .emoji, .launcher] {
             expect(
                 resolve(collapsed: true, mode: mode), .ignored,
                 "the compact bar draws no filter button, so ⌘P opens nothing on \(mode.rawValue)")

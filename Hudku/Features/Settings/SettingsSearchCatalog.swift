@@ -109,7 +109,7 @@ enum SettingsSearchCatalog {
 
     static let entries: [SettingsSearchEntry] =
         general + applications + systemSettings + systemActions + commands
-        + appleShortcuts + fallbacks + clipboard + fileSearch + permissions + about
+        + appleShortcuts + clipboard + fileSearch + permissions + about
 
     private static let general: [SettingsSearchEntry] = [
         .init(pane: .general, keywords: ["preferences", "settings"]),
@@ -219,12 +219,6 @@ enum SettingsSearchCatalog {
             keywords: ["alias", "hotkey", "hide"])
     ]
 
-    private static let fallbacks: [SettingsSearchEntry] = [
-        .init(
-            pane: .fallbacks,
-            keywords: ["no results", "empty", "order"])
-    ]
-
     private static let fileSearch: [SettingsSearchEntry] = [
         .init(
             pane: .fileSearch,
@@ -232,9 +226,6 @@ enum SettingsSearchCatalog {
         .init(
             .fileSearchFileSearch, "Enable File Search",
             keywords: ["spotlight", "index"]),
-        .init(
-            group: .fileSearchCommands, "File search commands",
-            keywords: ["shortcut", "launcher"]),
         .init(
             group: .fileSearchSearchScopes, "Search Scopes",
             keywords: ["folders", "locations", "home", "add folder"]),

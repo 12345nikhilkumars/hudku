@@ -1,60 +1,6 @@
 import SwiftUI
 
-struct FileSearchList: View {
-
-    @Environment(\.metrics) private var metrics
-    let title: String
-    let results: [FileSearchResult]
-    let selectedID: FileSearchResult.ID?
-    let scroll: ScrollIntent
-    let onSelect: (FileSearchResult) -> Void
-    let onActivate: (FileSearchResult) -> Void
-    let onActions: (FileSearchResult) -> Void
-    let onDropped: () -> Void
-
-    private var firstRowSelected: Bool {
-        selectedID != nil && selectedID == results.first?.id
-    }
-
-    var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    SectionHeader(title: title, isFirst: true)
-                    ForEach(results) { result in
-                        FileSearchRow(result: result, selected: result.id == selectedID)
-                            .selectionFrame(result.id == selectedID)
-                            .contentShape(Rectangle())
-                            .onRowClick(
-                                select: { onSelect(result) }, activate: { onActivate(result) },
-                                drag: drag(for: result)
-                            )
-                            .onRightClick { onActions(result) }
-                    }
-                }
-                .padding(.horizontal, metrics.spacing.md)
-                .padding(.top, metrics.spacing.xs)
-                .padding(.bottom, metrics.spacing.md)
-                .hideNativeScrollers()
-                .scrollOriginAnchor()
-            }
-            .edgeDissolve()
-            .thinScrollbar()
-            .scrollFollowsSelection(
-                scroll, row: selectedID, atOrigin: firstRowSelected, proxy: proxy)
-        }
-        .onDisappear { IconCache.purgeFitted() }
-    }
-
-    /// The row's own fitted tile, which is warm by the time a pointer can reach it.
-    private func drag(for result: FileSearchResult) -> RowDrag {
-        RowDrag(
-            item: { .file(result.url, image: IconCache.cachedFitted(forFile: result.id)) },
-            dropped: onDropped)
-    }
-}
-
-/// Shared with the launcher's `@`/`?` rows, so both surfaces draw a result the same way.
+/// An `@word` match in the launcher, drawn with its own file thumbnail.
 struct FileSearchRow: View {
 
     @Environment(\.metrics) private var metrics
@@ -93,7 +39,7 @@ struct FileSearchRow: View {
                 }
             }
             .frame(width: metrics.size.resultRowIcon, height: metrics.size.resultRowIcon)
-            // The column is too narrow for a path beside the name; the preview states it instead.
+            // The column is too narrow for a path beside the name; the actions menu states it.
             label
                 .font(metrics.typography.rowTitle)
                 .lineLimit(1)
@@ -118,5 +64,47 @@ struct FileSearchRow: View {
             }
             image = await IconCache.loadFittedAsync(forFile: result.id)
         }
+    }
+}
+
+/// The actions an inline file row's menu offers; each hands the result to the coordinator.
+@MainActor
+enum FileSearchActionsMenu {
+    static func content(
+        result: FileSearchResult, core: AppCore, target: PasteTarget?
+    ) -> PopoverMenuContent {
+        let coordinator = core.fileSearchCoordinator
+        return PopoverMenuContent(
+            header: result.name,
+            items: [
+                PopoverMenuItem(
+                    title: result.isDirectory ? "Open Folder" : "Open File",
+                    systemImage: result.isDirectory ? "folder" : "doc", shortcut: "↵"
+                ) { coordinator.open(result) },
+                PopoverMenuItem(
+                    title: "Show in Finder", systemImage: "folder", shortcut: "⌘↵"
+                ) { coordinator.showInFinder(result) },
+                PopoverMenuItem(title: "Share…", systemImage: "square.and.arrow.up") {
+                    coordinator.share(result)
+                },
+                PopoverMenuItem(
+                    title: "Copy File", systemImage: "doc.on.clipboard", startsSection: true,
+                    shortcut: "⇧⌘C"
+                ) { coordinator.copyFile(result) },
+                PopoverMenuItem(
+                    title: target.map { "Paste File to \($0.name)" } ?? "Paste File",
+                    icon: .paste(target, fallback: "doc.on.clipboard"), shortcut: "⇧⌘V"
+                ) { coordinator.pasteFile(result) },
+                PopoverMenuItem(
+                    title: "Copy Name", systemImage: "doc.on.clipboard", shortcut: "⌥⌘C"
+                ) { coordinator.copyName(result) },
+                PopoverMenuItem(
+                    title: "Copy Path", systemImage: "doc.on.clipboard", shortcut: "⌃⌘C"
+                ) { coordinator.copyPath(result) },
+                PopoverMenuItem(
+                    title: "Move to Trash", systemImage: "trash", startsSection: true,
+                    shortcut: "⌃X", isDestructive: true
+                ) { coordinator.trash(result) }
+            ])
     }
 }

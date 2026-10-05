@@ -237,10 +237,6 @@ run palette-shortcut-test  Hudku/Palette/PaletteShortcut.swift
 run ascii-layout-test      Hudku/Platform/ASCIIKeyboardLayout.swift
 run palette-tab-test       Hudku/Palette/PaletteMode.swift \
                            Hudku/Palette/PaletteTabAction.swift 
-run fallback-test          Hudku/Features/Launcher/Model/Fallback.swift \
-                           Hudku/Features/Launcher/Model/CommandID.swift \
-                           Hudku/Features/HotKeys/Model/HotKeyAction.swift \
-                           Hudku/Features/SystemActions/Model/SystemAction.swift 
 run dictionary-test        Hudku/Features/Dictionary/Model/DictionaryEntry.swift \
                            Hudku/Features/Dictionary/Model/DictionaryMarkup.swift
 run hotkey-test            Hudku/Features/HotKeys/Model/DoubleTapModifier.swift \

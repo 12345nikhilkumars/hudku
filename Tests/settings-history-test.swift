@@ -65,11 +65,11 @@ struct SettingsHistoryTests {
 
     static func roundTrips() {
         var history = SettingsHistory(current: .general)
-        history.select(.fallbacks)
+        history.select(.clipboard)
         history.select(.permissions)
 
         history.goBack()
-        expect(history.current == .fallbacks, "Back walks one entry at a time")
+        expect(history.current == .clipboard, "Back walks one entry at a time")
         expect(history.canGoForward, "and what we left becomes reachable again")
 
         history.goBack()

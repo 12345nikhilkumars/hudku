@@ -87,7 +87,6 @@ final class PaletteCoordinator {
         }
         if let query { palette.query = query }
         windowController.show()
-        if palette.mode == .fileSearch { fileSearch.search(palette.query) }
         if palette.mode == .emoji { onEmojiScreenOpening?() }
         // Re-scan on open so an app uninstalled since the last scan drops out of the launcher.
         if palette.mode == .launcher {

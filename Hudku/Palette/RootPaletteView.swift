@@ -55,9 +55,6 @@ struct RootPaletteView: View {
                 index: emojiIndex, frequent: frequentEmoji, pinned: core.pinnedEmoji, core: core, vm: vm,
                 tone: settings.emojiSkinTone, defaultColumns: settings.emojiGridColumns,
                 openActions: openActions)
-        case .fileSearch:
-            return FileSearchScreen(
-                session: fileSearch, core: core, vm: vm, openActions: openActions)
         case .clipboard:
             return ClipboardScreen(
                 store: store, core: core, vm: vm, openActions: openActions,
@@ -94,16 +91,6 @@ struct RootPaletteView: View {
                     startsSection: index == 1
                 ) {
                     vm.clipboardFilter = filter
-                }
-            })
-    }
-
-    /// The file search type filter's rows, built the way the clipboard's are.
-    private var fileSearchFilterContent: PopoverMenuContent {
-        PopoverMenuContent(
-            items: FileSearchFilter.allCases.map { filter in
-                PopoverMenuItem(title: filter.title, systemImage: filter.systemImage) {
-                    vm.fileSearchFilter = filter
                 }
             })
     }
@@ -170,8 +157,6 @@ struct RootPaletteView: View {
         case .clipboardFilter:
             return headerMenu(
                 clipboardFilterContent, width: metrics.size.clipboardFilterMenuWidth)
-        case .fileSearchFilter:
-            return headerMenu(fileSearchFilterContent, width: metrics.size.fileSearchFilterMenuWidth)
         case .emojiCategory:
             return headerMenu(emojiCategoryContent, width: metrics.size.emojiCategoryMenuWidth)
         case nil: return nil
@@ -282,7 +267,6 @@ struct RootPaletteView: View {
             .onChange(of: vm.query) {
                 if vm.collapseQueryLineBreaks() { return }
                 land()
-                if vm.mode == .fileSearch { fileSearch.search(vm.query, filter: vm.fileSearchFilter) }
                 if vm.mode == .dictionary { dictionary.lookUp(vm.query) }
                 // Root-search keywords: `@file`, `:smile` and `def word` answer in the launcher.
                 if vm.mode == .launcher {
@@ -292,7 +276,9 @@ struct RootPaletteView: View {
                     if let term = LauncherScreen.definitionTerm(in: vm.query) {
                         dictionary.lookUp(term)
                     }
-                    if let term = LauncherScreen.fileSearchTerm(in: vm.query) {
+                    if settings.fileSearchEnabled,
+                        let term = LauncherScreen.fileSearchTerm(in: vm.query)
+                    {
                         fileSearch.search(term)
                     } else {
                         // A stale session holds search state for a term nobody is showing.
@@ -306,28 +292,16 @@ struct RootPaletteView: View {
             .onChange(of: fileSearch.results) { fileResultsRevision &+= 1 }
             // A narrower list means the old index points at a different row, or at none.
             .onChange(of: vm.clipboardFilter) { land() }
-            // The filter is part of the query, so narrowing re-runs it rather than thinning rows.
-            .onChange(of: vm.fileSearchFilter) {
-                land()
-                fileSearch.search(vm.query, filter: vm.fileSearchFilter)
-            }
             .onChange(of: vm.mode) {
                 vm.clipboardFilter = .all
-                vm.fileSearchFilter = .all
                 vm.emojiCategoryFilter = .all
                 vm.emojiGridColumnsOverride = nil
-                vm.fileSearchQuickLook = false
                 if menuOpen { closeMenus() }
                 land()
                 searchFocused = !screen.hidesSearchField
                 // Every way out of the Uninstall screen: back chevron, bare backspace, a fresh summon.
                 if vm.mode != .uninstall { uninstall.cancel() }
-                // Entering with no query is the blank screen's own request for recents.
-                if vm.mode == .fileSearch {
-                    fileSearch.search(vm.query, filter: vm.fileSearchFilter)
-                } else {
-                    fileSearch.cancel()
-                }
+                fileSearch.cancel()
                 if vm.mode == .dictionary {
                     dictionary.lookUp(vm.query)
                 } else {
@@ -564,13 +538,6 @@ struct RootPaletteView: View {
                     filter: vm.clipboardFilter, isOpen: openMenu == .clipboardFilter,
                     action: toggleClipboardFilter)
             }
-            if !isCollapsed, vm.mode == .fileSearch {
-                headerGutter(width: metrics.spacing.md)
-                HeaderMenuButton(
-                    title: vm.fileSearchFilter.title, systemImage: vm.fileSearchFilter.systemImage,
-                    isOpen: openMenu == .fileSearchFilter, help: "Filter by type  ⌘P",
-                    action: toggleFileSearchFilter)
-            }
             if !isCollapsed, vm.mode == .emoji {
                 headerGutter(width: metrics.spacing.md)
                 HeaderMenuButton(
@@ -748,19 +715,9 @@ struct RootPaletteView: View {
         open(.clipboardFilter, highlighting: active)
     }
 
-    private func toggleFileSearchFilter() {
-        if openMenu == .fileSearchFilter {
-            closeMenus()
-            return
-        }
-        let active = FileSearchFilter.allCases.firstIndex(of: vm.fileSearchFilter) ?? 0
-        open(.fileSearchFilter, highlighting: active)
-    }
-
     private func performFilterAction() -> Bool {
         switch PaletteFilterAction.resolve(collapsed: isCollapsed, mode: vm.mode) {
         case .clipboardFilter: toggleClipboardFilter()
-        case .fileSearchFilter: toggleFileSearchFilter()
         case .emojiCategory: toggleEmojiCategory()
         case .ignored: return false
         }
@@ -924,7 +881,7 @@ struct RootPaletteView: View {
         switch openMenu {
         case .app: .bottomLeading
         case .actions: .bottomTrailing
-        case .clipboardFilter, .fileSearchFilter, .emojiCategory:
+        case .clipboardFilter, .emojiCategory:
             .belowHeaderTrailing
         case nil: nil
         }
@@ -1064,7 +1021,6 @@ private enum OpenMenu {
     case actions
     case app
     case clipboardFilter
-    case fileSearchFilter
     case emojiCategory
 }
 
