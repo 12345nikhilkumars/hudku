@@ -13,6 +13,11 @@ hundreds of megabytes of RAM, searches that answered in milliseconds, and small 
 the everyday flows. Everything here was ported to that leaner brief. See [LICENSE](LICENSE)
 and [NOTICE.md](NOTICE.md) for the fork's licensing.
 
+Hudku deliberately ships without AI and without an extension platform. If those matter to you,
+[Raycast](https://raycast.com), [Alfred](https://www.alfredapp.com), or
+[Tinycast](https://github.com/abue-ammar/tinycast) are the right tools; Hudku is the lean
+alternative.
+
 SwiftUI and AppKit, zero third-party dependencies, no Electron, no telemetry. Runs as an
 accessory app with no Dock icon; summon it from a global hotkey (Settings > General) or
 Spotlight. Builds are ad-hoc signed for local use.
