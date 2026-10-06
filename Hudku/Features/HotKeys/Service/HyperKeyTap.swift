@@ -43,7 +43,7 @@ private func hyperKeyEventTapCallback(
     }
 }
 
-/// HID remap of Caps Lock → F18 while it is Hyper. See docs/features/hotkeys.md#the-hyper-key.
+/// HID remap of Caps Lock → F18 while it is Hyper.
 private enum CapsLockRemap {
     // HID usages: keyboard page 0x07, Caps Lock 0x39, F18 0x6D.
     private static let mappingOn =
@@ -80,7 +80,7 @@ private enum CapsLockRemap {
     }
 }
 
-/// The Hyper Key engine, a modifying tap. See docs/features/hotkeys.md#the-hyper-key.
+/// The Hyper Key engine, a modifying tap.
 @MainActor
 @Observable
 final class HyperKeyTap: HealthCheckable {
@@ -100,7 +100,7 @@ final class HyperKeyTap: HealthCheckable {
     /// Marker on events this tap posts, so it never reacts to its own synthetics.
     nonisolated static let syntheticTag: Int64 = 0x5459_4354
 
-    /// Device-level modifier bits from IOLLEvent.h. See docs/features/hotkeys.md#the-hyper-key.
+    /// Device-level modifier bits from IOLLEvent.h.
     private enum DeviceFlag {
         static let leftControl: UInt64 = 0x0000_0001
         static let leftShift: UInt64 = 0x0000_0002
@@ -258,7 +258,7 @@ final class HyperKeyTap: HealthCheckable {
         return decideModifierTransition(flagsRaw: flagsRaw, swapKeyCode: false)
     }
 
-    /// docs/features/hotkeys.md#press-tracking-uses-toggle-semantics
+    ///
     private func decideModifierTransition(flagsRaw: UInt64, swapKeyCode: Bool) -> Decision {
         let keyCode: Int64? = swapKeyCode ? Int64(kVK_Control) : nil
         if !hyperActive {
@@ -386,7 +386,7 @@ final class HyperKeyTap: HealthCheckable {
         if let tapPort { CGEvent.tapEnable(tap: tapPort, enable: true) }
     }
 
-    /// One-second watchdog while a key is configured. See docs/features/hotkeys.md#lifecycle.
+    /// One-second watchdog while a key is configured.
     func healthCheck() {
         guard key != .none else { return }
         if tapPort == nil {

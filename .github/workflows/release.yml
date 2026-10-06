@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the DMG
+        run: |
+          brew install xcodegen
+          xcodegen generate
+          xcodebuild -project Hudku.xcodeproj -scheme Hudku \
+            -configuration Release -derivedDataPath build build
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' \
+            build/Build/Products/Release/Hudku.app/Contents/Info.plist)
+          STAGE=$(mktemp -d)
+          cp -R build/Build/Products/Release/Hudku.app "$STAGE/"
+          ln -s /Applications "$STAGE/Applications"
+          hdiutil create -volname Hudku -srcfolder "$STAGE" -ov -format UDZO "build/Hudku-$VERSION.dmg"
+          rm -rf "$STAGE"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FLAGS=""
+          case "$GITHUB_REF_NAME" in *-*) FLAGS="--prerelease";; esac
+          gh release create "$GITHUB_REF_NAME" "build/Hudku-$VERSION.dmg" \
+            --title "Hudku $VERSION" --notes-file .github/release-notes.md $FLAGS

@@ -1,7 +1,7 @@
 import AppKit
 import Carbon.HIToolbox
 
-/// Local monitors for the one active recording. See docs/features/hotkeys.md#recorder.
+/// Local monitors for the one active recording.
 @MainActor
 @Observable
 final class ShortcutCaptureSession {

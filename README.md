@@ -5,8 +5,13 @@ Do → calculations, conversions, uninstall, trash
 Done → disappear and get out of the way
 
 A tiny, fully native macOS launcher: one hotkey for everything you reach for all day.
-A stripped, renamed fork of an upstream AGPL launcher (see [LICENSE](LICENSE) and
-[NOTICE.md](NOTICE.md)).
+
+Hudku started as a fork of [Tinycast](https://github.com/abue-ammar/tinycast) and kept the
+native launcher core from that starting point, reworked for one simpler brief. What drove the
+fork: an AI assistant bundled into an app launcher, day-to-day conveniences quietly sitting on
+hundreds of megabytes of RAM, searches that answered in milliseconds, and small paper cuts in
+the everyday flows. Everything here was ported to that leaner brief. See [LICENSE](LICENSE)
+and [NOTICE.md](NOTICE.md) for the fork's licensing.
 
 SwiftUI and AppKit, zero third-party dependencies, no Electron, no telemetry. Runs as an
 accessory app with no Dock icon; summon it from a global hotkey (Settings > General) or
@@ -21,7 +26,7 @@ Spotlight. Builds are ad-hoc signed for local use.
 - **Emoji & symbols**: a searchable grid, plus Slack/Discord-style `:smile` typing in the launcher.
 - **Dictionary**: type `def word` and the full definition page renders in place.
 - **File search**: type `@name` or `?name` in the launcher and files and folders from your home
-  appear as you type. The `Search Files` fallback opens the full screen, with previews.
+  appear as you type, served by Hudku's own name index rather than Spotlight.
 - **Apple Shortcuts**: search and run the shortcuts you built, with aliases and hotkeys.
 - **System actions**: lock, sleep, empty trash, toggle appearance, Bluetooth, mute, and more.
 - **Camera**: a preview, and a photo straight to the clipboard.
@@ -111,10 +116,9 @@ or run `sudo xcode-select -s /Applications/Xcode.app` once.
 ## Development
 
 - Tests: `./Scripts/run-tests.sh` (standalone Swift harnesses; there is no XCTest target).
-- Architecture, conventions, and invariants: [docs/architecture.md](docs/architecture.md) and
-  [docs/standards.md](docs/standards.md).
+- Docs: [docs/](docs/README.md) covers the launcher, file search, settings, permissions,
+  standards, and the build and release pipeline.
 - Performance profile and the `HUDKU_PERF` harness: [PERFORMANCE.md](PERFORMANCE.md).
-- The upstream author's reference docs: [docs/](docs/README.md).
 
 ## License
 

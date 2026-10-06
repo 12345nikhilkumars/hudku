@@ -26,7 +26,7 @@ private func commandEscapeTapCallback(
 ///
 /// The window server binds the chord itself, so it never reaches `onCommandShortcut` the way ⌘.
 /// and ⌘w do: no keystroke is left by the time the responder chain runs, and a head-inserted HID
-/// tap is the one place earlier than that. See docs/features/palette.md.
+/// tap is the one place earlier than that.
 @MainActor
 final class CommandEscapeTap {
     /// Claims the chord and returns true, or declines it so the rest of the system still gets it.

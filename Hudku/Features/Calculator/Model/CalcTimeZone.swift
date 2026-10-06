@@ -1,6 +1,6 @@
 import Foundation
 
-/// Clock time in another city. See docs/features/calculator.md.
+/// Clock time in another city.
 enum CalcTimeZone {
     static func evaluate(_ raw: String, now: Date, calendar: Calendar) -> CalcResult? {
         guard raw.count <= 128, raw.contains(where: \.isWhitespace) else { return nil }

@@ -15,7 +15,7 @@ enum CalcNumberStyle: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// Separators the user writes; the engine only reads English. See docs/features/calculator.md.
+/// Separators the user writes; the engine only reads English.
 struct CalcNumberFormat: Equatable, Sendable {
     let decimalSeparator: Unicode.Scalar
     /// nil when numbers are written without grouping.

@@ -7,15 +7,17 @@ export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Develope
 IDENTITY="Hudku Self-Signed"
 DERIVED="build/DerivedData"
 
-if ! security find-identity -p codesigning | grep -q "$IDENTITY"; then
-    echo "✗ '$IDENTITY' code-signing identity not found - create it once (docs/signing.md)." >&2
-    exit 1
+SIGN_FLAGS=()
+if security find-identity -p codesigning | grep -q "$IDENTITY"; then
+    echo "▸ Building signed Hudku.app (Release)…"
+    SIGN_FLAGS=(CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$IDENTITY" OTHER_CODE_SIGN_FLAGS="--timestamp=none")
+else
+    echo "▸ Building ad-hoc Hudku.app (Release)…"
 fi
 
-echo "▸ Building signed Hudku.app (Release)…"
 xcodebuild -project Hudku.xcodeproj -scheme Hudku -configuration Release \
     -derivedDataPath "$DERIVED" \
-    CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$IDENTITY" OTHER_CODE_SIGN_FLAGS="--timestamp=none" \
+    ${SIGN_FLAGS+"${SIGN_FLAGS[@]}"} \
     ${1:+MARKETING_VERSION="$1"} \
     build
 

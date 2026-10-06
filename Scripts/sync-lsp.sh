@@ -1,6 +1,6 @@
 #!/bin/bash
 # Rebuild SourceKit-LSP's flag database from a build log. Run by the VS Code build task; also the
-# one-time editor setup, since it is what creates buildServer.json. See docs/development.md.
+# one-time editor setup, since it is what creates buildServer.json. See docs/building.md.
 #
 # `xcode-build-server parse` with no `-o` is deliberate: that is the only spelling that also writes
 # buildServer.json, and it writes it as `kind: manual`. The `kind: xcode` alternative ignores .compile

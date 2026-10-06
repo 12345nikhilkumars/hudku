@@ -167,11 +167,11 @@ enum ClipboardChord: CaseIterable, Sendable {
     }
 }
 
-/// SQLite-backed clipboard history. See docs/features/clipboard.md#store.
+/// SQLite-backed clipboard history.
 @MainActor
 @Observable
 final class ClipboardStore {
-    /// Newest-first with pins in place, every pin resident. docs/features/clipboard.md
+    /// Newest-first with pins in place, every pin resident.
     private(set) var items: [ClipboardItem] = [] {
         didSet {
             if !textSearchMatches.isEmpty {
@@ -770,7 +770,7 @@ final class ClipboardStore {
         }
     }
 
-    /// Unpinning rejoins as the newest entry. See docs/features/clipboard.md#pinned-entries.
+    /// Unpinning rejoins as the newest entry.
     private func unpin(_ item: ClipboardItem) {
         reinsert(item.with(createdAt: Date(), pinnedAt: nil))
     }
@@ -898,7 +898,7 @@ final class ClipboardStore {
             sqlite3_exec(db, Self.schema, nil, nil, nil) == SQLITE_OK
         else { return false }
         insertStmt = prepare(Self.insertSQL)
-        // Two indexed branches, deliberately not one OR. See docs/features/clipboard.md#store.
+        // Two indexed branches, deliberately not one OR.
         loadStmt = prepare(
             """
             SELECT id, kind, text, image_path, created_at, source_app, pinned_at FROM (

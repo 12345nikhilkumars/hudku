@@ -64,7 +64,7 @@ final class PaletteState {
     @ObservationIgnored private var hoverAnchor: CGPoint = .zero
     /// A containment test, because hit-testing a rebuilding hierarchy misses the field.
     @ObservationIgnored var searchFieldFrame: CGRect = .zero
-    /// True while a palette menu is open. See docs/features/palette.md#menu-open-input-freeze.
+    /// True while a palette menu is open.
     @ObservationIgnored var menuOpen = false { didSet { onMenuOpenChanged?(menuOpen) } }
     var menuQuery = ""
     /// Fired when `menuOpen` flips, so the panel can hide the caret without a focus swap.

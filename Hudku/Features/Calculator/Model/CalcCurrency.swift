@@ -98,7 +98,7 @@ enum CalcCurrency {
         }
     }
 
-    /// Hand-written because CLDR won't assign a shared noun. docs/features/calculator.md
+    /// Hand-written because CLDR won't assign a shared noun.
     private static let contested: [String: [String]] = [
         "USD": ["dollar", "dollars"],  // 22 claimants
         "CHF": ["franc", "francs"],  // 10
@@ -118,12 +118,12 @@ enum CalcCurrency {
         "CNY": ["rmb", "renminbi"]  // ISO 4217 names CNY "Yuan Renminbi"; CLDR says "Chinese Yuan"
     ]
 
-    /// Codes daily use spells from CLDR's sign, not ISO 4217. docs/features/calculator.md
+    /// Codes daily use spells from CLDR's sign, not ISO 4217.
     private static let signCodes: [String: [String]] = [
         "TWD": ["ntd"]  // CLDR writes TWD "NT$", so Taiwan types the sign's code, not TWD
     ]
 
-    /// Hand-written because no standards body names a coin. docs/features/calculator.md
+    /// Hand-written because no standards body names a coin.
     static let crypto: [(code: String, name: String, aliases: [String])] = [
         ("ADA", "Cardano", ["cardano"]),
         ("AVAX", "Avalanche", ["avalanche"]),

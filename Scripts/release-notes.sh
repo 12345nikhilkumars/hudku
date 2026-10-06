@@ -1,6 +1,6 @@
 #!/bin/bash
 # Compose a release body from GitHub's generated notes. Usage: ./Scripts/release-notes.sh <body.md> <discord.md>
-# The changelog goes above the install marker; the app shows only that half. See docs/release.md.
+# The changelog goes above the install marker; the app shows only that half.
 set -euo pipefail
 
 BODY_OUT="${1:?usage: release-notes.sh <body.md> <discord.md>}"

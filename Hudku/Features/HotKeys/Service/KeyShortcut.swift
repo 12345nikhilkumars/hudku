@@ -1,7 +1,7 @@
 import AppKit
 import Carbon.HIToolbox
 
-/// A shortcut in Carbon's encoding, which is also the on-disk shape. See docs/features/hotkeys.md.
+/// A shortcut in Carbon's encoding, which is also the on-disk shape.
 struct KeyShortcut: Hashable, Sendable {
     let carbonKeyCode: Int
     let carbonModifiers: Int
@@ -58,7 +58,7 @@ struct KeyShortcut: Hashable, Sendable {
         includesShift ? [.control, .option, .shift, .command] : [.control, .option, .command]
     }
 
-    /// Re-points a chord recorded against the other Hyper set. docs/features/hotkeys.md
+    /// Re-points a chord recorded against the other Hyper set.
     func retargetingHyper(includesShift: Bool) -> KeyShortcut {
         let stale = Self.hyperChord(includesShift: !includesShift)
         guard modifierFlags.isSuperset(of: stale) else { return self }
@@ -120,7 +120,7 @@ struct KeyShortcut: Hashable, Sendable {
 
 }
 
-// Decoding routes through the masking initializer. See docs/features/hotkeys.md#persistence.
+// Decoding routes through the masking initializer.
 extension KeyShortcut: Codable {
     private enum CodingKeys: String, CodingKey {
         case carbonKeyCode, carbonModifiers

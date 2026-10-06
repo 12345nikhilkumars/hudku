@@ -12,7 +12,7 @@ struct DialogAction {
     var role: Role = .standard
 }
 
-/// How serious a dialog is; it tints the glyph but never picks one. See docs/ui.md.
+/// How serious a dialog is; it tints the glyph but never picks one.
 enum DialogTone: Sendable {
     case neutral
     case success

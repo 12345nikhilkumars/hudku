@@ -1,6 +1,6 @@
 import Foundation
 
-/// Which directory entries belong to an app, from names alone. See docs/features/uninstall.md.
+/// Which directory entries belong to an app, from names alone.
 enum UninstallRules {
     /// Stripped before matching, so `com.foo.Bar.plist` compares as `com.foo.Bar`.
     static let strippedExtensions: Set<String> = [

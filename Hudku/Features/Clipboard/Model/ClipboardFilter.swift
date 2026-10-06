@@ -1,6 +1,6 @@
 import Foundation
 
-/// The clipboard list's type filter. See docs/features/clipboard.md#type-filter.
+/// The clipboard list's type filter.
 enum ClipboardFilter: CaseIterable, Sendable {
     case all
     case text

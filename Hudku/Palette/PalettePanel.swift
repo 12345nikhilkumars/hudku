@@ -49,7 +49,7 @@ final class PalettePanel: NSPanel {
         }
     }
 
-    /// Mirrors the field editor's marked text. docs/features/palette.md#ime-composition
+    /// Mirrors the field editor's marked text.
     private var compositionObserver: NotificationToken?
 
     override func makeFirstResponder(_ responder: NSResponder?) -> Bool {
@@ -118,7 +118,7 @@ final class PalettePanel: NSPanel {
 
     private static let caretColor = NSColor(Theme.Colors.textPrimary)
 
-    /// Caret hiding on SwiftUI's own field editor. docs/features/palette.md#menu-open-input-freeze
+    /// Caret hiding on SwiftUI's own field editor.
     private func setSearchCaretHidden(_ hidden: Bool) {
         guard let editor = fieldEditor else { return }
         editor.insertionPointColor = hidden ? .clear : Self.caretColor
@@ -143,7 +143,7 @@ final class PalettePanel: NSPanel {
         cursor.set()
     }
 
-    /// docs/features/palette.md: a 24pt editor in a 23pt field, so its I-beam overhangs.
+    ///: a 24pt editor in a 23pt field, so its I-beam overhangs.
     private static let fieldEditorSlack: CGFloat = 2
 
     /// SwiftUI reports the field top-left down; AppKit reads the window bottom-left up.
@@ -171,7 +171,7 @@ final class PalettePanel: NSPanel {
             sendEvent(arrow)
             return
         }
-        // A palette menu owns the keyboard. See docs/features/palette.md#menu-open-input-freeze.
+        // A palette menu owns the keyboard.
         if event.type == .keyDown,
             paletteState?.menuOpen == true,
             event.modifierFlags.isDisjoint(with: [.command, .control]),

@@ -1,7 +1,7 @@
 import Carbon.HIToolbox
 import CoreGraphics
 
-/// The physical key remapped to the Hyper chord. See docs/features/hotkeys.md#the-hyper-key.
+/// The physical key remapped to the Hyper chord.
 enum HyperKeyPhysicalKey: String, CaseIterable, Identifiable, Sendable {
     case none
     case capsLock

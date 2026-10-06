@@ -25,7 +25,7 @@ struct UninstallSearchRoot: Hashable, Sendable {
         }
     }
 
-    /// Immediate children only; the home directory is absent. See docs/features/uninstall.md.
+    /// Immediate children only; the home directory is absent.
     static let all: [UninstallSearchRoot] = [
         UninstallSearchRoot(
             base: .userLibrary, relativePath: "Application Support",

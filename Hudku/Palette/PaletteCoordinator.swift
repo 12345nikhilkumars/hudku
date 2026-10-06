@@ -73,7 +73,7 @@ final class PaletteCoordinator {
         }
     }
 
-    /// Shows the palette, honoring Pop to Root Search. See docs/features/palette.md#state-flow.
+    /// Shows the palette, honoring Pop to Root Search.
     func showPalette(
         mode: PaletteMode, restoreAnyMode: Bool = false, seeding query: String? = nil
     ) {

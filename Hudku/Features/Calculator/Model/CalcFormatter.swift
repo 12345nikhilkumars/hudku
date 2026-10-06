@@ -26,7 +26,7 @@ enum CalcFormatter {
         return String(format: "%.10g", v)
     }
 
-    /// Money: 2 decimals, widening below a cent. Never `%g`. docs/features/calculator.md
+    /// Money: 2 decimals, widening below a cent. Never `%g`.
     static func currency(_ value: Double) -> String {
         let magnitude = abs(value)
         // Below ~1e-9 the digits are noise, and a literal "0.00" avoids `%.2f`'s "-0.00".

@@ -44,7 +44,7 @@ struct CalcResult: Equatable, Sendable {
     }
 }
 
-/// Raw query to answer, or nil when it isn't calculator input. See docs/features/calculator.md.
+/// Raw query to answer, or nil when it isn't calculator input.
 enum CalcEngine {
     /// Every environment fact is injected; the answer is canonical, for `format` to localize.
     static func evaluate(

@@ -27,7 +27,7 @@ private func modifierTapEventTapCallback(
     return Unmanaged.passUnretained(event)
 }
 
-/// The listen-only modifier tap. See docs/features/hotkeys.md#modifier-only-shortcuts.
+/// The listen-only modifier tap.
 @MainActor
 @Observable
 final class ModifierTapMonitor: HealthCheckable {
@@ -209,7 +209,7 @@ final class ModifierTapMonitor: HealthCheckable {
         guard
             let port = CGEvent.tapCreate(
                 tap: .cgSessionEventTap,
-                // Appended, so `HyperKeyTap`'s rewrite lands first. See docs/features/hotkeys.md.
+                // Appended, so `HyperKeyTap`'s rewrite lands first.
                 place: .tailAppendEventTap,
                 options: .listenOnly,
                 eventsOfInterest: mask,
@@ -252,7 +252,7 @@ final class ModifierTapMonitor: HealthCheckable {
         if let tapPort { CGEvent.tapEnable(tap: tapPort, enable: true) }
     }
 
-    /// One-second watchdog while something is bound. See docs/features/hotkeys.md#lifecycle.
+    /// One-second watchdog while something is bound.
     func healthCheck() {
         guard !bound.isEmpty, sessionActive else { return }
         if tapPort == nil {

@@ -173,7 +173,7 @@ struct RootPaletteView: View {
         let sel = selection(count: count)
         let showActionGroup = count > 0 && screen.hasPrimaryAction(at: sel)
 
-        // One header position, so focus survives the swap. See docs/features/palette.md.
+        // One header position, so focus survives the swap.
         return keyHandlers(
             stateObservers(
                 Group {

@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Deliberately not a focusable control. See docs/features/hotkeys.md#recorder.
+/// Deliberately not a focusable control.
 struct ShortcutRecorder: View {
     let action: HotKeyAction
     /// Drops the empty well's fill: a column of identical pills reads louder than its rows.
