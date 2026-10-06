@@ -35,7 +35,7 @@ sum the whole process suite (main process plus XPC services and helpers) over a 
 Three runs per open state, medians shown; full method, flame graphs, and the memory ladder:
 [PERFORMANCE.md](PERFORMANCE.md).
 
-| | Hudku 0.0.1 | Tinycast 0.11.3 | Raycast 2.6.2 |
+| | Hudku 0.0.2 | Tinycast 0.11.3 | Raycast 2.6.2 |
 | --- | --- | --- | --- |
 | Processes | 1 | 1 | 4 (up to 8 seen) |
 | RAM, closed / open | **22 MB / 38 MB** | 33 MB / 45 MB | 272 MB / 287 MB |
@@ -50,7 +50,7 @@ has no such instrument, so its column is the whole input-to-result path, measure
 with real key events and the Accessibility API (a few ms resolution). Raycast answers every
 command in roughly 7 to 15 ms end to end.
 
-| Command | Hudku 0.0.1 (engine) | Tinycast 0.11.3 (engine) | Raycast 2.6.2 (input to result) |
+| Command | Hudku 0.0.2 (engine) | Tinycast 0.11.3 (engine) | Raycast 2.6.2 (input to result) |
 | --- | --- | --- | --- |
 | App search, median query p50 / p90 | **12.4 / 34.2 µs** | 108 / 167 µs | 13 ms (p50) |
 | Single letter / full app name | **7.9 / 5.3 µs** | 304 / 86 µs | ~7 - 15 ms across root queries |
@@ -77,7 +77,7 @@ those rows compare engines and service calls, not keystroke flows.
 
 ### DMG
 
-Download `Hudku-0.0.1.dmg` from the
+Download `Hudku-0.0.2.dmg` from the
 [latest release](https://github.com/12345nikhilkumars/hudku/releases), open it, and drag Hudku
 into Applications. The build is ad-hoc signed and not notarized, so macOS may block the first
 launch: right-click the app and choose Open, or clear the quarantine flag yourself:

@@ -20,7 +20,7 @@ closed state is one run each. All runs on AC power.
 
 | Launcher | Version | Processes | RAM (closed) | RAM (open) | Open CPU / 60 s | Energy (top) | Threads |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Hudku** | 0.0.1 | 1 | **22 MB** | **38 MB** | **0.04 s (0.07 %)** | **~0.02** | **3** |
+| **Hudku** | 0.0.2 | 1 | **22 MB** | **38 MB** | **0.04 s (0.07 %)** | **~0.02** | **3** |
 | Tinycast (upstream) | 0.11.3 | 1 | 33 MB | 45 MB | 0.02 s (0.03 %) | 0.00 | 4 |
 | Raycast | 2.6.2 | 4 (8 seen) | 272 MB | 287 MB (267-318) | 0.80 s (1.3 %) | ~1.1 | 82 |
 
@@ -39,7 +39,7 @@ The in-repo `HUDKU_PERF` harness compiles into both apps (upstream needs three e
 launcher screen, each query repeated many times. The first row aggregates the corpus (median of
 the per-query medians, and their 90th percentile).
 
-| | Hudku 0.0.1 | Tinycast (upstream HEAD) |
+| | Hudku 0.0.2 | Tinycast (upstream HEAD) |
 | --- | --- | --- |
 | Palette search, median query p50 / p90 | **12.4 / 34.2 µs** | 108 / 167 µs |
 | Single letters (`s`) | 7.9 µs | 304 µs |
@@ -51,7 +51,7 @@ the per-query medians, and their 90th percentile).
 The same harness also times the feature engines directly in both apps (archived in
 `features-hudku.json` and `features-tinycast.json`):
 
-| Feature call (identical code path in both apps) | Hudku 0.0.1 | Tinycast (upstream HEAD) |
+| Feature call (identical code path in both apps) | Hudku 0.0.2 | Tinycast (upstream HEAD) |
 | --- | --- | --- |
 | Emoji engine, per call p50 / p95 (n=50) | **0.33 / 1.4 µs** | 3054 / 4004 µs |
 | Clipboard filter, p50 / p95 (n=40) | 58 / 126 µs | 31 / 59 µs |
