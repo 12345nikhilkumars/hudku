@@ -14,14 +14,14 @@ struct AppleShortcutTest {
             }
         }
 
-        let volume = UUID(uuidString: "97A1DDFA-76F3-4872-A672-25D5F35B7882")!
+        let volume = UUID(uuidString: "8B3F2C04-1D5E-4A66-9C1B-2E7D4F0A9C31")!
         let pdf = UUID(uuidString: "B63D79CE-D540-4E8C-B5E4-B3BF5FDD1897")!
         let recipes = UUID(uuidString: "DCA44E1D-F062-424D-BA7C-FA91DBFE33FF")!
 
         // The tool's real output on a Mac holding three shortcuts, in its own order.
         let listed = AppleShortcut.parseList(
             """
-            Set Volume to 50% (97A1DDFA-76F3-4872-A672-25D5F35B7882)
+            Set Volume to 50% (8B3F2C04-1D5E-4A66-9C1B-2E7D4F0A9C31)
             Summarize PDF (B63D79CE-D540-4E8C-B5E4-B3BF5FDD1897)
             Leftover Recipes (DCA44E1D-F062-424D-BA7C-FA91DBFE33FF)
 

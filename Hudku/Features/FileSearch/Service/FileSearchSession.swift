@@ -46,8 +46,8 @@ final class FileSearchSession {
             homeDirectory: homeDirectory)
         debounce = .milliseconds(120)
         searchOperation = { query, filter, policy in
-            try await Task.detached(priority: .userInitiated) {
-                try FileSearchService.search(query: query, policy: policy, filter: filter)
+            await Task.detached(priority: .userInitiated) {
+                FileSearchService.search(query: query, policy: policy, filter: filter)
             }.value
         }
     }

@@ -19,7 +19,6 @@ struct FileSearchTests {
 
     static func main() {
         queryGrammar()
-        recents()
         typeFilter()
         scopePolicy()
         pathPolicy()
@@ -27,6 +26,7 @@ struct FileSearchTests {
         policyResolution()
         resultModel()
         ranking()
+        indexTable()
 
         print(failures == 0 ? "File search tests passed" : "\(failures) file search tests failed")
         exit(failures == 0 ? 0 : 1)
@@ -36,73 +36,21 @@ struct FileSearchTests {
         expect(
             FileSearchQuery.terms(in: "  annual\treport  ") == ["annual", "report"],
             "terms split on whitespace")
-        expect(FileSearchQuery.expression(for: " \n ") == nil, "empty input creates no query")
-        expect(
-            FileSearchQuery.expression(for: "annual report")
-                == "kMDItemFSName == \"*annual*\"cd && kMDItemFSName == \"*report*\"cd",
-            "every term must occur in the filename")
-        let escaped = FileSearchQuery.expression(for: #"a\b\"c*d?e"#)
-        let expected =
-            "kMDItemFSName == \"*a" + String(repeating: "\\", count: 2) + "b"
-            + String(repeating: "\\", count: 3) + "\"c\\*d\\?e*\"cd"
-        expect(
-            escaped == expected,
-            "query metacharacters are escaped: \(String(reflecting: escaped)) != \(String(reflecting: expected))"
-        )
-        expect(
-            FileSearchQuery.expression(for: "report", excluding: ["*.tmp", "*.log"])
-                == "kMDItemFSName == \"*report*\"cd && kMDItemFSName != \"*.tmp\"cd"
-                + " && kMDItemFSName != \"*.log\"cd",
-            "ignored name globs keep their wildcards and join the expression as exclusions")
-        expect(FileSearchQuery.candidateLimit == 1_000, "the Spotlight candidate cap is fixed")
+        expect(FileSearchQuery.candidateLimit == 400, "the candidate cap is fixed")
         expect(FileSearchQuery.resultLimit == 200, "the displayed result cap is fixed")
         expect(
             FileSearchQuery.matches(filename: "Résumé Final.pdf", query: "resume final"),
-            "home-root matching mirrors case- and diacritic-insensitive Spotlight terms")
+            "matching is case- and diacritic-insensitive")
         expect(
             !FileSearchQuery.matches(filename: "Annual Notes.pdf", query: "annual report"),
-            "every term is required for a home-root match")
-    }
-
-    static func recents() {
-        expect(
-            FileSearchQuery.recentExpression(stamp: .changed, excluding: ["*.tmp"], filter: .images)
-                == "kMDItemFSContentChangeDate > $time.now(-259200)"
-                + " && kMDItemContentTypeTree == \"public.image\""
-                + " && kMDItemFSName != \"*.tmp\"cd",
-            "a recents query is one stamp, narrowed by the filter and the ignore list")
-        expect(
-            FileSearchQuery.recentExpression(stamp: .used)
-                == "kMDItemLastUsedDate > $time.now(-2592000)",
-            "an unfiltered recents query is the one date clause alone")
-        expect(
-            FileSearchQuery.RecentStamp.allCases.map(\.rawValue)
-                == ["kMDItemFSContentChangeDate", "kMDItemLastUsedDate"],
-            "both stamps are asked about: macOS records a last-used date for very few opens")
-        expect(
-            FileSearchQuery.RecentStamp.changed.window != FileSearchQuery.RecentStamp.used.window,
-            "editing is constant, so the changed window is not the used one")
-        expect(FileSearchQuery.recentLimit == 20, "the blank screen's row count is fixed")
+            "every term is required for a match")
     }
 
     static func typeFilter() {
         expect(
-            FileSearchQuery.expression(for: "report", filter: .all)
-                == FileSearchQuery.expression(for: "report"),
-            "an unfiltered search asks Spotlight exactly what it always has")
-        expect(
-            FileSearchQuery.expression(for: "report", filter: .images)
-                == "kMDItemFSName == \"*report*\"cd && kMDItemContentTypeTree == \"public.image\"",
-            "a single-type filter joins the expression as one clause")
-        expect(
-            FileSearchQuery.expression(for: "report", excluding: ["*.tmp"], filter: .folders)
-                == "kMDItemFSName == \"*report*\"cd && kMDItemContentTypeTree == \"public.folder\""
-                + " && kMDItemFSName != \"*.tmp\"cd",
-            "the type clause sits between the name terms and the ignored names")
-        expect(
-            FileSearchFilter.documents.spotlightClause?.hasPrefix("(") == true,
-            "a filter naming several types parenthesizes them, so the OR cannot leak")
-        expect(FileSearchFilter.all.spotlightClause == nil, "All Types constrains nothing")
+            FileSearchFilter.documents.contentTypes.contains(.pdf),
+            "Documents names PDF outright, not only through conformance")
+        expect(FileSearchFilter.all.contentTypes.isEmpty, "All Types constrains nothing")
 
         expect(
             FileSearchFilter.all.accepts(contentType: nil, isDirectory: false),
@@ -213,14 +161,6 @@ struct FileSearchTests {
         expect(
             !FileSearchIgnoreList(patterns: []).excludes(path: "/Users/test/Documents/node_modules/a"),
             "the shipped rules are supplied by the policy, not baked into the matcher")
-
-        expect(
-            list.spotlightNameExclusions == ["*.tmp"],
-            "only bare `*` name globs are pushed into the Spotlight expression")
-        expect(
-            FileSearchIgnoreList(patterns: ["?.log", "a[bc].txt", "say\"hi\"", "back\\slash"])
-                .spotlightNameExclusions.isEmpty,
-            "Spotlight reads `?`, brackets and quotes literally, so those stay local")
     }
 
     static func policyResolution() {
@@ -300,6 +240,73 @@ struct FileSearchTests {
                 ignoring: FileSearchIgnoreList(patterns: ["Archive"])
             ).isEmpty,
             "ranking drops what the user's own patterns exclude")
+    }
+
+    static func indexTable() {
+        let table = FileIndexTable(
+            roots: ["/Users/test"],
+            records: [
+                (name: "", parent: .max, isDirectory: true),
+                (name: "Notes.txt", parent: 0, isDirectory: false),
+                (name: "Documents", parent: 0, isDirectory: true),
+                (name: "Annual Report.pdf", parent: 2, isDirectory: false),
+                (name: "Résumé Final.txt", parent: 2, isDirectory: false),
+                (name: "Archive", parent: 0, isDirectory: true),
+                (name: "report-2019.txt", parent: 5, isDirectory: false),
+            ])
+        let open = FileSearchIgnoreList(patterns: [])
+        let found = table.search(
+            query: "annual report", filter: .all, ignoring: open, homeDirectory: home)
+        expect(found.map(\.name) == ["Annual Report.pdf"], "both terms must occur in the name")
+        expect(found.first?.parentPath == "~/Documents", "paths rebuild through the parent chain")
+
+        expect(
+            table.search(query: "resume", filter: .all, ignoring: open, homeDirectory: home)
+                .map(\.name) == ["Résumé Final.txt"],
+            "the index folds case and diacritics into its match bytes")
+        expect(
+            table.search(query: "annual", filter: .documents, ignoring: open, homeDirectory: home)
+                .map(\.name) == ["Annual Report.pdf"],
+            "the documents filter runs against resolved types")
+        expect(
+            table.search(query: "report", filter: .folders, ignoring: open, homeDirectory: home)
+                .isEmpty,
+            "a folders filter admits no files")
+        expect(
+            table.search(query: "report", filter: .images, ignoring: open, homeDirectory: home)
+                .isEmpty,
+            "an images filter rejects both the PDF and the text file")
+        expect(
+            table.search(query: "zzz", filter: .all, ignoring: open, homeDirectory: home).isEmpty,
+            "a term nobody carries finds nothing")
+        expect(
+            table.search(
+                query: "report", filter: .all,
+                ignoring: FileSearchIgnoreList(patterns: ["Archive"]), homeDirectory: home
+            ).map(\.name) == ["Annual Report.pdf"],
+            "the ignore list still applies at query time")
+
+        let many = (0..<210).map { index in
+            (name: "Report \(index).txt", parent: UInt32(0), isDirectory: false)
+        }
+        let capped = FileIndexTable(
+            roots: ["/Users/test"],
+            records: [(name: "", parent: .max, isDirectory: true)] + many)
+        expect(
+            capped.search(query: "report", filter: .all, ignoring: open, homeDirectory: home)
+                .count == 200,
+            "a sprawling match set still publishes no more than the display cap")
+
+        if let stored = FileIndexTable.deserialized(table.serialized(policyKey: "k")) {
+            expect(stored.policyKey == "k", "the persisted table carries its policy key")
+            expect(
+                stored.table.search(
+                    query: "annual report", filter: .all, ignoring: open, homeDirectory: home
+                ).map(\.name) == ["Annual Report.pdf"],
+                "a table survives a serialization round trip")
+        } else {
+            expect(false, "the persisted table deserializes")
+        }
     }
 
 }

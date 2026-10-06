@@ -122,6 +122,8 @@ final class AppCore {
                 Task { await emojiIndex.load(languages: Locale.preferredLanguages) }
             }
             Task { await appIndex.refresh() }
+            // Warm the dictionary daemon off the clock, so the first `def word` is not the cold one.
+            Task.detached(priority: .utility) { _ = DictionaryService.entry(for: "time") }
             currencyRates.start()
 
             hyperKeyTap.healthTicker = healthTicker

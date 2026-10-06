@@ -55,16 +55,29 @@ The same harness also times the feature engines directly in both apps (archived 
 | --- | --- | --- |
 | Emoji engine, per call p50 / p95 (n=50) | **0.33 / 1.4 µs** | 3054 / 4004 µs |
 | Clipboard filter, p50 / p95 (n=40) | 58 / 126 µs | 31 / 59 µs |
-| File search, MDQuery inside `/Applications`, p50 / p95 (n=12) | 52.3 / 87.5 ms | 53.2 / 75.8 ms |
-| Dictionary lookup, p50 / p95 (n=4) | 4.1 / 7.9 ms | 8.1 / 14.3 ms |
+| File search, p50 / p95 | **0.03 / 0.19 ms** (owned index) | 53.2 / 75.8 ms (Spotlight) |
+| Dictionary lookup | **4.6 ms cold / 7.5 µs repeat** (n=4 / 40) | 8.1 / 14.3 ms |
 
 In the emoji row, Hudku's first call in a fresh process builds the catalog (1.6 to 3.5 ms
 depending on the run); every call after that is under a microsecond, while upstream pays
 milliseconds on every call. Clipboard is the one row where upstream wins on today's clean
 runs (31 vs 58 µs at the median); both are microseconds, and earlier runs had the spread the
-other way, so read that row as parity. File search and dictionary are dominated by the system
-services behind them (Spotlight, Dictionary Services), so both apps land in the same range,
-with Hudku about 2x ahead on dictionary.
+other way, so read that row as parity. Dictionary lookups run through the macOS dictionary
+daemon: a first-ever term costs roughly 4 to 8 ms depending on the run (the daemon's
+first-ask plus our XHTML parse), while Hudku memoizes hits and misses so every repeat of a
+term costs about 7.5 µs, and a launch-time warm-up keeps the daemon connection hot before
+the first `def word`.
+
+### File search runs on Hudku's own index
+
+Spotlight is gone from Hudku's file search. `@word` now scans a name index Hudku builds
+itself: 79,083 entries on this Mac after the dev-cache ignore rules (go, node_modules,
+DerivedData and friends are skipped), 4.7 MB in memory, built once in about 1.7 s, then
+loaded from disk at later launches and kept current by FSEvents. Typical terms answer in 0.6
+to 3 ms and the worst single letters in about 7 ms, against Spotlight's flat ~52 ms. The
+tradeoffs: the first build needs one-time macOS permission grants for the protected folders
+it reads (Documents, Desktop, Downloads), and the table occupies its ~5 MB only while file
+search is in use.
 
 ### Raycast, measured externally with real input
 
@@ -79,7 +92,7 @@ measured with a probe that posts real key events and timestamps the AX notificat
 | Calculator (`2+2`) | 14.6 ms | 14.8 ms |
 | Currency (`10 usd in eur`) | 13.9 ms | 14.0 ms |
 | Color (`#ff5733`) | 12.8 ms | 13.2 ms |
-| Search Files (`nikhil`) | 12.5 ms | 12.7 ms |
+| Search Files (`report`) | 12.5 ms | 12.7 ms |
 | Search Emoji (`smile`) | 13.7 ms | 13.9 ms |
 | Define Word (`hello`) | 12.3 ms | 12.6 ms |
 

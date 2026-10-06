@@ -185,14 +185,26 @@ enum PerfHarness {
             let policy = FileSearchPolicy(
                 scopes: ["/Applications"], ignorePatterns: [],
                 homeDirectory: FileManager.default.homeDirectoryForCurrentUser)
+            FileIndexService.shared.apply(policy)
+            let readyStart = clock.now
+            while FileIndexService.shared.entryCount == nil,
+                milliseconds(readyStart.duration(to: clock.now)) < 30_000
+            {
+                await sleep(0.05)
+            }
+            notes["fileindex_ready_ms"] = milliseconds(readyStart.duration(to: clock.now))
+            notes["fileindex_entries"] = FileIndexService.shared.entryCount ?? -1
+            notes["fileindex_source"] = FileIndexService.shared.stats.source
+            notes["fileindex_build_ms"] = FileIndexService.shared.stats.buildMs
+            notes["fileindex_load_ms"] = FileIndexService.shared.stats.loadMs
             var fileSamples: [Double] = []
             for query in ["safari", "term", "x", "photo"] {
                 for _ in 0..<3 {
                     let start = clock.now
-                    let results: [FileSearchResult]? = await Task.detached(priority: .userInitiated) {
-                        try? FileSearchService.search(query: query, policy: policy, filter: .all)
+                    let results = await Task.detached(priority: .userInitiated) {
+                        FileSearchService.search(query: query, policy: policy, filter: .all)
                     }.value
-                    _ = results?.count
+                    _ = results.count
                     fileSamples.append(micros(start.duration(to: clock.now)))
                 }
             }
@@ -207,6 +219,19 @@ enum PerfHarness {
                 dictionarySamples.append(micros(start.duration(to: clock.now)))
             }
             features["dictionary_us"] = summary(of: dictionarySamples)
+
+            // The same terms again: what a session pays once the memo holds them.
+            var warmDictionarySamples: [Double] = []
+            for _ in 0..<10 {
+                for term in ["hello", "run", "light", "name"] {
+                    let start = clock.now
+                    _ = await Task.detached(priority: .userInitiated) {
+                        DictionaryService.entry(for: term)
+                    }.value
+                    warmDictionarySamples.append(micros(start.duration(to: clock.now)))
+                }
+            }
+            features["dictionary_warm_us"] = summary(of: warmDictionarySamples)
 
             notes["features"] = features
             phase("features_done")

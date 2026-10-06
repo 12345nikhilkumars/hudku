@@ -1,48 +1,18 @@
 import Foundation
 
 enum FileSearchQuery {
-    static let candidateLimit = 1_000
+    /// Ranking headroom over the 200 displayed rows: constructing a result costs real URL
+    /// work, so a common term ranks this many candidates and no more.
+    static let candidateLimit = 400
     static let resultLimit = 200
-    /// A blank screen is a shortlist, not a browser: enough rows to reach, never to scroll far.
-    static let recentLimit = 20
 
     static func terms(in query: String) -> [String] {
         query.split(whereSeparator: \Character.isWhitespace).map(String.init)
     }
 
-    static func expression(
-        for query: String, excluding exclusions: [String] = [], filter: FileSearchFilter = .all
-    ) -> String? {
-        let terms = terms(in: query)
-        guard !terms.isEmpty else { return nil }
-        let matches = terms.map { "kMDItemFSName == \"*\(escape($0))*\"cd" }
-        // Excluding in the predicate keeps ignored files from consuming the candidate cap.
-        let excludes = exclusions.map { "kMDItemFSName != \"\(escapeGlob($0))\"cd" }
-        let types = filter.spotlightClause.map { [$0] } ?? []
-        return (matches + types + excludes).joined(separator: " && ")
-    }
-
-    /// Both, because macOS stamps `kMDItemLastUsedDate` on few opens now, and Spotlight sorts on one.
-    enum RecentStamp: String, CaseIterable, Sendable {
-        case changed = "kMDItemFSContentChangeDate"
-        case used = "kMDItemLastUsedDate"
-
-        /// Spotlight's own literal, so no clock is injected; editing is constant, so it is shorter.
-        var window: String {
-            switch self {
-            case .changed: return "$time.now(-259200)"
-            case .used: return "$time.now(-2592000)"
-            }
-        }
-    }
-
-    static func recentExpression(
-        stamp: RecentStamp, excluding exclusions: [String] = [], filter: FileSearchFilter = .all
-    ) -> String {
-        let touched = "\(stamp.rawValue) > \(stamp.window)"
-        let types = filter.spotlightClause.map { [$0] } ?? []
-        let excludes = exclusions.map { "kMDItemFSName != \"\(escapeGlob($0))\"cd" }
-        return ([touched] + types + excludes).joined(separator: " && ")
+    /// One fold for both sides of a comparison: built into the index and applied to the query.
+    static func folded(_ text: String) -> String {
+        text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
     }
 
     static func rank(
@@ -52,7 +22,7 @@ enum FileSearchQuery {
         guard !terms.isEmpty else { return [] }
         // Folded once each: a thousand candidates would otherwise re-fold every term per result.
         let whole = FuzzyMatch.Query(query)
-        let folded = terms.map(FuzzyMatch.Query.init)
+        let folded = terms.map { FuzzyMatch.Query($0) }
         return results.filter { !isExcludedPath($0.id, ignoring: ignore) }.map { result in
             let full = FuzzyMatch.score(whole, candidate: result.name)
             let termScore = folded.compactMap { FuzzyMatch.score($0, candidate: result.name) }
@@ -69,9 +39,9 @@ enum FileSearchQuery {
                 return false
             default:
                 if left.2 != right.2 { return left.2 > right.2 }
-                let nameOrder = left.0.name.localizedCaseInsensitiveCompare(right.0.name)
+                let nameOrder = left.0.name.caseInsensitiveCompare(right.0.name)
                 if nameOrder != .orderedSame { return nameOrder == .orderedAscending }
-                return left.0.id.localizedCaseInsensitiveCompare(right.0.id) == .orderedAscending
+                return left.0.id.caseInsensitiveCompare(right.0.id) == .orderedAscending
             }
         }
         .prefix(resultLimit)
@@ -79,10 +49,8 @@ enum FileSearchQuery {
     }
 
     static func matches(filename: String, query: String) -> Bool {
-        terms(in: query).allSatisfy { term in
-            filename.range(
-                of: term, options: [.caseInsensitive, .diacriticInsensitive]) != nil
-        }
+        let haystack = folded(filename)
+        return terms(in: query).allSatisfy { haystack.contains(folded($0)) }
     }
 
     /// Hidden paths and bundle contents are what keep File Search permission-free.
@@ -92,24 +60,5 @@ enum FileSearchQuery {
                 || component.lowercased().hasSuffix(".app")
         }
         return structural || ignore.excludes(path: path)
-    }
-
-    /// A typed term is literal, so its wildcards are neutralized along with the string delimiters.
-    private static func escape(_ term: String) -> String {
-        quoting(term, escaping: ["\\", "\"", "*", "?"])
-    }
-
-    /// A user pattern keeps its `*`, since that is the one wildcard Spotlight evaluates.
-    private static func escapeGlob(_ pattern: String) -> String {
-        quoting(pattern, escaping: ["\\", "\""])
-    }
-
-    private static func quoting(_ text: String, escaping characters: Set<Character>) -> String {
-        var escaped = ""
-        for character in text {
-            if characters.contains(character) { escaped.append("\\") }
-            escaped.append(character)
-        }
-        return escaped
     }
 }

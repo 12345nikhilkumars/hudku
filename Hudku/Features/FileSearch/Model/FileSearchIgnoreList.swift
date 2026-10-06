@@ -8,20 +8,26 @@ struct FileSearchIgnoreList: Sendable, Equatable {
     static let defaults = [
         "node_modules", "DerivedData", "build", "dist", "target", "Pods", "__pycache__",
         "venv", "vendor", "bower_components", "out", "coverage",
+        // Development caches and build artifacts: high file counts, low search value.
+        "go", "Carthage", "obj", "site-packages", "Packages", ".build",
     ]
 
     private let literalNames: Set<String>
     private let nameGlobs: [Glob]
     private let pathGlobs: [Glob]
+    /// The raw patterns, as configured; the index key hashes these to detect changes.
+    let patterns: [String]
 
     init(patterns: [String]) {
         var literalNames: Set<String> = []
         var nameGlobs: [Glob] = []
         var pathGlobs: [Glob] = []
+        var kept: [String] = []
         for pattern in patterns {
             let trimmed = pattern.trimmingCharacters(in: .whitespaces)
             // An interior NUL would silently truncate the pattern once it reaches `fnmatch`.
             guard !trimmed.isEmpty, !trimmed.contains("\0") else { continue }
+            kept.append(trimmed)
             if trimmed.contains("/") {
                 pathGlobs.append(Glob(trimmed))
             } else if trimmed.contains(where: Glob.isMetacharacter) {
@@ -33,6 +39,7 @@ struct FileSearchIgnoreList: Sendable, Equatable {
         self.literalNames = literalNames
         self.nameGlobs = nameGlobs
         self.pathGlobs = pathGlobs
+        self.patterns = kept
     }
 
     func excludes(path: String) -> Bool {
@@ -42,11 +49,6 @@ struct FileSearchIgnoreList: Sendable, Equatable {
             if nameGlobs.contains(where: { $0.matches(name) }) { return true }
         }
         return pathGlobs.contains { $0.matches(path) }
-    }
-
-    /// Name globs Spotlight can evaluate itself, so ignored files never fill the candidate cap.
-    var spotlightNameExclusions: [String] {
-        nameGlobs.filter(\.isSpotlightExpressible).map(\.pattern)
     }
 }
 
@@ -62,11 +64,6 @@ private struct Glob: Sendable, Equatable {
 
     static func isMetacharacter(_ character: Character) -> Bool {
         character == "*" || character == "?" || character == "["
-    }
-
-    /// Spotlight reads `?` and `[` as literals and knows only `*`, so anything else stays local.
-    var isSpotlightExpressible: Bool {
-        !pattern.contains(where: { $0 == "?" || $0 == "[" || $0 == "\"" || $0 == "\\" })
     }
 
     func matches(_ candidate: String) -> Bool {

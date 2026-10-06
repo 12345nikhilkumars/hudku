@@ -58,8 +58,8 @@ command in roughly 7 to 15 ms end to end.
 | Calculator, units, currency | **1.9 - 11.8 µs** | 1.2 - 11.8 µs | 14.6 ms |
 | Color (`#ff5733`) | **5.0 µs** | 87.8 µs | 12.8 ms |
 | Emoji engine call | **0.33 µs** | 3.05 ms | 13.7 ms (Search Emoji) |
-| Dictionary lookup | **4.1 ms** | 8.1 ms | 12.3 ms (Define Word) |
-| File search (Spotlight) | 52.3 ms (inline `@`) | 53.2 ms (screen) | 12.5 ms (Search Files) |
+| Dictionary lookup | **4.6 ms cold / 7.5 µs repeat** | 8.1 ms | 12.3 ms (Define Word) |
+| File search | **0.03 - 7 ms** (inline `@`, Hudku's own index) | 53.2 ms (Spotlight, screen) | 12.5 ms (Search Files) |
 | Clipboard filter | 58 µs | **31 µs** | n/a (no public search) |
 | External CPU per typed query | **0.00 - 0.01 s** | 0.04 - 0.09 s | not measurable (backend never idles) |
 
@@ -67,7 +67,8 @@ Raycast's four processes (its Node backend dominates at 195-245 MB) start at 272
 backend runs whether the window is up or not; a fuller state on this Mac showed 8 processes and
 about 510 MB. Tinycast's file-search screen pulls in a QuickLook helper when results are
 browsed (about 90 MB suite total on a quick lookup, up to roughly 430 MB after previewing
-several files); Hudku answers `@word` inline and never leaves its ~47 MB. Emoji and dictionary
+several files); Hudku answers `@word` inline from its own name index and never leaves its
+~47 MB plus the index's ~5 MB once file search is first used. Emoji and dictionary
 are invoked differently in each launcher (Hudku inline as `:smile` and `def word`; Tinycast
 through a separate Emoji screen and a Define Word row; Raycast through its own commands), so
 those rows compare engines and service calls, not keystroke flows.
